@@ -1,0 +1,8 @@
+{
+  "soc": 85,
+  "remaining_discharge_time_min": 240,
+  "ac_output_watts": 200,
+  "ac_output_enabled": true,
+  "total_output_watts": 200,
+  "dc_output_watts": 15
+}

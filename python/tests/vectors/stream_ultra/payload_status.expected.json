@@ -1,0 +1,14 @@
+{
+  "batt_soc": 47.0,
+  "cascade_soc": 44,
+  "grid_power_watts": 4924.0,
+  "load_power_watts": 738.6836,
+  "battery_power_watts": 4185.465,
+  "pv_power_watts": 0.0,
+  "input_watts": 970.0,
+  "temp": 35.0,
+  "cycles": 219,
+  "health": 100.0,
+  "max_charge_soc": 95,
+  "min_discharge_soc": 10
+}
