@@ -32,5 +32,5 @@ def test_base_device_repr() -> None:
 async def test_base_device_publish_uses_rest_when_no_mqtt() -> None:
     rest = _make_rest()
     device = BaseDevice(sn="SN12345", product_name="Smart Plug", rest=rest, mqtt=None)
-    await device._publish({"switch": 1})
+    await device._publish({"switch": 1})  # pyright: ignore[reportPrivateUsage]
     rest.set_quota.assert_called_once_with("SN12345", {"switch": 1})

@@ -4,13 +4,14 @@ Shared pytest fixtures.
 QUIRK NOTE (smart_plug):
   The raw 'watts' field from the Smart Plug MQTT payload is 10× the actual wattage.
   payload_power.json has watts=123, expected output is power_watts=12.3.
-  See: src/ecoflow/models/plug.py::_WATTS_RAW_FACTOR
+  See: src/ecoflow/models/plug.py::WATTS_RAW_FACTOR
   Test vector: tests/vectors/smart_plug/payload_power.json
 """
 
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 from dotenv import load_dotenv
@@ -21,15 +22,15 @@ load_dotenv(Path(__file__).parent / ".env")
 VECTORS_DIR = Path(__file__).parent / "vectors"
 
 
-def load_vector(device: str, name: str) -> tuple[dict, dict]:
+def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load a test vector pair (payload + expected) for a device."""
     base = VECTORS_DIR / device
-    payload = json.loads((base / f"{name}.json").read_text())
-    expected = json.loads((base / f"{name}.expected.json").read_text())
+    payload: dict[str, Any] = json.loads((base / f"{name}.json").read_text())
+    expected: dict[str, Any] = json.loads((base / f"{name}.expected.json").read_text())
     return payload, expected
 
 
-def pytest_addoption(parser) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--enable-write-tests",
         action="store_true",
@@ -38,7 +39,9 @@ def pytest_addoption(parser) -> None:
     )
 
 
-def pytest_collection_modifyitems(config, items) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Skip write_integration tests unless both gates are open."""
     cli_flag = config.getoption("--enable-write-tests", default=False)
     env_flag = os.getenv("ECOFLOW_ENABLE_WRITE_TESTS", "").lower() == "true"

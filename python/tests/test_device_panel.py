@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -9,7 +10,7 @@ import pytest
 from ecoflow.devices.panel import SmartHomePanelDevice
 
 
-def make_panel(raw: dict | None = None) -> SmartHomePanelDevice:
+def make_panel(raw: dict[str, Any] | None = None) -> SmartHomePanelDevice:
     """Create a SmartHomePanelDevice with a mocked REST client."""
     rest = MagicMock()
     rest.get_quota = AsyncMock(return_value=raw or {})

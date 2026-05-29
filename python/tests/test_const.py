@@ -3,8 +3,8 @@ from ecoflow.const import (
     ECOFLOW_MQTT_PORT_TLS,
     ECOFLOW_REST_HOST_EU,
     ECOFLOW_REST_HOST_US,
-    ENDPOINT_CERT,  # noqa: F401 — importability smoke test
-    ENDPOINT_DEVICE_LIST,  # noqa: F401 — importability smoke test
+    ENDPOINT_CERT,  # noqa: F401  # pyright: ignore[reportUnusedImport]
+    ENDPOINT_DEVICE_LIST,  # noqa: F401  # pyright: ignore[reportUnusedImport]
     TOPIC_DEVICE_PROPERTY,
     TOPIC_OPEN_QUOTA,
     TOPIC_OPEN_STATUS,

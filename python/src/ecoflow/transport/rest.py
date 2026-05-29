@@ -1,11 +1,11 @@
-"""EcoFlow REST transport — private implementation."""
+"""EcoFlow REST transport."""
 
 from __future__ import annotations
 
 import json
 import logging
 from types import TracebackType
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -30,8 +30,8 @@ from ecoflow.exceptions import (
 _log = logging.getLogger(__name__)
 
 
-class _RestClient:
-    """Private async REST client. Not part of the public API."""
+class RestTransport:
+    """Async REST client for the EcoFlow Developer API."""
 
     def __init__(
         self,
@@ -97,7 +97,9 @@ class _RestClient:
 
     async def list_devices(self) -> list[dict[str, Any]]:
         data = await self._get(ENDPOINT_DEVICE_LIST)
-        return data if isinstance(data, list) else data.get("deviceList", [])
+        if isinstance(data, list):
+            return cast(list[dict[str, Any]], data)
+        return cast(list[dict[str, Any]], data.get("deviceList", []))
 
     async def get_device(self, sn: str) -> dict[str, Any]:
         data = await self._get(ENDPOINT_DEVICE_INFO.format(sn=sn))
@@ -117,7 +119,7 @@ class _RestClient:
     async def close(self) -> None:
         await self._client.aclose()
 
-    async def __aenter__(self) -> _RestClient:
+    async def __aenter__(self) -> RestTransport:
         return self
 
     async def __aexit__(
