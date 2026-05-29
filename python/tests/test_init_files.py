@@ -15,7 +15,7 @@ class TestPackageInit:
     def test_version_value(self) -> None:
         import ecoflow
 
-        assert ecoflow.__version__ == "0.1.0"
+        assert ecoflow.__version__ == "0.2.0"
 
 
 class TestTransportInit:
