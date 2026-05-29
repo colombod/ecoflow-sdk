@@ -1,9 +1,9 @@
-"""Transport layer — private REST and MQTT clients."""
+"""Transport layer — REST and MQTT clients."""
 
 from ecoflow.transport.mqtt import (
     MqttCredentials,
-    _MqttClient,  # pyright: ignore[reportPrivateUsage]
+    MqttTransport,
 )
-from ecoflow.transport.rest import _RestClient  # pyright: ignore[reportPrivateUsage]
+from ecoflow.transport.rest import RestTransport
 
-__all__ = ["_RestClient", "_MqttClient", "MqttCredentials"]
+__all__ = ["RestTransport", "MqttTransport", "MqttCredentials"]

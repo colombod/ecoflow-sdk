@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import IntEnum
+from typing import Any
 
 
 class Wave3Mode(IntEnum):
@@ -41,10 +42,10 @@ class Wave3Status:
     updated_at: datetime | None = None
 
     @classmethod
-    def from_mqtt_payload(cls, sn: str, data: dict) -> Wave3Status:  # type: ignore[type-arg]
+    def from_mqtt_payload(cls, sn: str, data: dict[str, Any]) -> Wave3Status:
         """Build a Wave3Status snapshot from a raw MQTT payload dict."""
-        pd = data.get("pd", data)
-        bms = data.get("bms", {})
+        pd: dict[str, Any] = data.get("pd", data)
+        bms: dict[str, Any] = data.get("bms", {})
 
         return cls(
             sn=sn,

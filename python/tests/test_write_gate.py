@@ -49,7 +49,7 @@ def test_write_integration_skipped_when_both_flags_absent():
 
     item = MagicMock()
     # Simulate the item having the write_integration marker
-    item.get_closest_marker.side_effect = lambda name: (
+    item.get_closest_marker.side_effect = lambda name: (  # pyright: ignore[reportUnknownLambdaType]
         MagicMock() if name == "write_integration" else None
     )
 
@@ -68,7 +68,7 @@ def test_write_integration_skipped_when_only_cli_flag_set():
     config.getoption.return_value = True  # CLI flag set
 
     item = MagicMock()
-    item.get_closest_marker.side_effect = lambda name: (
+    item.get_closest_marker.side_effect = lambda name: (  # pyright: ignore[reportUnknownLambdaType]
         MagicMock() if name == "write_integration" else None
     )
 
@@ -87,7 +87,7 @@ def test_write_integration_skipped_when_only_env_var_set():
     config.getoption.return_value = False  # CLI flag NOT set
 
     item = MagicMock()
-    item.get_closest_marker.side_effect = lambda name: (
+    item.get_closest_marker.side_effect = lambda name: (  # pyright: ignore[reportUnknownLambdaType]
         MagicMock() if name == "write_integration" else None
     )
 
@@ -105,7 +105,7 @@ def test_write_integration_not_skipped_when_both_gates_open():
     config.getoption.return_value = True  # CLI flag set
 
     item = MagicMock()
-    item.get_closest_marker.side_effect = lambda name: (
+    item.get_closest_marker.side_effect = lambda name: (  # pyright: ignore[reportUnknownLambdaType]
         MagicMock() if name == "write_integration" else None
     )
 

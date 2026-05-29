@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -15,17 +16,19 @@ from ecoflow.models.battery import BatteryStatus, BmsModule
 VECTORS_DIR = Path(__file__).parent / "vectors"
 
 
-def load_vector(device: str, name: str) -> tuple[dict, dict]:
+def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load a test vector pair (payload + expected) for a device."""
     base = VECTORS_DIR / device
-    payload = json.loads((base / f"{name}.json").read_text())
-    expected = json.loads((base / f"{name}.expected.json").read_text())
+    payload: dict[str, Any] = json.loads((base / f"{name}.json").read_text())
+    expected: dict[str, Any] = json.loads(
+        (base / f"{name}.expected.json").read_text()
+    )
     return payload, expected
 
 
 def test_bms_module_parses_voltage_from_mv() -> None:
     """BmsModule.from_mqtt_payload converts raw mV/mA/temp values correctly."""
-    data = {
+    data: dict[str, Any] = {
         "vol": 51200,
         "amp": -5000,
         "temp": 280,
@@ -41,9 +44,9 @@ def test_bms_module_parses_voltage_from_mv() -> None:
         "maxCellVol": 3250,
     }
     bms = BmsModule.from_mqtt_payload(data)
-    assert bms.voltage == pytest.approx(51.2)
-    assert bms.current == pytest.approx(-5.0)
-    assert bms.temp == pytest.approx(28.0)
+    assert bms.voltage == pytest.approx(51.2)  # pyright: ignore[reportUnknownMemberType]
+    assert bms.current == pytest.approx(-5.0)  # pyright: ignore[reportUnknownMemberType]
+    assert bms.temp == pytest.approx(28.0)  # pyright: ignore[reportUnknownMemberType]
     assert bms.soc == 85
 
 

@@ -18,8 +18,8 @@ from ecoflow.devices.plug import SmartPlugDevice
 from ecoflow.devices.stream_ac_pro import StreamAcProDevice
 from ecoflow.devices.stream_ultra import StreamUltraDevice
 from ecoflow.devices.wave3 import Wave3Device
-from ecoflow.transport.mqtt import MqttCredentials, _MqttClient
-from ecoflow.transport.rest import _RestClient
+from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
+from ecoflow.transport.rest import RestTransport
 
 _log = logging.getLogger(__name__)
 
@@ -58,8 +58,8 @@ class EcoFlowClient:
             access_key=access_key, secret_key=secret_key
         )
         self._region = region
-        self._rest: _RestClient = _RestClient(self._credentials, region=region)
-        self._mqtt: _MqttClient | None = None
+        self._rest: RestTransport = RestTransport(self._credentials, region=region)
+        self._mqtt: MqttTransport | None = None
 
         # Typed device collections — populated on connect()
         self.batteries: list[BatteryDevice] = []
@@ -88,12 +88,12 @@ class EcoFlowClient:
                 # API returns certificateAccount, not userId
                 user_id=mqtt_data.get("certificateAccount", ""),
             )
-            self._mqtt = _MqttClient(mqtt_creds)
+            self._mqtt = MqttTransport(mqtt_creds)
             # Register callbacks BEFORE connect() so _run() subscribes to all
             # devices in one shot and captures the broker's initial state dump.
             for device in self._all_typed:
                 if hasattr(device, "_handle_message"):
-                    self._mqtt.on_message(device.sn, device._handle_message)
+                    self._mqtt.on_message(device.sn, device._handle_message)  # noqa: SLF001
             await self._mqtt.connect()
         except Exception as exc:
             _log.warning("MQTT unavailable — REST-only mode: %s", exc)
@@ -154,7 +154,7 @@ class EcoFlowClient:
             elif isinstance(device, StreamUltraDevice):
                 self.stream_units.append(device)
 
-    async def events(self) -> AsyncGenerator[dict, None]:
+    async def events(self) -> AsyncGenerator[dict[str, Any], None]:
         """Async generator yielding raw device update events.
         Events are routed to typed device _handle_message callbacks;
         this generator yields a dict with {'sn', 'product_name', 'data'}.

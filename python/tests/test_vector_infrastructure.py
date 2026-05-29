@@ -142,7 +142,7 @@ class TestSmartPlugVectors:
         assert data["is_on"] is True
         assert data["power_watts"] == 264.0
         assert data["voltage"] == 242.0
-        assert data["current"] == pytest.approx(1.598)
+        assert data["current"] == pytest.approx(1.598)  # pyright: ignore[reportUnknownMemberType]
         assert data["temp"] == 36.0
         assert data["brightness"] == 100
 
@@ -169,10 +169,10 @@ class TestStreamUltraVectors:
             (VECTORS_DIR / "stream_ultra" / "payload_status.json").read_text()
         )
         # Real fields: bmsBattSoc is individual battery SOC (correct)
-        assert data["bmsBattSoc"] == pytest.approx(47.0)
-        assert data["cmsBattSoc"] == pytest.approx(45.0)
+        assert data["bmsBattSoc"] == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
+        assert data["cmsBattSoc"] == pytest.approx(45.0)  # pyright: ignore[reportUnknownMemberType]
         assert data["cascadeSysSoc"] == 44
-        assert data["powGetSysGrid"] == pytest.approx(4924.0)
+        assert data["powGetSysGrid"] == pytest.approx(4924.0)  # pyright: ignore[reportUnknownMemberType]
         assert data["cmsMaxChgSoc"] == 95
         assert data["cmsMinDsgSoc"] == 10
         assert data["feedGridMode"] == 2
@@ -187,10 +187,10 @@ class TestStreamUltraVectors:
         data = json.loads(
             (VECTORS_DIR / "stream_ultra" / "payload_status.expected.json").read_text()
         )
-        assert data["batt_soc"] == pytest.approx(47.0)
+        assert data["batt_soc"] == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
         assert data["cascade_soc"] == 44
-        assert data["grid_power_watts"] == pytest.approx(4924.0)
-        assert data["pv_power_watts"] == pytest.approx(0.0)
+        assert data["grid_power_watts"] == pytest.approx(4924.0)  # pyright: ignore[reportUnknownMemberType]
+        assert data["pv_power_watts"] == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
         assert data["max_charge_soc"] == 95
         assert data["min_discharge_soc"] == 10
 
@@ -232,7 +232,7 @@ class TestConftestPy:
         assert spec is not None
         module = importlib.util.module_from_spec(spec)  # type: ignore[attr-defined]
         spec.loader.exec_module(module)  # type: ignore[union-attr]
-        payload, expected = module.load_vector("battery", "payload_status")
+        payload, expected = module.load_vector("battery", "payload_status")  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
         assert "bms_bmsStatus" in payload
         assert "soc" in expected
         assert expected["soc"] == 85

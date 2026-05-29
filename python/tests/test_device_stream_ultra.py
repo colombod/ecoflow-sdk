@@ -40,7 +40,7 @@ async def test_stream_ultra_refresh_returns_status() -> None:
     device = make_stream_ultra()
     status = await device.refresh()
     assert isinstance(status, StreamUltraStatus)
-    assert status.batt_soc == pytest.approx(13.0)
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 @pytest.mark.asyncio
@@ -114,9 +114,9 @@ def test_stream_ultra_handle_message_updates_status() -> None:
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     device = make_stream_ultra()
-    device._handle_message("BK11ZK1B2H5S1478", _QUOTA_PAYLOAD)
+    device._handle_message("BK11ZK1B2H5S1478", _QUOTA_PAYLOAD)  # pyright: ignore[reportPrivateUsage]
     assert isinstance(device.status, StreamUltraStatus)
-    assert device.status.batt_soc == pytest.approx(13.0)
+    assert device.status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_accumulates_mqtt_chunks() -> None:
@@ -127,19 +127,19 @@ def test_stream_ultra_accumulates_mqtt_chunks() -> None:
     device = StreamUltraDevice(sn="BK11TEST", product_name="STREAM Ultra", rest=rest)
 
     # Chunk 1: grid power only — no SOC fields
-    device._handle_message(
+    device._handle_message(  # pyright: ignore[reportPrivateUsage]
         "BK11TEST", {"powGetSysGrid": 1200.0, "powGetSysLoad": 500.0}
     )
     assert device.status is not None
-    assert device.status.grid_power_watts == pytest.approx(1200.0)
-    assert device.status.batt_soc == pytest.approx(0.0)  # SOC not arrived yet
+    assert device.status.grid_power_watts == pytest.approx(1200.0)  # pyright: ignore[reportUnknownMemberType]
+    assert device.status.batt_soc == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]  # SOC not arrived yet
 
     # Chunk 2: battery SOC only — grid power not repeated
-    device._handle_message("BK11TEST", {"bmsBattSoc": 47.0, "cascadeSysSoc": 44})
+    device._handle_message("BK11TEST", {"bmsBattSoc": 47.0, "cascadeSysSoc": 44})  # pyright: ignore[reportPrivateUsage]
     assert device.status is not None
     # Grid power MUST still be 1200W (preserved from chunk 1, not reset to 0)
-    assert device.status.grid_power_watts == pytest.approx(1200.0)
-    assert device.status.batt_soc == pytest.approx(47.0)  # populated from chunk 2
+    assert device.status.grid_power_watts == pytest.approx(1200.0)  # pyright: ignore[reportUnknownMemberType]
+    assert device.status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]  # populated from chunk 2
 
 
 def test_stream_ac_pro_is_stream_ultra_subclass() -> None:
@@ -163,4 +163,4 @@ async def test_stream_ac_pro_refresh_returns_status() -> None:
     )
     status = await device.refresh()
     assert isinstance(status, StreamUltraStatus)
-    assert status.batt_soc == pytest.approx(13.0)
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]

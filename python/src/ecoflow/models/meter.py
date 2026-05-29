@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -51,13 +52,13 @@ class SmartMeterData:
     updated_at: datetime | None = None
 
     @classmethod
-    def from_quota_payload(cls, sn: str, data: dict) -> SmartMeterData:  # type: ignore[type-arg]
+    def from_quota_payload(cls, sn: str, data: dict[str, Any]) -> SmartMeterData:
         """Parse MQTT quota payload for Smart Home Meter (BK21 devices).
 
         NOTE: Smart Meter returns empty {} from REST /quota/all.
         Data arrives exclusively via MQTT topic /open/{user_id}/{sn}/quota.
         """
-        record = data.get("gridConnectionDataRecord", {})
+        record: dict[str, Any] = data.get("gridConnectionDataRecord", {})
         return cls(
             sn=sn,
             online=True,

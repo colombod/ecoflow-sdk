@@ -6,6 +6,7 @@ from httpx import Response
 from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
 from ecoflow.devices.plug import SmartPlugDevice
+from ecoflow.transport.mqtt import MqttCredentials
 
 CREDS = EcoFlowCredentials(access_key="key", secret_key="secret")
 
@@ -53,7 +54,7 @@ async def test_discover_populates_plugs() -> None:
     )
     client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
     with patch.object(client, "_mqtt", None):
-        await client._discover()
+        await client._discover()  # pyright: ignore[reportPrivateUsage]
     assert len(client.plugs) == 1
     assert client.plugs[0].sn == "SP001"
     assert len(client.batteries) == 1
@@ -80,7 +81,7 @@ async def test_discover_unknown_device_not_dropped() -> None:
     )
     client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
     with patch.object(client, "_mqtt", None):
-        await client._discover()
+        await client._discover()  # pyright: ignore[reportPrivateUsage]
     assert len(client.unknown_devices) == 1
     assert client.unknown_devices[0].product_name == "Future Device Pro Max"
     assert client.unknown_devices[0].raw["sn"] == "XYZ001"
@@ -114,21 +115,16 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
             },
         )
     )
-    captured_creds: list = []
+    captured_creds: list[MqttCredentials] = []
 
     async def fake_mqtt_connect(self) -> None:  # type: ignore[override]
         pass
 
-    with patch(
-        "ecoflow.client._MqttClient",
-        side_effect=lambda creds: (
-            captured_creds.append(creds)
-            or AsyncMock(
-                connect=AsyncMock(),
-                on_message=AsyncMock(),
-            )
-        ),
-    ):
+    def _capture_side_effect(creds: MqttCredentials) -> AsyncMock:
+        captured_creds.append(creds)
+        return AsyncMock(connect=AsyncMock(), on_message=AsyncMock())
+
+    with patch("ecoflow.client.MqttTransport", side_effect=_capture_side_effect):
         client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
         await client.connect()
 
@@ -188,7 +184,7 @@ async def test_connect_registers_callbacks_before_mqtt_connect() -> None:
         async def disconnect(self) -> None:
             pass
 
-    with patch("ecoflow.client._MqttClient", FakeMqttClient):
+    with patch("ecoflow.client.MqttTransport", FakeMqttClient):
         client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
         await client.connect()
 
@@ -211,9 +207,9 @@ async def test_global_events_yields_from_mqtt_subscriptions() -> None:
     )
     plug = SmartPlugDevice(sn="SP001", product_name="Smart Plug", rest=mock_rest)
     client.plugs = [plug]
-    client._all_typed = [plug]
+    client._all_typed = [plug]  # pyright: ignore[reportPrivateUsage]
 
-    plug._handle_message("SP001", {"plug_heartbeat": {"plugState": 1, "watts": 50}})
+    plug._handle_message("SP001", {"plug_heartbeat": {"plugState": 1, "watts": 50}})  # pyright: ignore[reportPrivateUsage]
 
     assert plug.data is not None
     assert plug.data.is_on is True

@@ -1,4 +1,4 @@
-"""EcoFlow MQTT transport — private implementation."""
+"""EcoFlow MQTT transport."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from ecoflow.exceptions import EcoFlowConnectionError
 
 _log = logging.getLogger(__name__)
 
-MessageCallback = Callable[[str, dict], None]
+MessageCallback = Callable[[str, dict[str, Any]], None]
 
 
 @dataclass(frozen=True)
@@ -36,8 +36,8 @@ class MqttCredentials:
     user_id: str
 
 
-class _MqttClient:
-    """Private async MQTT client with TLS and exponential backoff reconnection.
+class MqttTransport:
+    """Async MQTT client with TLS and exponential backoff reconnection.
 
     Connection is maintained by a long-lived background asyncio Task that owns
     the ``async with aiomqtt.Client(...)`` context.  ``connect()`` starts that
@@ -47,7 +47,7 @@ class _MqttClient:
     def __init__(
         self,
         credentials: MqttCredentials,
-        connect_timeout: int = MQTT_CONNECT_TIMEOUT_S,
+        connect_timeout: float = MQTT_CONNECT_TIMEOUT_S,
     ) -> None:
         self._creds = credentials
         self._timeout = connect_timeout
@@ -57,6 +57,29 @@ class _MqttClient:
         self._ready = asyncio.Event()  # set when broker confirms connection
         self._run_task: asyncio.Task[None] | None = None
         self._client: Any = None  # live aiomqtt.Client set inside _run()
+
+    # ------------------------------------------------------------------
+    # Public read-only properties
+    # ------------------------------------------------------------------
+
+    @property
+    def connected(self) -> bool:
+        """Return True when the broker connection is live."""
+        return self._connected
+
+    @property
+    def creds(self) -> MqttCredentials:
+        """Return the MQTT credentials used by this transport."""
+        return self._creds
+
+    @property
+    def subscriptions(self) -> dict[str, tuple[str, list[MessageCallback]]]:
+        """Return the current subscription map (SN → (template, callbacks))."""
+        return self._subscriptions
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def on_message(
         self,
@@ -111,10 +134,35 @@ class _MqttClient:
         self._run_task = None
         self._client = None
 
-    async def publish(self, topic: str, payload: dict) -> None:  # type: ignore[type-arg]
+    async def publish(self, topic: str, payload: dict[str, Any]) -> None:
         if not self._connected or self._client is None:
             raise EcoFlowConnectionError("MQTT not connected")
         await self._client.publish(topic, json.dumps(payload), qos=1)
+
+    async def dispatch_message(self, topic: str, payload: dict[str, Any]) -> None:
+        """Route a decoded payload to registered callbacks by SN.
+
+        Handles both topic patterns:
+          /open/{user_id}/{sn}/quota  → SN is at index -2 (primary)
+          /app/device/property/{sn}   → SN is at index -1 (legacy fallback)
+        """
+        parts = topic.split("/")
+        # Try second-to-last first — covers /open/{user_id}/{sn}/quota
+        sn = parts[-2] if len(parts) >= 2 else parts[-1]
+        # If second-to-last doesn't match any subscription, fall back to last segment
+        if sn not in self._subscriptions and len(parts) >= 1:
+            sn = parts[-1]
+        for registered_sn, (_template, callbacks) in self._subscriptions.items():
+            if registered_sn == sn:
+                for cb in callbacks:
+                    try:
+                        cb(sn, payload)
+                    except Exception:
+                        _log.exception("Error in MQTT callback for %s", sn)
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
 
     async def _run(self) -> None:
         """Background task: own the aiomqtt connection and reconnect on failure."""
@@ -155,7 +203,7 @@ class _MqttClient:
                         except json.JSONDecodeError:
                             _log.debug("Non-JSON MQTT payload on %s", message.topic)
                             continue
-                        await self._dispatch_message(str(message.topic), payload)
+                        await self.dispatch_message(str(message.topic), payload)
 
             except asyncio.CancelledError:
                 break  # clean shutdown requested — exit immediately
@@ -172,28 +220,7 @@ class _MqttClient:
         self._connected = False
         self._client = None
 
-    async def _dispatch_message(self, topic: str, payload: dict) -> None:  # type: ignore[type-arg]
-        """Route a decoded payload to registered callbacks by SN.
-
-        Handles both topic patterns:
-          /open/{user_id}/{sn}/quota  → SN is at index -2 (primary)
-          /app/device/property/{sn}   → SN is at index -1 (legacy fallback)
-        """
-        parts = topic.split("/")
-        # Try second-to-last first — covers /open/{user_id}/{sn}/quota
-        sn = parts[-2] if len(parts) >= 2 else parts[-1]
-        # If second-to-last doesn't match any subscription, fall back to last segment
-        if sn not in self._subscriptions and len(parts) >= 1:
-            sn = parts[-1]
-        for registered_sn, (_template, callbacks) in self._subscriptions.items():
-            if registered_sn == sn:
-                for cb in callbacks:
-                    try:
-                        cb(sn, payload)
-                    except Exception:
-                        _log.exception("Error in MQTT callback for %s", sn)
-
-    async def __aenter__(self) -> _MqttClient:
+    async def __aenter__(self) -> MqttTransport:
         await self.connect()
         return self
 

@@ -32,7 +32,7 @@ async def test_smart_meter_refresh_returns_data() -> None:
     meter = make_meter()
     data = await meter.refresh()
     assert isinstance(data, SmartMeterData)
-    assert data.grid_power_watts == pytest.approx(4917.057)
+    assert data.grid_power_watts == pytest.approx(4917.057)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_meter_is_read_only_no_action_methods() -> None:
@@ -49,18 +49,18 @@ def test_smart_meter_accumulates_mqtt_chunks() -> None:
     )
 
     # Chunk 1: total grid power only — no per-phase data
-    meter._handle_message("BK21TEST", {"powGetSysGrid": 5183.0})
+    meter._handle_message("BK21TEST", {"powGetSysGrid": 5183.0})  # pyright: ignore[reportPrivateUsage]
     assert meter.data is not None
-    assert meter.data.grid_power_watts == pytest.approx(5183.0)
-    assert meter.data.voltage_l1 == pytest.approx(0.0)  # Not arrived yet
+    assert meter.data.grid_power_watts == pytest.approx(5183.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.data.voltage_l1 == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]  # Not arrived yet
 
     # Chunk 2: per-phase voltage — grid power not repeated
-    meter._handle_message(
+    meter._handle_message(  # pyright: ignore[reportPrivateUsage]
         "BK21TEST",
         {"gridConnectionVolL1": 237.38, "gridConnectionFlagL1": True},
     )
     assert meter.data is not None
     # Grid power MUST still be 5183W (preserved from chunk 1, not reset to 0)
-    assert meter.data.grid_power_watts == pytest.approx(5183.0)
-    assert meter.data.voltage_l1 == pytest.approx(237.38)
+    assert meter.data.grid_power_watts == pytest.approx(5183.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.data.voltage_l1 == pytest.approx(237.38)  # pyright: ignore[reportUnknownMemberType]
     assert meter.data.phase_l1_active is True

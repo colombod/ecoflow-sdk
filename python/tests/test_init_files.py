@@ -22,14 +22,14 @@ class TestTransportInit:
     """Verify src/ecoflow/transport/__init__.py exports the expected symbols."""
 
     def test_rest_client_importable_from_transport(self) -> None:
-        from ecoflow.transport import _RestClient  # pyright: ignore[reportPrivateUsage]
+        from ecoflow.transport import RestTransport
 
-        assert _RestClient is not None
+        assert RestTransport is not None
 
     def test_mqtt_client_importable_from_transport(self) -> None:
-        from ecoflow.transport import _MqttClient  # pyright: ignore[reportPrivateUsage]
+        from ecoflow.transport import MqttTransport
 
-        assert _MqttClient is not None
+        assert MqttTransport is not None
 
     def test_mqtt_credentials_importable_from_transport(self) -> None:
         from ecoflow.transport import MqttCredentials
@@ -41,34 +41,30 @@ class TestTransportInit:
 
         assert hasattr(transport, "__all__"), "transport must define __all__"
         all_names = transport.__all__
-        assert "_RestClient" in all_names
-        assert "_MqttClient" in all_names
+        assert "RestTransport" in all_names
+        assert "MqttTransport" in all_names
         assert "MqttCredentials" in all_names
 
     def test_transport_all_exact_membership(self) -> None:
         import ecoflow.transport as transport
 
         assert set(transport.__all__) == {
-            "_RestClient",
-            "_MqttClient",
+            "RestTransport",
+            "MqttTransport",
             "MqttCredentials",
         }
 
     def test_rest_client_is_correct_class(self) -> None:
-        from ecoflow.transport import _RestClient  # pyright: ignore[reportPrivateUsage]
-        from ecoflow.transport.rest import (
-            _RestClient as OrigRestClient,  # pyright: ignore[reportPrivateUsage]
-        )
+        from ecoflow.transport import RestTransport
+        from ecoflow.transport.rest import RestTransport as OrigRestTransport
 
-        assert _RestClient is OrigRestClient
+        assert RestTransport is OrigRestTransport
 
     def test_mqtt_client_is_correct_class(self) -> None:
-        from ecoflow.transport import _MqttClient  # pyright: ignore[reportPrivateUsage]
-        from ecoflow.transport.mqtt import (
-            _MqttClient as OrigMqttClient,  # pyright: ignore[reportPrivateUsage]
-        )
+        from ecoflow.transport import MqttTransport
+        from ecoflow.transport.mqtt import MqttTransport as OrigMqttTransport
 
-        assert _MqttClient is OrigMqttClient
+        assert MqttTransport is OrigMqttTransport
 
     def test_mqtt_credentials_is_correct_class(self) -> None:
         from ecoflow.transport import MqttCredentials

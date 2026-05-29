@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -12,11 +13,11 @@ from ecoflow.models.meter import SmartMeterData
 VECTORS_DIR = Path(__file__).parent / "vectors"
 
 
-def load_vector(device: str, name: str) -> tuple[dict, dict]:  # type: ignore[type-arg]
+def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load a test vector pair (payload + expected) for a device."""
     base = VECTORS_DIR / device
-    payload = json.loads((base / f"{name}.json").read_text())
-    expected = json.loads((base / f"{name}.expected.json").read_text())
+    payload: dict[str, Any] = json.loads((base / f"{name}.json").read_text())
+    expected: dict[str, Any] = json.loads((base / f"{name}.expected.json").read_text())
     return payload, expected
 
 
@@ -33,14 +34,14 @@ def test_smart_meter_from_quota_vector() -> None:
     payload, expected = load_vector("smart_meter", "payload_status")
     meter = SmartMeterData.from_quota_payload("BK21Z1BB7H414753", payload)
 
-    assert meter.grid_power_watts == pytest.approx(expected["grid_power_watts"])
+    assert meter.grid_power_watts == pytest.approx(expected["grid_power_watts"])  # pyright: ignore[reportUnknownMemberType]
     assert meter.grid_status == expected["grid_status"]
-    assert meter.voltage_l1 == pytest.approx(expected["voltage_l1"])
-    assert meter.power_l1 == pytest.approx(expected["power_l1"])
-    assert meter.current_l1 == pytest.approx(expected["current_l1"])
+    assert meter.voltage_l1 == pytest.approx(expected["voltage_l1"])  # pyright: ignore[reportUnknownMemberType]
+    assert meter.power_l1 == pytest.approx(expected["power_l1"])  # pyright: ignore[reportUnknownMemberType]
+    assert meter.current_l1 == pytest.approx(expected["current_l1"])  # pyright: ignore[reportUnknownMemberType]
     assert meter.phase_l1_active is expected["phase_l1_active"]
     assert meter.phase_l2_active is expected["phase_l2_active"]
-    assert meter.total_active_energy_wh == pytest.approx(
+    assert meter.total_active_energy_wh == pytest.approx(  # pyright: ignore[reportUnknownMemberType]
         expected["total_active_energy_wh"]
     )
 
@@ -53,7 +54,7 @@ def test_smart_meter_from_quota_vector() -> None:
 def test_smart_meter_system_grid_power() -> None:
     """powGetSysGrid maps to grid_power_watts."""
     meter = SmartMeterData.from_quota_payload("BK21", {"powGetSysGrid": 4917.057})
-    assert meter.grid_power_watts == pytest.approx(4917.057)
+    assert meter.grid_power_watts == pytest.approx(4917.057)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_grid_status_string() -> None:
@@ -72,9 +73,9 @@ def test_smart_meter_phase_voltages() -> None:
         "gridConnectionVolL3": 118.40,
     }
     meter = SmartMeterData.from_quota_payload("BK21", payload)
-    assert meter.voltage_l1 == pytest.approx(237.38)
-    assert meter.voltage_l2 == pytest.approx(118.39)
-    assert meter.voltage_l3 == pytest.approx(118.40)
+    assert meter.voltage_l1 == pytest.approx(237.38)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.voltage_l2 == pytest.approx(118.39)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.voltage_l3 == pytest.approx(118.40)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_phase_powers() -> None:
@@ -85,17 +86,17 @@ def test_smart_meter_phase_powers() -> None:
         "gridConnectionPowerL3": 0.0,
     }
     meter = SmartMeterData.from_quota_payload("BK21", payload)
-    assert meter.power_l1 == pytest.approx(4917.06)
-    assert meter.power_l2 == pytest.approx(0.0)
-    assert meter.power_l3 == pytest.approx(0.0)
+    assert meter.power_l1 == pytest.approx(4917.06)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.power_l2 == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.power_l3 == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_phase_currents() -> None:
     """gridConnectionAmpL1/L2/L3 map to current_l1/l2/l3."""
     payload = {"gridConnectionAmpL1": 21.61, "gridConnectionAmpL2": 0.0}
     meter = SmartMeterData.from_quota_payload("BK21", payload)
-    assert meter.current_l1 == pytest.approx(21.61)
-    assert meter.current_l2 == pytest.approx(0.0)
+    assert meter.current_l1 == pytest.approx(21.61)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.current_l2 == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_phase_flags() -> None:
@@ -121,9 +122,9 @@ def test_smart_meter_energy_totals() -> None:
         }
     }
     meter = SmartMeterData.from_quota_payload("BK21", payload)
-    assert meter.total_active_energy_wh == pytest.approx(9068059.0)
-    assert meter.today_active_energy_wh == pytest.approx(9076453.0)
-    assert meter.total_reactive_energy_varh == pytest.approx(8394.0)
+    assert meter.total_active_energy_wh == pytest.approx(9068059.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.today_active_energy_wh == pytest.approx(9076453.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.total_reactive_energy_varh == pytest.approx(8394.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_power_factor() -> None:
@@ -131,7 +132,7 @@ def test_smart_meter_power_factor() -> None:
     meter = SmartMeterData.from_quota_payload(
         "BK21", {"gridConnectionPowerFactor": 0.95}
     )
-    assert meter.power_factor == pytest.approx(0.95)
+    assert meter.power_factor == pytest.approx(0.95)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_sn_stored() -> None:
@@ -164,4 +165,4 @@ def test_smart_meter_updated_at_is_set() -> None:
 def test_smart_meter_from_mqtt_payload_alias() -> None:
     """from_mqtt_payload is an alias for from_quota_payload (backward compat)."""
     meter = SmartMeterData.from_mqtt_payload("BK21", {"powGetSysGrid": 100.0})
-    assert meter.grid_power_watts == pytest.approx(100.0)
+    assert meter.grid_power_watts == pytest.approx(100.0)  # pyright: ignore[reportUnknownMemberType]
