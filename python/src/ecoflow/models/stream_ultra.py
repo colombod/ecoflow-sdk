@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass
@@ -74,7 +75,7 @@ class StreamUltraStatus:
     updated_at: datetime | None = None
 
     @classmethod
-    def from_quota_payload(cls, sn: str, data: dict) -> StreamUltraStatus:  # type: ignore[type-arg]
+    def from_quota_payload(cls, sn: str, data: dict[str, Any]) -> StreamUltraStatus:
         """Parse the REST /quota/all or MQTT quota payload for STREAM Ultra / AC Pro.
 
         SOC: bmsBattSoc is per-unit real SOC; cmsBattSoc is CMS aggregate

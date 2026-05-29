@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, cast
 
 
 @dataclass
@@ -26,7 +27,7 @@ class BmsModule:
     max_cell_vol: float  # V (raw/1000)
 
     @classmethod
-    def from_mqtt_payload(cls, data: dict) -> BmsModule:  # type: ignore[type-arg]
+    def from_mqtt_payload(cls, data: dict[str, Any]) -> BmsModule:
         """Build a BmsModule from a raw MQTT payload sub-dict."""
         return cls(
             module_sn=data.get("sn"),
@@ -62,7 +63,7 @@ class ExpansionBatteryModule:
     def from_mqtt_payload(
         cls,
         slot: int,
-        data: dict,  # type: ignore[type-arg]
+        data: dict[str, Any],
     ) -> ExpansionBatteryModule:
         """Build an ExpansionBatteryModule from a raw MQTT payload sub-dict."""
         return cls(
@@ -85,7 +86,7 @@ class SolarInput:
     current: float  # A (raw/100)
 
     @classmethod
-    def from_mqtt_payload(cls, mppt: dict) -> SolarInput:  # type: ignore[type-arg]
+    def from_mqtt_payload(cls, mppt: dict[str, Any]) -> SolarInput:
         """Build a SolarInput from a raw MPPT sub-dict."""
         return cls(
             input_watts=float(mppt.get("inWatts", 0)),
@@ -120,16 +121,16 @@ class BatteryStatus:
     updated_at: datetime | None
 
     @classmethod
-    def from_mqtt_payload(cls, sn: str, data: dict) -> BatteryStatus:  # type: ignore[type-arg]
+    def from_mqtt_payload(cls, sn: str, data: dict[str, Any]) -> BatteryStatus:
         """Build a BatteryStatus snapshot from a raw MQTT payload dict."""
-        pd = data.get("pd") or {}
-        inv = data.get("inv") or {}
-        mppt_raw = data.get("mppt")
-        mppt = mppt_raw or {}
+        pd: dict[str, Any] = data.get("pd") or {}
+        inv: dict[str, Any] = data.get("inv") or {}
+        mppt_raw: dict[str, Any] | None = data.get("mppt")
+        mppt: dict[str, Any] = mppt_raw or {}
 
         # Main BMS modules: keys starting with 'bms' but not 'bms_slave'
         bms_modules = [
-            BmsModule.from_mqtt_payload(v)
+            BmsModule.from_mqtt_payload(cast(dict[str, Any], v))
             for k, v in data.items()
             if k.startswith("bms")
             and not k.startswith("bms_slave")
@@ -137,8 +138,8 @@ class BatteryStatus:
         ]
 
         # Expansion (slave) battery modules: keys starting with 'bms_slave'
-        slave_values = [
-            v
+        slave_values: list[dict[str, Any]] = [
+            cast(dict[str, Any], v)
             for k, v in data.items()
             if k.startswith("bms_slave") and isinstance(v, dict)
         ]
