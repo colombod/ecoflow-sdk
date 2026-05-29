@@ -27,18 +27,44 @@ class StreamUltraStatus:
     # Battery state of charge
     batt_soc: float = 0.0
     """Battery SOC 0–100 %. From bmsBattSoc (primary) with cmsBattSoc as fallback."""
+    soc_precise: float = 0.0
+    """Precise floating-point battery SOC (0–100 %). From f32ShowSoc.
+    This is what the EcoFlow app displays. batt_soc is the integer version."""
     cascade_soc: int = 0
     """System-level SOC across all cascaded units. From cascadeSysSoc."""
 
     # Power flows
     grid_power_watts: float = 0.0
-    """Grid power in Watts. Positive = importing, negative = exporting."""
+    """Grid power (W) from powGetSysGrid.
+    POSITIVE = importing from grid. NEGATIVE = exporting to grid.
+    NOTE: The related field gridConnectionPower (→ grid_connection_power) has OPPOSITE
+    sign convention: negative = importing, positive = exporting.
+    Source: tolwi/hassio-ecoflow-cloud research 2026-05-29."""
     load_power_watts: float = 0.0
     """Home load power in Watts."""
     pv_power_watts: float = 0.0
     """Solar PV input power in Watts."""
     battery_power_watts: float = 0.0
     """Battery charge/discharge power in Watts."""
+
+    # Load source breakdown
+    load_from_battery_watts: float = 0.0
+    """Load power sourced from battery (W). From powGetSysLoadFromBp."""
+    load_from_grid_watts: float = 0.0
+    """Load power sourced from grid (W). From powGetSysLoadFromGrid."""
+    load_from_pv_watts: float = 0.0
+    """Load power sourced from PV (W). From powGetSysLoadFromPv."""
+
+    # Schuko outlets (German-standard AC outlets on STREAM Ultra)
+    schuko1_watts: float = 0.0
+    """Schuko outlet 1 power (W). From powGetSchuko1."""
+    schuko2_watts: float = 0.0
+    """Schuko outlet 2 power (W). From powGetSchuko2."""
+
+    # System-level grid (multi-device aggregated across all linked STREAM units)
+    system_grid_power_watts: float = 0.0
+    """System grid power (W) aggregated across all linked STREAM units.
+    From sysGridConnectionPower."""
 
     # Settings
     max_charge_soc: int = 95
@@ -65,12 +91,34 @@ class StreamUltraStatus:
     """Battery voltage in V (converted from vBat mV)."""
     cycles: int = 0
     """Charge/discharge cycle count. From cycles."""
+
+    # Capacity — raw mAh fields
+    remaining_cap_mah: int = 0
+    """Remaining capacity in mAh (raw). From remainCap."""
+    full_cap_mah: int = 0
+    """Full capacity in mAh (raw). From fullCap."""
+    design_cap_mah: int = 0
+    """Design (factory) capacity in mAh (raw). From designCap."""
+
+    # Capacity — computed Wh fields
     remaining_cap_wh: float = 0.0
-    """Remaining capacity in Wh (converted from remainCap 10mAh units)."""
+    """Remaining capacity in Wh. Computed as (remainCap_mAh × vBat_mV) / 1_000_000.
+    QUIRK: remainCap/fullCap are in mAh (not 10mAh as earlier assumed).
+    Requires vBat > 0; returns 0.0 otherwise. Source: tolwi research 2026-05-29."""
     full_cap_wh: float = 0.0
-    """Full capacity in Wh (converted from fullCap 10mAh units)."""
+    """Full capacity in Wh. Computed as (fullCap_mAh × vBat_mV) / 1_000_000.
+    See remaining_cap_wh for conversion notes."""
+
     health: float = 0.0
     """State of health %. From soh."""
+
+    # Remaining time
+    remaining_time_min: int = 0
+    """Remaining time in minutes (contextual: charge or discharge). From remainTime."""
+    charge_time_remaining_min: int = 0
+    """Charge time remaining in minutes. From bmsChgRemTime."""
+    discharge_time_remaining_min: int = 0
+    """Discharge time remaining in minutes. From bmsDsgRemTime."""
 
     updated_at: datetime | None = None
 
@@ -83,20 +131,38 @@ class StreamUltraStatus:
         QUIRK: cmsBattSoc = 0.0 on STREAM AC Pro slave units in cascaded systems.
         Always prefer bmsBattSoc (real individual battery SOC) over cmsBattSoc.
         See: Perplexity research 2026-05-29 — master/slave CMS aggregation.
+
+        CAPACITY QUIRK: remainCap/fullCap/designCap are in mAh. vBat is in mV.
+        Wh = (mAh × mV) / 1_000_000. Requires vBat > 0.
+        Source: tolwi/hassio-ecoflow-cloud research 2026-05-29.
         """
         bms_soc = float(data.get("bmsBattSoc", 0))
         cms_soc = float(data.get("cmsBattSoc", 0))
         batt_soc = bms_soc if bms_soc > 0 else cms_soc
 
+        remain_mah = int(data.get("remainCap", 0))
+        full_mah = int(data.get("fullCap", 0))
+        vbat_mv = int(data.get("vBat", 0))
+
+        remaining_cap_wh = (remain_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
+        full_cap_wh = (full_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
+
         return cls(
             sn=sn,
             online=True,
             batt_soc=batt_soc,
+            soc_precise=float(data.get("f32ShowSoc", 0.0)),
             cascade_soc=int(data.get("cascadeSysSoc", 0)),
             grid_power_watts=float(data.get("powGetSysGrid", 0)),
             load_power_watts=float(data.get("powGetSysLoad", 0)),
             pv_power_watts=float(data.get("powGetPvSum", 0)),
             battery_power_watts=float(data.get("powGetBpCms", 0)),
+            load_from_battery_watts=float(data.get("powGetSysLoadFromBp", 0)),
+            load_from_grid_watts=float(data.get("powGetSysLoadFromGrid", 0)),
+            load_from_pv_watts=float(data.get("powGetSysLoadFromPv", 0)),
+            schuko1_watts=float(data.get("powGetSchuko1", 0)),
+            schuko2_watts=float(data.get("powGetSchuko2", 0)),
+            system_grid_power_watts=float(data.get("sysGridConnectionPower", 0)),
             max_charge_soc=int(data.get("cmsMaxChgSoc", 95)),
             min_discharge_soc=int(data.get("cmsMinDsgSoc", 10)),
             feed_grid_mode=int(data.get("feedGridMode", 0)),
@@ -110,8 +176,14 @@ class StreamUltraStatus:
             temp=float(data.get("temp", 0)),
             battery_voltage=data.get("vBat", 0) / 1000.0,  # mV → V
             cycles=int(data.get("cycles", 0)),
-            remaining_cap_wh=data.get("remainCap", 0) * 0.01,  # 10mAh units → Wh
-            full_cap_wh=data.get("fullCap", 0) * 0.01,  # 10mAh units → Wh
+            remaining_cap_mah=remain_mah,
+            full_cap_mah=full_mah,
+            design_cap_mah=int(data.get("designCap", 0)),
+            remaining_cap_wh=remaining_cap_wh,
+            full_cap_wh=full_cap_wh,
             health=float(data.get("soh", 0)),
+            remaining_time_min=int(data.get("remainTime", 0)),
+            charge_time_remaining_min=int(data.get("bmsChgRemTime", 0)),
+            discharge_time_remaining_min=int(data.get("bmsDsgRemTime", 0)),
             updated_at=datetime.now(tz=UTC),
         )
