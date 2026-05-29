@@ -1,0 +1,10 @@
+{
+  "grid_power_watts": 4917.057,
+  "grid_status": "PANEL_GRID_IN",
+  "voltage_l1": 237.38184,
+  "power_l1": 4917.057,
+  "current_l1": 21.607796,
+  "phase_l1_active": true,
+  "phase_l2_active": false,
+  "total_active_energy_wh": 9068059.0
+}

@@ -1,0 +1,36 @@
+{
+  "bms_bmsStatus": {
+    "soc": 85,
+    "vol": 51200,
+    "amp": -5000,
+    "temp": 280,
+    "cycles": 42,
+    "designCap": 102400,
+    "fullCap": 98000,
+    "remainCap": 83300,
+    "soh": 96,
+    "minCellTemp": 270,
+    "maxCellTemp": 290,
+    "minCellVol": 3200,
+    "maxCellVol": 3250
+  },
+  "pd": {
+    "soc": 85,
+    "chgRemTime": 0,
+    "dsgRemTime": 240,
+    "wattsInSum": 0,
+    "wattsOutSum": 200,
+    "usb1Watts": 10,
+    "usb2Watts": 5
+  },
+  "inv": {
+    "inputWatts": 0,
+    "outputWatts": 200,
+    "cfgAcEnabled": 1,
+    "invInTemp": 350
+  },
+  "mppt": {
+    "inWatts": 0,
+    "dcdc12vWatts": 15
+  }
+}

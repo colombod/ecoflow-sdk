@@ -1,0 +1,50 @@
+name: Publish Python Package
+
+on:
+  push:
+    tags:
+      - "python-v*"     # Trigger on tags like python-v0.1.0
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write     # Required for OIDC trusted publishing
+      contents: read      # Required for actions/checkout
+
+    defaults:
+      run:
+        working-directory: python
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run tests
+        run: uv run pytest -m "not integration and not write_integration" -v
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#python-v}"
+          TOML_VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+          if [ "$TAG_VERSION" != "$TOML_VERSION" ]; then
+            echo "ERROR: tag version ($TAG_VERSION) != pyproject.toml version ($TOML_VERSION)"
+            exit 1
+          fi
+          echo "Version check passed: $TOML_VERSION"
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/

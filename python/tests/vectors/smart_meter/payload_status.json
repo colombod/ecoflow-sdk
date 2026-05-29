@@ -1,0 +1,22 @@
+{
+  "gridConnectionSta": "PANEL_GRID_IN",
+  "gridConnectionVolL1": 237.38184,
+  "gridConnectionVolL2": 118.38574,
+  "gridConnectionVolL3": 118.40487,
+  "gridConnectionPowerL1": 4917.057,
+  "gridConnectionPowerL2": 0.0,
+  "gridConnectionPowerL3": 0.0,
+  "gridConnectionAmpL1": 21.607796,
+  "gridConnectionAmpL2": 0.0,
+  "gridConnectionAmpL3": 0.0,
+  "gridConnectionFlagL1": true,
+  "gridConnectionFlagL2": false,
+  "gridConnectionFlagL3": false,
+  "powGetSysGrid": 4917.057,
+  "gridConnectionPowerFactor": 0.0,
+  "gridConnectionDataRecord": {
+    "totalActiveEnergy": 9068059.0,
+    "todayActive": 9076453.0,
+    "totalReactiveEnergy": 8394.0
+  }
+}
