@@ -6,5 +6,6 @@
   "current_l1": 21.607796,
   "phase_l1_active": true,
   "phase_l2_active": false,
-  "total_active_energy_wh": 9068059.0
+  "total_active_energy_wh": 9068059.0,
+  "total_exported_energy_wh": 8394.0
 }

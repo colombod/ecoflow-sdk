@@ -1,5 +1,6 @@
 {
   "batt_soc": 47.0,
+  "soc_precise": 45.540928,
   "cascade_soc": 44,
   "grid_power_watts": 4924.0,
   "load_power_watts": 738.6836,
@@ -10,5 +11,8 @@
   "cycles": 219,
   "health": 100.0,
   "max_charge_soc": 95,
-  "min_discharge_soc": 10
+  "min_discharge_soc": 10,
+  "remaining_cap_mah": 46495,
+  "full_cap_mah": 100000,
+  "remaining_cap_wh": 936.18
 }
