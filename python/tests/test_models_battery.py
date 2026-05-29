@@ -20,9 +20,7 @@ def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]
     """Load a test vector pair (payload + expected) for a device."""
     base = VECTORS_DIR / device
     payload: dict[str, Any] = json.loads((base / f"{name}.json").read_text())
-    expected: dict[str, Any] = json.loads(
-        (base / f"{name}.expected.json").read_text()
-    )
+    expected: dict[str, Any] = json.loads((base / f"{name}.expected.json").read_text())
     return payload, expected
 
 
