@@ -30,7 +30,7 @@ class TestPyprojectToml:
         data = tomllib.loads((ROOT / "pyproject.toml").read_text())
         proj = data["project"]
         assert proj["name"] == "ecoflow-python"
-        assert proj["version"] == "0.1.0"
+        assert proj["version"] == "0.2.0"
         assert proj["requires-python"] == ">=3.11"
 
     def test_runtime_dependencies(self) -> None:
