@@ -207,23 +207,42 @@ def test_stream_ultra_cycles() -> None:
 
 
 def test_stream_ultra_remaining_cap_wh() -> None:
-    """remainCap (10mAh units) is converted to Wh on remaining_cap_wh."""
+    """remaining_cap_wh is computed as remainCap_mAh × vBat_mV / 1_000_000.
+
+    UNIT FIX: remainCap is in mAh (not 10mAh units as previously assumed).
+    Wh = (mAh × mV) / 1_000_000. Returns 0.0 when vBat is absent.
+    Source: tolwi/hassio-ecoflow-cloud research 2026-05-29.
+    """
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
-    # 46495 × 0.01 = 464.95 Wh
-    payload = {"remainCap": 46495}
+    # With vBat: (46495 mAh × 20135 mV) / 1_000_000 ≈ 936.18 Wh
+    payload = {"remainCap": 46495, "vBat": 20135}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.remaining_cap_wh == pytest.approx(464.95)  # pyright: ignore[reportUnknownMemberType]
+    assert status.remaining_cap_wh == pytest.approx(936.18, abs=1.0)  # pyright: ignore[reportUnknownMemberType]
+
+    # Without vBat: should return 0.0
+    payload_no_vbat = {"remainCap": 46495}
+    status2 = StreamUltraStatus.from_quota_payload("X", payload_no_vbat)
+    assert status2.remaining_cap_wh == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_full_cap_wh() -> None:
-    """fullCap (10mAh units) is converted to Wh on full_cap_wh."""
+    """full_cap_wh is computed as fullCap_mAh × vBat_mV / 1_000_000.
+
+    UNIT FIX: fullCap is in mAh (not 10mAh units as previously assumed).
+    Source: tolwi/hassio-ecoflow-cloud research 2026-05-29.
+    """
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
-    # 100000 × 0.01 = 1000.0 Wh
-    payload = {"fullCap": 100000}
+    # With vBat: (100000 mAh × 20135 mV) / 1_000_000 ≈ 2013.5 Wh
+    payload = {"fullCap": 100000, "vBat": 20135}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.full_cap_wh == pytest.approx(1000.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.full_cap_wh == pytest.approx(2013.5, abs=1.0)  # pyright: ignore[reportUnknownMemberType]
+
+    # Without vBat: should return 0.0
+    payload_no_vbat = {"fullCap": 100000}
+    status2 = StreamUltraStatus.from_quota_payload("X", payload_no_vbat)
+    assert status2.full_cap_wh == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_health() -> None:
@@ -233,3 +252,174 @@ def test_stream_ultra_health() -> None:
     payload = {"soh": 100}
     status = StreamUltraStatus.from_quota_payload("X", payload)
     assert status.health == pytest.approx(100.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+# ---------------------------------------------------------------------------
+# Step 4 new tests: soc_precise, raw mAh capacity fields, Wh via mAh×vBat/1e6
+# ---------------------------------------------------------------------------
+
+
+def test_stream_ultra_soc_precise_from_f32ShowSoc() -> None:
+    """f32ShowSoc maps to soc_precise as float (what the EcoFlow app displays)."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"f32ShowSoc": 45.540928}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.soc_precise == pytest.approx(45.540928)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_soc_precise_default_zero() -> None:
+    """Empty payload yields soc_precise=0.0."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload("X", {})
+    assert status.soc_precise == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_remaining_cap_mah_raw() -> None:
+    """remainCap maps to remaining_cap_mah as int (raw mAh)."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"remainCap": 46495}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.remaining_cap_mah == 46495
+
+
+def test_stream_ultra_full_cap_mah_raw() -> None:
+    """fullCap maps to full_cap_mah as int (raw mAh)."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"fullCap": 100000}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.full_cap_mah == 100000
+
+
+def test_stream_ultra_design_cap_mah_raw() -> None:
+    """designCap maps to design_cap_mah as int (factory capacity in mAh)."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"designCap": 100000}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.design_cap_mah == 100000
+
+
+def test_stream_ultra_remaining_cap_wh_uses_vbat_formula() -> None:
+    """remaining_cap_wh = (remainCap_mAh × vBat_mV) / 1_000_000."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    # 46495 mAh × 20135 mV / 1_000_000 = 936.18 Wh (approximately)
+    payload = {"remainCap": 46495, "vBat": 20135}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.remaining_cap_wh == pytest.approx(936.18, abs=1.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_full_cap_wh_uses_vbat_formula() -> None:
+    """full_cap_wh = (fullCap_mAh × vBat_mV) / 1_000_000."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    # 100000 mAh × 20135 mV / 1_000_000 = 2013.5 Wh
+    payload = {"fullCap": 100000, "vBat": 20135}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.full_cap_wh == pytest.approx(2013.5, abs=1.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_cap_wh_zero_when_no_vbat() -> None:
+    """remaining_cap_wh and full_cap_wh are 0.0 when vBat is absent/zero."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"remainCap": 46495, "fullCap": 100000}  # no vBat
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.remaining_cap_wh == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.full_cap_wh == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+# ---------------------------------------------------------------------------
+# Step 4 new tests: load source breakdown, Schuko outlets, system grid, time
+# ---------------------------------------------------------------------------
+
+
+def test_stream_ultra_load_from_battery() -> None:
+    """powGetSysLoadFromBp maps to load_from_battery_watts."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"powGetSysLoadFromBp": 300.0}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.load_from_battery_watts == pytest.approx(300.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_load_from_grid() -> None:
+    """powGetSysLoadFromGrid maps to load_from_grid_watts."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"powGetSysLoadFromGrid": 450.0}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.load_from_grid_watts == pytest.approx(450.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_load_from_pv() -> None:
+    """powGetSysLoadFromPv maps to load_from_pv_watts."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"powGetSysLoadFromPv": 200.0}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.load_from_pv_watts == pytest.approx(200.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_schuko_outlets() -> None:
+    """powGetSchuko1/2 map to schuko1_watts/schuko2_watts."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"powGetSchuko1": 110.0, "powGetSchuko2": 220.0}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.schuko1_watts == pytest.approx(110.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.schuko2_watts == pytest.approx(220.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_system_grid_power() -> None:
+    """sysGridConnectionPower maps to system_grid_power_watts."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"sysGridConnectionPower": -500.0}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.system_grid_power_watts == pytest.approx(-500.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_ultra_remaining_time() -> None:
+    """remainTime maps to remaining_time_min as int."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"remainTime": 120}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.remaining_time_min == 120
+
+
+def test_stream_ultra_charge_time_remaining() -> None:
+    """bmsChgRemTime maps to charge_time_remaining_min as int."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"bmsChgRemTime": 45}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.charge_time_remaining_min == 45
+
+
+def test_stream_ultra_discharge_time_remaining() -> None:
+    """bmsDsgRemTime maps to discharge_time_remaining_min as int."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload = {"bmsDsgRemTime": 300}
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.discharge_time_remaining_min == 300
+
+
+def test_stream_ultra_vector_new_fields() -> None:
+    """Vector test: new fields are parsed from the real MQTT payload."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    payload, expected = load_vector("stream_ultra", "payload_status")
+    status = StreamUltraStatus.from_quota_payload("BK11ZK1B2H5S1478", payload)
+
+    assert status.soc_precise == pytest.approx(expected["soc_precise"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.remaining_cap_mah == expected["remaining_cap_mah"]
+    assert status.full_cap_mah == expected["full_cap_mah"]
+    wh_approx = pytest.approx(expected["remaining_cap_wh"], abs=5.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.remaining_cap_wh == wh_approx

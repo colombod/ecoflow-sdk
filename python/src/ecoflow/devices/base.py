@@ -36,18 +36,21 @@ class BaseDevice:
         self._last_event: Any = None
         self._last_updated: datetime | None = None
 
-    async def _publish(self, params: dict[str, Any]) -> None:
-        """Send a command via MQTT if connected, otherwise fall back to REST."""
-        if self._mqtt is not None and self._mqtt.connected:
-            from ecoflow.const import TOPIC_DEVICE_SET
+    async def _publish(self, payload: dict[str, Any]) -> None:
+        """Publish a command to this device via MQTT set topic.
 
-            topic = TOPIC_DEVICE_SET.format(
-                user_id=self._mqtt.creds.user_id,
-                sn=self.sn,
-            )
-            await self._mqtt.publish(topic, {"params": params})
-        else:
-            await self._rest.set_quota(self.sn, params)
+        Uses the official public-API topic /open/{user_id}/{sn}/set.
+
+        Raises:
+            EcoFlowConnectionError: if MQTT is not connected.
+        """
+        from ecoflow.const import TOPIC_OPEN_SET
+        from ecoflow.exceptions import EcoFlowConnectionError
+
+        if self._mqtt is None or not self._mqtt.connected:
+            raise EcoFlowConnectionError("MQTT not connected — cannot send command")
+        topic = TOPIC_OPEN_SET.format(user_id=self._mqtt.creds.user_id, sn=self.sn)
+        await self._mqtt.publish(topic, payload)
 
     async def events(self) -> AsyncGenerator[Any, None]:
         """Async generator yielding status updates for this device.

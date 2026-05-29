@@ -46,3 +46,19 @@ def test_device_model_enum_has_all_devices() -> None:
     assert DeviceModel.SMART_PLUG.value == "Smart Plug"
     assert DeviceModel.WAVE_3.value == "Wave 3"
     assert DeviceModel.POWER_STREAM.value == "PowerStream"
+
+
+def test_topic_open_set_format() -> None:
+    """TOPIC_OPEN_SET formats to the correct command topic for the public API."""
+    from ecoflow.const import TOPIC_OPEN_SET
+
+    topic = TOPIC_OPEN_SET.format(user_id="user456", sn="BK11DEVICE")
+    assert topic == "/open/user456/BK11DEVICE/set"
+
+
+def test_topic_open_set_reply_format() -> None:
+    """TOPIC_OPEN_SET_REPLY formats to the correct ACK topic."""
+    from ecoflow.const import TOPIC_OPEN_SET_REPLY
+
+    topic = TOPIC_OPEN_SET_REPLY.format(user_id="user456", sn="BK11DEVICE")
+    assert topic == "/open/user456/BK11DEVICE/set_reply"
