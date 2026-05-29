@@ -24,6 +24,8 @@ ENDPOINT_CERT = "/iot-open/sign/certification"
 # Confirmed by live testing: 36 events in 25 s on /open/ vs 0 on /app/device/property/
 TOPIC_OPEN_QUOTA = "/open/{user_id}/{sn}/quota"
 TOPIC_OPEN_STATUS = "/open/{user_id}/{sn}/status"
+TOPIC_OPEN_SET = "/open/{user_id}/{sn}/set"  # publish commands TO device
+TOPIC_OPEN_SET_REPLY = "/open/{user_id}/{sn}/set_reply"  # device command ACK
 
 # Legacy topic — undocumented email/password API; kept for backward compat only
 TOPIC_DEVICE_PROPERTY = "/app/device/property/{sn}"

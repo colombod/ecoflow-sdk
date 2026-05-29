@@ -33,6 +33,23 @@ class StreamUltraDevice(BaseDevice):
         self.status.product_name = self.product_name
         self._notify_callbacks(self.status)
 
+    # ------------------------------------------------------------------
+    # Command helpers
+    # ------------------------------------------------------------------
+
+    def _stream_cmd(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Build a STREAM command envelope for the Public API."""
+        return {
+            "sn": self.sn,
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": params,
+        }
+
+    # ------------------------------------------------------------------
+    # Existing commands (charge / discharge limits)
+    # ------------------------------------------------------------------
+
     async def set_charge_limit(self, *, soc_pct: int) -> None:
         """Set maximum charge SOC (50–100 %).
 
@@ -52,3 +69,53 @@ class StreamUltraDevice(BaseDevice):
         if not 0 <= soc_pct <= 30:
             raise ValueError(f"discharge_limit must be 0–30, got {soc_pct}")
         await self._publish({"cmsMinDsgSoc": soc_pct})
+
+    # ------------------------------------------------------------------
+    # New write commands (STREAM Public API cmdId=17 / cmdFunc=254 format)
+    # ------------------------------------------------------------------
+
+    async def set_relay2(self, *, on: bool) -> None:
+        """Turn AC outlet 1 (relay2) on or off."""
+        await self._publish(self._stream_cmd({"cfgRelay2Onoff": on}))
+
+    async def set_relay3(self, *, on: bool) -> None:
+        """Turn AC outlet 2 (relay3) on or off."""
+        await self._publish(self._stream_cmd({"cfgRelay3Onoff": on}))
+
+    async def set_grid_export(self, *, enabled: bool) -> None:
+        """Enable or disable grid export (feed-in) mode."""
+        await self._publish(self._stream_cmd({"cfgFeedGridMode": 2 if enabled else 1}))
+
+    async def set_backup_reserve(self, *, soc_pct: int) -> None:
+        """Set backup reserve SOC level (3–95 %).
+
+        Raises:
+            ValueError: if soc_pct is not between 3 and 95 inclusive.
+        """
+        if not 3 <= soc_pct <= 95:
+            raise ValueError(f"backup_reserve must be 3–95, got {soc_pct}")
+        await self._publish(self._stream_cmd({"cfgBackupReverseSoc": soc_pct}))
+
+    async def set_self_powered_mode(self, *, enabled: bool) -> None:
+        """Enable or disable self-powered mode (use solar/battery before grid)."""
+        await self._publish(
+            self._stream_cmd(
+                {
+                    "cfgEnergyStrategyOperateMode": {
+                        "operateSelfPoweredOpen": enabled,
+                    }
+                }
+            )
+        )
+
+    async def set_ai_schedule_mode(self, *, enabled: bool) -> None:
+        """Enable or disable AI intelligent schedule mode."""
+        await self._publish(
+            self._stream_cmd(
+                {
+                    "cfgEnergyStrategyOperateMode": {
+                        "operateIntelligentScheduleModeOpen": enabled,
+                    }
+                }
+            )
+        )

@@ -113,7 +113,11 @@ def test_smart_meter_phase_flags() -> None:
 
 
 def test_smart_meter_energy_totals() -> None:
-    """gridConnectionDataRecord nested dict maps to energy total fields."""
+    """gridConnectionDataRecord nested dict maps to energy total fields.
+
+    RENAME NOTE: total_reactive_energy_varh → total_exported_energy_wh.
+    EcoFlow misnames exported energy as 'totalReactiveEnergy'.
+    """
     payload = {
         "gridConnectionDataRecord": {
             "totalActiveEnergy": 9068059.0,
@@ -124,7 +128,7 @@ def test_smart_meter_energy_totals() -> None:
     meter = SmartMeterData.from_quota_payload("BK21", payload)
     assert meter.total_active_energy_wh == pytest.approx(9068059.0)  # pyright: ignore[reportUnknownMemberType]
     assert meter.today_active_energy_wh == pytest.approx(9076453.0)  # pyright: ignore[reportUnknownMemberType]
-    assert meter.total_reactive_energy_varh == pytest.approx(8394.0)  # pyright: ignore[reportUnknownMemberType]
+    assert meter.total_exported_energy_wh == pytest.approx(8394.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_smart_meter_power_factor() -> None:
@@ -166,3 +170,65 @@ def test_smart_meter_from_mqtt_payload_alias() -> None:
     """from_mqtt_payload is an alias for from_quota_payload (backward compat)."""
     meter = SmartMeterData.from_mqtt_payload("BK21", {"powGetSysGrid": 100.0})
     assert meter.grid_power_watts == pytest.approx(100.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+# ---------------------------------------------------------------------------
+# Step 5 new tests: total_exported_energy_wh (renamed), per-phase lifetime
+# ---------------------------------------------------------------------------
+
+
+def test_smart_meter_total_exported_energy_wh_renamed() -> None:
+    """totalReactiveEnergy maps to total_exported_energy_wh (renamed from varh).
+
+    QUIRK: EcoFlow misnames this field 'totalReactiveEnergy' but it measures
+    lifetime exported Wh. Confirmed by tolwi/hassio-ecoflow-cloud research 2026-05-29.
+    """
+    payload = {
+        "gridConnectionDataRecord": {
+            "totalReactiveEnergy": 8394.0,
+        }
+    }
+    meter = SmartMeterData.from_quota_payload("BK21", payload)
+    assert meter.total_exported_energy_wh == pytest.approx(8394.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_smart_meter_lifetime_energy_l1() -> None:
+    """todayActiveL1 → lifetime_energy_l1_wh (QUIRK: EcoFlow misnames as 'today')."""
+    payload = {
+        "gridConnectionDataRecord": {
+            "todayActiveL1": 3123456.0,
+        }
+    }
+    meter = SmartMeterData.from_quota_payload("BK21", payload)
+    assert meter.lifetime_energy_l1_wh == pytest.approx(3123456.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_smart_meter_lifetime_energy_l2() -> None:
+    """todayActiveL2 maps to lifetime_energy_l2_wh."""
+    payload = {
+        "gridConnectionDataRecord": {
+            "todayActiveL2": 1234567.0,
+        }
+    }
+    meter = SmartMeterData.from_quota_payload("BK21", payload)
+    assert meter.lifetime_energy_l2_wh == pytest.approx(1234567.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_smart_meter_lifetime_energy_l3() -> None:
+    """todayActiveL3 maps to lifetime_energy_l3_wh."""
+    payload = {
+        "gridConnectionDataRecord": {
+            "todayActiveL3": 987654.0,
+        }
+    }
+    meter = SmartMeterData.from_quota_payload("BK21", payload)
+    assert meter.lifetime_energy_l3_wh == pytest.approx(987654.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_smart_meter_lifetime_energy_defaults_zero() -> None:
+    """Per-phase lifetime energy fields default to 0.0 when absent."""
+    meter = SmartMeterData.from_quota_payload("BK21", {})
+    assert meter.lifetime_energy_l1_wh == 0.0
+    assert meter.lifetime_energy_l2_wh == 0.0
+    assert meter.lifetime_energy_l3_wh == 0.0
+    assert meter.total_exported_energy_wh == 0.0

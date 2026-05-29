@@ -47,7 +47,23 @@ class SmartMeterData:
     # Energy totals (units are Wh based on field scale)
     total_active_energy_wh: float = 0.0
     today_active_energy_wh: float = 0.0
-    total_reactive_energy_varh: float = 0.0
+    total_exported_energy_wh: float = 0.0
+    """Lifetime energy exported to the grid (Wh).
+    QUIRK: EcoFlow names this field 'totalReactiveEnergy' but it measures exported Wh,
+    not reactive power in VAr·h. Confirmed by tolwi/hassio-ecoflow-cloud research
+    2026-05-29."""
+
+    # Per-phase lifetime energy
+    lifetime_energy_l1_wh: float = 0.0
+    """Lifetime cumulative per-phase energy L1 (Wh). From todayActiveL1.
+    QUIRK: EcoFlow names these 'todayActiveL1/L2/L3' but they represent lifetime
+    cumulative per-phase energy, not daily. Source: research 2026-05-29."""
+    lifetime_energy_l2_wh: float = 0.0
+    """Lifetime cumulative per-phase energy L2 (Wh). From todayActiveL2.
+    See lifetime_energy_l1_wh for naming quirk notes."""
+    lifetime_energy_l3_wh: float = 0.0
+    """Lifetime cumulative per-phase energy L3 (Wh). From todayActiveL3.
+    See lifetime_energy_l1_wh for naming quirk notes."""
 
     updated_at: datetime | None = None
 
@@ -79,7 +95,10 @@ class SmartMeterData:
             phase_l3_active=bool(data.get("gridConnectionFlagL3", False)),
             total_active_energy_wh=float(record.get("totalActiveEnergy", 0)),
             today_active_energy_wh=float(record.get("todayActive", 0)),
-            total_reactive_energy_varh=float(record.get("totalReactiveEnergy", 0)),
+            total_exported_energy_wh=float(record.get("totalReactiveEnergy", 0)),
+            lifetime_energy_l1_wh=float(record.get("todayActiveL1", 0)),
+            lifetime_energy_l2_wh=float(record.get("todayActiveL2", 0)),
+            lifetime_energy_l3_wh=float(record.get("todayActiveL3", 0)),
             updated_at=datetime.now(UTC),
         )
 

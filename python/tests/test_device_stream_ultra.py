@@ -142,6 +142,161 @@ def test_stream_ultra_accumulates_mqtt_chunks() -> None:
     assert device.status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]  # populated from chunk 2
 
 
+# ---------------------------------------------------------------------------
+# Step 7 new tests: STREAM write commands (set_relay2, set_relay3, etc.)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_relay2_on() -> None:
+    """set_relay2(on=True) publishes the correct STREAM command envelope."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_relay2(on=True)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgRelay2Onoff": True},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_relay2_off() -> None:
+    """set_relay2(on=False) publishes cfgRelay2Onoff=False."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_relay2(on=False)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgRelay2Onoff": False},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_relay3_on() -> None:
+    """set_relay3(on=True) publishes cfgRelay3Onoff=True."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_relay3(on=True)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgRelay3Onoff": True},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_grid_export_enabled() -> None:
+    """set_grid_export(enabled=True) publishes cfgFeedGridMode=2."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_grid_export(enabled=True)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgFeedGridMode": 2},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_grid_export_disabled() -> None:
+    """set_grid_export(enabled=False) publishes cfgFeedGridMode=1."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_grid_export(enabled=False)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgFeedGridMode": 1},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_backup_reserve_valid() -> None:
+    """set_backup_reserve(soc_pct=20) publishes cfgBackupReverseSoc=20."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_backup_reserve(soc_pct=20)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {"cfgBackupReverseSoc": 20},
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_backup_reserve_rejects_below_3() -> None:
+    """set_backup_reserve() raises ValueError for soc_pct < 3."""
+    device = make_stream_ultra()
+    with pytest.raises(ValueError):
+        await device.set_backup_reserve(soc_pct=2)
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_backup_reserve_rejects_above_95() -> None:
+    """set_backup_reserve() raises ValueError for soc_pct > 95."""
+    device = make_stream_ultra()
+    with pytest.raises(ValueError):
+        await device.set_backup_reserve(soc_pct=96)
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_self_powered_mode_enabled() -> None:
+    """set_self_powered_mode(enabled=True) publishes correct params."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_self_powered_mode(enabled=True)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {
+                "cfgEnergyStrategyOperateMode": {"operateSelfPoweredOpen": True}
+            },
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_stream_ultra_set_ai_schedule_mode_enabled() -> None:
+    """set_ai_schedule_mode(enabled=True) publishes correct params."""
+    device = make_stream_ultra()
+    with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
+        await device.set_ai_schedule_mode(enabled=True)
+    mock_pub.assert_called_once_with(
+        {
+            "sn": "BK11ZK1B2H5S1478",
+            "cmdId": 17,
+            "cmdFunc": 254,
+            "params": {
+                "cfgEnergyStrategyOperateMode": {
+                    "operateIntelligentScheduleModeOpen": True
+                }
+            },
+        }
+    )
+
+
 def test_stream_ac_pro_is_stream_ultra_subclass() -> None:
     """StreamAcProDevice is a subclass of StreamUltraDevice."""
     from ecoflow.devices.stream_ac_pro import StreamAcProDevice
