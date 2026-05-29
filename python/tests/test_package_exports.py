@@ -29,7 +29,7 @@ def test_devices_package_exports_all_typed_devices() -> None:
 def test_models_package_exports_all_typed_models() -> None:
     """All model names should be importable from ecoflow.models."""
     from ecoflow.models import (
-        _WATTS_RAW_FACTOR,
+        WATTS_RAW_FACTOR,
         BatteryStatus,
         BmsModule,
         ExpansionBatteryModule,
@@ -49,5 +49,5 @@ def test_models_package_exports_all_typed_models() -> None:
     assert SmartMeterData.__name__ == "SmartMeterData"
     assert StreamUltraStatus.__name__ == "StreamUltraStatus"
     assert Wave3Status.__name__ == "Wave3Status"
-    assert _WATTS_RAW_FACTOR == 0.1
+    assert WATTS_RAW_FACTOR == 0.1
     assert Wave3Mode.COOL.value == 0

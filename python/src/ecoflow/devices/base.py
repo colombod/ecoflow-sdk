@@ -9,8 +9,8 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ecoflow.transport.mqtt import _MqttClient
-    from ecoflow.transport.rest import _RestClient
+    from ecoflow.transport.mqtt import MqttTransport
+    from ecoflow.transport.rest import RestTransport
 
 _log = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ class BaseDevice:
         self,
         sn: str,
         product_name: str,
-        rest: _RestClient,
-        mqtt: _MqttClient | None = None,
+        rest: RestTransport,
+        mqtt: MqttTransport | None = None,
     ) -> None:
         self.sn = sn
         self.product_name = product_name
@@ -38,11 +38,11 @@ class BaseDevice:
 
     async def _publish(self, params: dict[str, Any]) -> None:
         """Send a command via MQTT if connected, otherwise fall back to REST."""
-        if self._mqtt is not None and self._mqtt._connected:
+        if self._mqtt is not None and self._mqtt.connected:
             from ecoflow.const import TOPIC_DEVICE_SET
 
             topic = TOPIC_DEVICE_SET.format(
-                user_id=self._mqtt._creds.user_id,
+                user_id=self._mqtt.creds.user_id,
                 sn=self.sn,
             )
             await self._mqtt.publish(topic, {"params": params})
@@ -64,7 +64,7 @@ class BaseDevice:
                 yield self._last_event
                 self._last_event = None
 
-    def _handle_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
+    def _handle_message(self, sn: str, data: dict[str, Any]) -> None:
         """Route incoming MQTT payload — discard if older than cached state."""
         now = datetime.now(tz=UTC)
         if self._last_updated is not None and self._last_updated >= now:
@@ -73,7 +73,7 @@ class BaseDevice:
         self._last_updated = now
         self._on_message(sn, data)
 
-    def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
+    def _on_message(self, sn: str, data: dict[str, Any]) -> None:
         """Process an accepted MQTT payload — override in subclasses."""
 
     def on_update(self, callback: Callable[[Any], None]) -> None:

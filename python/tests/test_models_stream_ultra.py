@@ -8,17 +8,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 VECTORS_DIR = Path(__file__).parent / "vectors"
 
 
-def load_vector(device: str, name: str) -> tuple[dict, dict]:  # type: ignore[type-arg]
+def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]:
     """Load a test vector pair (payload + expected) for a device."""
     base = VECTORS_DIR / device
-    payload = json.loads((base / f"{name}.json").read_text())
-    expected = json.loads((base / f"{name}.expected.json").read_text())
+    payload: dict[str, Any] = json.loads((base / f"{name}.json").read_text())
+    expected: dict[str, Any] = json.loads((base / f"{name}.expected.json").read_text())
     return payload, expected
 
 
@@ -32,16 +33,16 @@ def test_stream_ultra_from_quota_vector() -> None:
     payload, expected = load_vector("stream_ultra", "payload_status")
     status = StreamUltraStatus.from_quota_payload("BK11ZK1B2H5S1478", payload)
 
-    assert status.batt_soc == pytest.approx(expected["batt_soc"])
+    assert status.batt_soc == pytest.approx(expected["batt_soc"])  # pyright: ignore[reportUnknownMemberType]
     assert status.cascade_soc == expected["cascade_soc"]
-    assert status.grid_power_watts == pytest.approx(expected["grid_power_watts"])
-    assert status.load_power_watts == pytest.approx(expected["load_power_watts"])
-    assert status.battery_power_watts == pytest.approx(expected["battery_power_watts"])
-    assert status.pv_power_watts == pytest.approx(expected["pv_power_watts"])
-    assert status.input_watts == pytest.approx(expected["input_watts"])
-    assert status.temp == pytest.approx(expected["temp"])
+    assert status.grid_power_watts == pytest.approx(expected["grid_power_watts"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.load_power_watts == pytest.approx(expected["load_power_watts"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_power_watts == pytest.approx(expected["battery_power_watts"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.pv_power_watts == pytest.approx(expected["pv_power_watts"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.input_watts == pytest.approx(expected["input_watts"])  # pyright: ignore[reportUnknownMemberType]
+    assert status.temp == pytest.approx(expected["temp"])  # pyright: ignore[reportUnknownMemberType]
     assert status.cycles == expected["cycles"]
-    assert status.health == pytest.approx(expected["health"])
+    assert status.health == pytest.approx(expected["health"])  # pyright: ignore[reportUnknownMemberType]
     assert status.max_charge_soc == expected["max_charge_soc"]
     assert status.min_discharge_soc == expected["min_discharge_soc"]
 
@@ -105,7 +106,7 @@ def test_stream_ultra_battery_power() -> None:
 
     payload = {"powGetBpCms": -500.0}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.battery_power_watts == pytest.approx(-500.0)
+    assert status.battery_power_watts == pytest.approx(-500.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_backup_reserve_soc() -> None:
@@ -128,7 +129,7 @@ def test_stream_ultra_batt_soc_uses_bms_batt_soc_primary() -> None:
 
     payload = {"bmsBattSoc": 47.0, "cmsBattSoc": 45.0}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.batt_soc == pytest.approx(47.0)
+    assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_batt_soc_falls_back_to_cms_when_bms_zero() -> None:
@@ -137,7 +138,7 @@ def test_stream_ultra_batt_soc_falls_back_to_cms_when_bms_zero() -> None:
 
     payload = {"bmsBattSoc": 0.0, "cmsBattSoc": 45.0}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.batt_soc == pytest.approx(45.0)
+    assert status.batt_soc == pytest.approx(45.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_slave_unit_batt_soc() -> None:
@@ -147,7 +148,7 @@ def test_stream_ultra_slave_unit_batt_soc() -> None:
     # This is the exact scenario seen from live STREAM AC Pro slave unit
     payload = {"bmsBattSoc": 47.0, "cmsBattSoc": 0.0}
     status = StreamUltraStatus.from_quota_payload("BK31SLAVE", payload)
-    assert status.batt_soc == pytest.approx(47.0)
+    assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_cascade_soc() -> None:
@@ -174,8 +175,8 @@ def test_stream_ultra_input_output_watts() -> None:
 
     payload = {"inputWatts": 970, "outputWatts": 0}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.input_watts == pytest.approx(970.0)
-    assert status.output_watts == pytest.approx(0.0)
+    assert status.input_watts == pytest.approx(970.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.output_watts == pytest.approx(0.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_temperature() -> None:
@@ -184,7 +185,7 @@ def test_stream_ultra_temperature() -> None:
 
     payload = {"temp": 35}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.temp == pytest.approx(35.0)
+    assert status.temp == pytest.approx(35.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_battery_voltage_mv_to_v() -> None:
@@ -193,7 +194,7 @@ def test_stream_ultra_battery_voltage_mv_to_v() -> None:
 
     payload = {"vBat": 20135}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.battery_voltage == pytest.approx(20.135)
+    assert status.battery_voltage == pytest.approx(20.135)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_cycles() -> None:
@@ -212,7 +213,7 @@ def test_stream_ultra_remaining_cap_wh() -> None:
     # 46495 × 0.01 = 464.95 Wh
     payload = {"remainCap": 46495}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.remaining_cap_wh == pytest.approx(464.95)
+    assert status.remaining_cap_wh == pytest.approx(464.95)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_full_cap_wh() -> None:
@@ -222,7 +223,7 @@ def test_stream_ultra_full_cap_wh() -> None:
     # 100000 × 0.01 = 1000.0 Wh
     payload = {"fullCap": 100000}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.full_cap_wh == pytest.approx(1000.0)
+    assert status.full_cap_wh == pytest.approx(1000.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_stream_ultra_health() -> None:
@@ -231,4 +232,4 @@ def test_stream_ultra_health() -> None:
 
     payload = {"soh": 100}
     status = StreamUltraStatus.from_quota_payload("X", payload)
-    assert status.health == pytest.approx(100.0)
+    assert status.health == pytest.approx(100.0)  # pyright: ignore[reportUnknownMemberType]
