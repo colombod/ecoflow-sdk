@@ -126,7 +126,7 @@ class TestTopLevelExports:
     def test_version_is_correct(self) -> None:
         import ecoflow
 
-        assert ecoflow.__version__ == "0.1.0"
+        assert ecoflow.__version__ == "0.2.0"
 
     def test_all_list_contains_expected_symbols(self) -> None:
         import ecoflow
