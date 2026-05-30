@@ -62,3 +62,13 @@ def test_topic_open_set_reply_format() -> None:
 
     topic = TOPIC_OPEN_SET_REPLY.format(user_id="user456", sn="BK11DEVICE")
     assert topic == "/open/user456/BK11DEVICE/set_reply"
+
+
+def test_sn_prefix_ac71_routes_to_wave3() -> None:
+    """AC71 SN prefix must map to 'Wave 3' — discovery regression guard."""
+    from ecoflow.const import SN_PREFIX_TO_MODEL
+
+    assert "AC71" in SN_PREFIX_TO_MODEL, (
+        "AC71 missing from SN_PREFIX_TO_MODEL — Wave 3 falls into unknown_devices"
+    )
+    assert SN_PREFIX_TO_MODEL["AC71"] == "Wave 3"

@@ -78,3 +78,30 @@ async def test_wave3_set_temperature_scales_to_x10() -> None:
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_publish:
         await device.set_temperature(24.0)
     mock_publish.assert_called_once_with({"setTemp": 240})
+
+
+@pytest.mark.asyncio
+async def test_wave3_refresh_returns_minimal_status_on_api_error() -> None:
+    """refresh() must not raise when REST returns error 1006 for Wave 3.
+
+    The public EcoFlow Developer API returns error 1006 for Wave 3 devices
+    (not allowed to get device info). refresh() must catch this and return
+    a minimal Wave3Status with online=True and default field values.
+    """
+    from ecoflow.exceptions import EcoFlowError
+
+    mock_rest = AsyncMock()
+    mock_rest.get_quota = AsyncMock(
+        side_effect=EcoFlowError(
+            "API error 1006: current device is not allowed to get device info"
+        )
+    )
+
+    device = Wave3Device(sn="AC71TEST", product_name="Wave 3", rest=mock_rest)
+    status = await device.refresh()
+
+    assert status is not None
+    assert status.sn == "AC71TEST"
+    assert status.online is True  # device is online per device list
+    assert status.is_on is False  # default — no data from API
+    assert status.target_temp == 26.0  # default

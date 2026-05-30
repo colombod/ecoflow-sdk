@@ -73,6 +73,26 @@ class EcoFlowClient:
         # Internal: all typed devices (for MQTT subscription routing)
         self._all_typed: list[Any] = []
 
+    # ------------------------------------------------------------------
+    # Public read-only properties
+    # ------------------------------------------------------------------
+
+    @property
+    def mqtt_connected(self) -> bool:
+        """Whether the MQTT transport is currently connected."""
+        return self._mqtt is not None and self._mqtt.connected
+
+    @property
+    def mqtt_subscriptions(self) -> frozenset[str]:
+        """Return the set of device SNs with active MQTT subscriptions."""
+        if self._mqtt is None:
+            return frozenset()
+        return frozenset(self._mqtt.subscriptions)
+
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
+
     async def connect(self) -> None:
         """Fetch MQTT credentials, connect, and discover all devices."""
         await self._discover()
