@@ -45,6 +45,13 @@ SN_PREFIX_TO_MODEL: dict[str, str] = {
     "BK21": "Smart Meter",
     "BK31": "STREAM AC Pro",
     "HW52": "Smart Plug",
+    # Wave 3 (AC71): appears in device list with deviceName only (no productName).
+    # REST /quota/all returns error 1006 ("device not allowed to get device info").
+    # MQTT sends 0 events on the public API — Wave 3 uses the private EcoFlow API
+    # (email/password + Protobuf), which this library intentionally does not support.
+    # Device is discovered and routed to client.wave3_units; data fields will be
+    # unpopulated until EcoFlow exposes Wave 3 on the public Developer API.
+    "AC71": "Wave 3",
 }
 
 
