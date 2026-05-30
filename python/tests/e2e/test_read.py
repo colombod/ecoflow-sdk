@@ -212,13 +212,11 @@ async def test_wave3_mqtt_subscription_active(client: EcoFlowClient) -> None:
     The public API MQTT does not push data for Wave 3 (uses private API).
     The subscription is established (correct behaviour) — data absence is expected.
     """
-    if client._mqtt is None:
+    if not client.mqtt_connected:
         pytest.skip("MQTT not connected")
 
-    assert client._mqtt is not None  # narrow type for pyright
-
     for device in client.wave3_units:
-        assert device.sn in client._mqtt.subscriptions, (
+        assert device.sn in client.mqtt_subscriptions, (
             f"{device.sn}: Wave 3 not subscribed in MQTT client"
         )
         # MQTT data will be None or empty — document this as expected
