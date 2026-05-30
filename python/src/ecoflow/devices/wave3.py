@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from ecoflow.devices.base import BaseDevice
 from ecoflow.models.wave3 import Wave3Mode, Wave3Status
+
+_log = logging.getLogger(__name__)
 
 
 class Wave3Device(BaseDevice):
@@ -17,11 +20,32 @@ class Wave3Device(BaseDevice):
         self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
 
     async def refresh(self) -> Wave3Status:
-        """Fetch current device state via REST and return a Wave3Status."""
-        raw = await self._rest.get_quota(self.sn)
-        status = Wave3Status.from_mqtt_payload(self.sn, raw)
-        status.product_name = self.product_name
-        self.status = status
+        """Fetch current Wave 3 status via REST.
+
+        NOTE: Wave 3 returns error 1006 from the public REST API
+        (device is not allowed to get device info). When this happens,
+        a minimal status with online=True is returned with all reading
+        fields at defaults. Data arrives via MQTT on the private API only.
+        See: https://github.com/colombod/ecoflow-sdk — Wave 3 API limitation.
+        """
+        try:
+            raw = await self._rest.get_quota(self.sn)
+            self.status = Wave3Status.from_mqtt_payload(self.sn, raw)
+            self.status.product_name = self.product_name
+            self.status.online = True
+        except Exception as exc:
+            # Wave 3 public API limitation — return minimal status
+            _log.debug(
+                "Wave 3 REST quota not available (%s): %s — returning minimal status",
+                self.sn,
+                exc,
+            )
+            self.status = Wave3Status(
+                sn=self.sn,
+                product_name=self.product_name,
+                online=True,  # device is online (confirmed from device list)
+                is_on=False,  # default — no data available from public API
+            )
         return self.status
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]

@@ -197,6 +197,16 @@ async def test_connect_registers_callbacks_before_mqtt_connect() -> None:
     )
 
 
+def test_mqtt_connected_returns_false_when_no_mqtt() -> None:
+    client = EcoFlowClient(access_key="k", secret_key="s")
+    assert client.mqtt_connected is False
+
+
+def test_mqtt_subscriptions_returns_empty_when_no_mqtt() -> None:
+    client = EcoFlowClient(access_key="k", secret_key="s")
+    assert client.mqtt_subscriptions == frozenset()
+
+
 async def test_global_events_yields_from_mqtt_subscriptions() -> None:
     """The global event stream yields events from all device subscriptions."""
     client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
