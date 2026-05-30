@@ -30,9 +30,9 @@ class Wave3Device(BaseDevice):
         """
         try:
             raw = await self._rest.get_quota(self.sn)
-            self.status = Wave3Status.from_mqtt_payload(self.sn, raw)
+            self.status = Wave3Status.from_mqtt_payload(raw)
+            self.status.sn = self.sn
             self.status.product_name = self.product_name
-            self.status.online = True
         except Exception as exc:
             # Wave 3 public API limitation — return minimal status
             _log.debug(
@@ -51,7 +51,8 @@ class Wave3Device(BaseDevice):
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update status from an incoming MQTT payload, accumulating chunks."""
         self._raw_data.update(data)
-        self.status = Wave3Status.from_mqtt_payload(sn, self._raw_data)
+        self.status = Wave3Status.from_mqtt_payload(self._raw_data)
+        self.status.sn = sn
         self.status.product_name = self.product_name
         self._notify_callbacks(self.status)
 

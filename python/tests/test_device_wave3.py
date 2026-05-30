@@ -15,11 +15,9 @@ def make_wave3() -> Wave3Device:
     rest = MagicMock()
     rest.get_quota = AsyncMock(
         return_value={
-            "pd": {
-                "powerMode": 1,
-                "waveMode": 0,
-                "setTemp": 240,
-            }
+            "dev_sleep_state": 0,
+            "wave_operating_mode": 1,
+            "current_temp_set": 24.0,
         }
     )
     return Wave3Device(sn="WAVE3-001", product_name="Wave 3", rest=rest)
@@ -32,7 +30,7 @@ async def test_wave3_refresh_returns_status() -> None:
     status = await device.refresh()
     assert isinstance(status, Wave3Status)
     assert status.is_on is True
-    assert status.target_temp == 24.0
+    assert status.target_temp == pytest.approx(24.0)
 
 
 @pytest.mark.asyncio
@@ -64,11 +62,11 @@ async def test_wave3_turn_on_publishes_power_mode_1() -> None:
 
 @pytest.mark.asyncio
 async def test_wave3_set_mode_publishes_int_value() -> None:
-    """set_mode(Wave3Mode.HEAT) publishes {'waveMode': 1}."""
+    """set_mode(Wave3Mode.HEATING) publishes {'waveMode': 2}."""
     device = make_wave3()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_publish:
-        await device.set_mode(Wave3Mode.HEAT)
-    mock_publish.assert_called_once_with({"waveMode": 1})
+        await device.set_mode(Wave3Mode.HEATING)
+    mock_publish.assert_called_once_with({"waveMode": 2})
 
 
 @pytest.mark.asyncio
@@ -104,4 +102,4 @@ async def test_wave3_refresh_returns_minimal_status_on_api_error() -> None:
     assert status.sn == "AC71TEST"
     assert status.online is True  # device is online per device list
     assert status.is_on is False  # default — no data from API
-    assert status.target_temp == 26.0  # default
+    assert status.target_temp == 22.0  # default
