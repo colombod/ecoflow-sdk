@@ -26,8 +26,20 @@ class Wave3Device(BaseDevice):
         (device is not allowed to get device info). When this happens,
         a minimal status with online=True is returned with all reading
         fields at defaults. Data arrives via MQTT on the private API only.
-        See: https://github.com/colombod/ecoflow-sdk — Wave 3 API limitation.
+
+        NOTE: rest=None is valid for the private API path — Wave3Connection
+        passes rest=None and data arrives via MQTT only.
         """
+        if self._rest is None:
+            # Private API path — no REST quota available for Wave 3.
+            # Return current status if available, otherwise return minimal status.
+            if self.status is None:
+                self.status = Wave3Status(
+                    sn=self.sn,
+                    product_name=self.product_name,
+                    online=True,
+                )
+            return self.status
         try:
             raw = await self._rest.get_quota(self.sn)
             self.status = Wave3Status.from_mqtt_payload(raw)

@@ -103,3 +103,35 @@ async def test_wave3_refresh_returns_minimal_status_on_api_error() -> None:
     assert status.online is True  # device is online per device list
     assert status.is_on is False  # default — no data from API
     assert status.target_temp == 22.0  # default
+
+
+@pytest.mark.asyncio
+async def test_wave3_refresh_with_rest_none_returns_status_without_api_call() -> None:
+    """refresh() with rest=None: returns minimal status when None, then existing."""
+    device = Wave3Device(sn="AC71TEST", product_name="Wave 3", rest=None)
+
+    # First call: status=None case → returns Wave3Status with sn=AC71TEST, online=True
+    status = await device.refresh()
+    assert isinstance(status, Wave3Status)
+    assert status.sn == "AC71TEST"
+    assert status.online is True
+    assert status.product_name == "Wave 3"
+
+    # Simulate MQTT update: device receives data via MQTT
+    device.status = Wave3Status(
+        sn="AC71TEST", product_name="Wave 3", online=True, is_on=True
+    )
+
+    # Second call: returns existing status with is_on=True
+    status2 = await device.refresh()
+    assert status2.is_on is True
+
+
+@pytest.mark.asyncio
+async def test_wave3_refresh_with_rest_none_does_not_call_rest() -> None:
+    """refresh() with rest=None must not try to call self._rest.get_quota()."""
+    device = Wave3Device(sn="AC71TEST", product_name="Wave 3", rest=None)
+    # If refresh() tries to call self._rest.get_quota() it will raise AttributeError
+    # (None has no get_quota). This test passes if refresh() completes without raising.
+    status = await device.refresh()
+    assert status is not None
