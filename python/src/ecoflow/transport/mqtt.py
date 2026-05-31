@@ -229,10 +229,12 @@ class MqttTransport:
                     # connection per certificateAccount — another client is already
                     # connected.  Retrying will not help.
                     self._fatal_error = EcoFlowConnectionError(
-                        "MQTT error 135 (Not Authorized): another client may already "
-                        "be connected using this certificateAccount. EcoFlow allows "
-                        "only one MQTT connection per account. Stop any other app "
-                        "using these credentials (e.g. openclaw) and retry."
+                        "MQTT error 135 (Not Authorized): EcoFlow MQTT broker quota "
+                        "exceeded or another client is connected. The broker allows "
+                        "~10 unique client IDs per day per account. The library now "
+                        "uses a stable client ID to avoid this. If you hit this error, "
+                        "wait until the daily quota resets (midnight UTC) or stop any "
+                        "other app using the same certificateAccount."
                     )
                     self._ready.set()  # unblock connect() so it can surface the error
                     break

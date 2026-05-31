@@ -271,10 +271,8 @@ async def test_mqtt_135_error_message_describes_session_conflict() -> None:
 
     msg = str(exc_info.value)
     assert "certificateAccount" in msg, "Error should mention certificateAccount"
-    assert "openclaw" in msg or "another client" in msg, (
-        "Error should hint at the source of conflict"
-    )
-    assert "one MQTT connection" in msg, "Error should explain the one-connection limit"
+    assert "another client" in msg, "Error should hint at the source of conflict"
+    assert "quota" in msg, "Error should explain the daily client ID quota"
 
 
 async def test_run_subscribes_using_stored_topic_template() -> None:

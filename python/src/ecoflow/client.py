@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib as _hashlib
 import logging
-import uuid as _uuid
 from collections.abc import AsyncGenerator
 from types import TracebackType
 from typing import Any
@@ -99,14 +99,16 @@ class EcoFlowClient:
         await self._discover()
         try:
             mqtt_data = await self._rest.get_mqtt_credentials()
-            # QUIRK: EcoFlow public API /certification does not return a clientId field.
-            # An empty client_id causes MQTT error 135 (Not Authorized) on mqtt-e.ecoflow.com.
-            # We generate a UUID-based client ID matching the private API convention.
-            # Confirmed broken 2026-05-31 during STREAM relay investigation.
+            # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per day per
+            # account. Random UUIDs burn this quota instantly (one per restart).
+            # A stable, deterministic ID reuses the same slot on every reconnect.
+            # Source: EcoFlow community reports (ioBroker,
+            # hassio-ecoflow-cloud issue trackers).
             _account = mqtt_data.get("certificateAccount", "")
-            client_id = mqtt_data.get("clientId") or (
-                f"ANDROID_{_uuid.uuid4().hex.upper()}_{_account}"
-            )
+            # Derive a stable ID: short hash of the account so it's always the
+            # same across restarts, but doesn't expose the full account string.
+            _stable_suffix = _hashlib.sha256(_account.encode()).hexdigest()[:12]
+            client_id = mqtt_data.get("clientId") or f"ecoflow-sdk-{_stable_suffix}"
             mqtt_creds = MqttCredentials(
                 url=mqtt_data.get("url", "mqtt.ecoflow.com"),
                 port=int(mqtt_data.get("port", 8883)),
