@@ -211,6 +211,72 @@ async def test_dispatch_legacy_app_topic_still_works() -> None:
     assert received == [{"soc": 42}]
 
 
+# ---------------------------------------------------------------------------
+# Error 135 (session conflict) handling
+# ---------------------------------------------------------------------------
+
+
+async def test_mqtt_135_on_first_connect_raises_not_retried() -> None:
+    """Error 135 on initial connect raises EcoFlowConnectionError — not a retry loop.
+
+    EcoFlow allows only one MQTT connection per certificateAccount.  When another
+    client (e.g. openclaw) is already connected the broker returns reason code 135
+    on the very first CONNACK.  Retrying forever is useless; we must surface a
+    clear error immediately.
+    """
+    import aiomqtt as _aiomqtt
+
+    client = MqttTransport(MQTT_CREDS, connect_timeout=5)
+
+    connect_attempt_count = 0
+
+    async def failing_aenter(*args: object, **kwargs: object) -> object:
+        nonlocal connect_attempt_count
+        connect_attempt_count += 1
+        raise _aiomqtt.MqttCodeError(135)
+
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = failing_aenter
+    mock_cm.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("ecoflow.transport.mqtt.aiomqtt.Client", return_value=mock_cm):
+        with pytest.raises(EcoFlowConnectionError, match="135"):
+            await client.connect()
+
+    # The transport must NOT retry after a 135 on the first attempt.
+    assert connect_attempt_count == 1, (
+        f"Expected exactly 1 connect attempt, got {connect_attempt_count}. "
+        "The transport must not retry when the first connect returns 135."
+    )
+    # Transport must report itself as not connected.
+    assert client.connected is False
+
+
+async def test_mqtt_135_error_message_describes_session_conflict() -> None:
+    """First-connect 135 raises EcoFlowConnectionError with an informative message."""
+    import aiomqtt as _aiomqtt
+
+    client = MqttTransport(MQTT_CREDS, connect_timeout=5)
+
+    async def failing_aenter(*args: object, **kwargs: object) -> object:
+        raise _aiomqtt.MqttCodeError(135)
+
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = failing_aenter
+    mock_cm.__aexit__ = AsyncMock(return_value=False)
+
+    with patch("ecoflow.transport.mqtt.aiomqtt.Client", return_value=mock_cm):
+        with pytest.raises(EcoFlowConnectionError) as exc_info:
+            await client.connect()
+
+    msg = str(exc_info.value)
+    assert "certificateAccount" in msg, "Error should mention certificateAccount"
+    assert "openclaw" in msg or "another client" in msg, (
+        "Error should hint at the source of conflict"
+    )
+    assert "one MQTT connection" in msg, "Error should explain the one-connection limit"
+
+
 async def test_run_subscribes_using_stored_topic_template() -> None:
     """_run() subscribes each SN using its stored topic_template (not hardcoded)."""
     client = MqttTransport(MQTT_CREDS, connect_timeout=5)

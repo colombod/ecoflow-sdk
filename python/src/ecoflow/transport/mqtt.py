@@ -55,6 +55,7 @@ class MqttTransport:
         self._subscriptions: dict[str, tuple[str, list[MessageCallback]]] = {}
         self._connected = False
         self._ready = asyncio.Event()  # set when broker confirms connection
+        self._fatal_error: EcoFlowConnectionError | None = None
         self._run_task: asyncio.Task[None] | None = None
         self._client: Any = None  # live aiomqtt.Client set inside _run()
 
@@ -108,6 +109,7 @@ class MqttTransport:
     async def connect(self) -> None:
         """Start the background MQTT task and wait for broker confirmation."""
         self._ready.clear()
+        self._fatal_error = None
         self._run_task = asyncio.create_task(self._run())
         try:
             await asyncio.wait_for(self._ready.wait(), timeout=float(self._timeout))
@@ -121,6 +123,10 @@ class MqttTransport:
             raise EcoFlowConnectionError(
                 f"MQTT connection timed out after {self._timeout}s"
             ) from None
+        # _run() may have signalled a fatal (non-retriable) error via _fatal_error.
+        # Re-raise it here so callers get a proper exception instead of a silent hang.
+        if self._fatal_error is not None:
+            raise self._fatal_error
 
     async def disconnect(self) -> None:
         """Cancel the background task and reset state."""
@@ -169,6 +175,10 @@ class MqttTransport:
         tls_context = ssl.create_default_context()
         backoff = 1.0
         backoff_max = 300.0
+        # Track whether we have ever successfully established a connection.
+        # This lets us distinguish a fatal first-connect failure from a transient
+        # reconnect failure (e.g. session stolen after a working session).
+        ever_connected = False
         while True:
             try:
                 async with aiomqtt.Client(
@@ -180,6 +190,8 @@ class MqttTransport:
                     keepalive=ECOFLOW_MQTT_KEEPALIVE,
                     tls_context=tls_context,
                 ) as client:
+                    # __aenter__ succeeded — broker accepted the connection.
+                    ever_connected = True
                     self._client = client
                     self._connected = True
                     backoff = 1.0
@@ -207,6 +219,37 @@ class MqttTransport:
 
             except asyncio.CancelledError:
                 break  # clean shutdown requested — exit immediately
+
+            except aiomqtt.MqttCodeError as exc:
+                self._connected = False
+                self._client = None
+                if exc.rc == 135 and not ever_connected:
+                    # Fatal: broker rejected the very first connect attempt with
+                    # "Not Authorized" (135).  EcoFlow allows only one MQTT
+                    # connection per certificateAccount — another client is already
+                    # connected.  Retrying will not help.
+                    self._fatal_error = EcoFlowConnectionError(
+                        "MQTT error 135 (Not Authorized): another client may already "
+                        "be connected using this certificateAccount. EcoFlow allows "
+                        "only one MQTT connection per account. Stop any other app "
+                        "using these credentials (e.g. openclaw) and retry."
+                    )
+                    self._ready.set()  # unblock connect() so it can surface the error
+                    break
+                elif exc.rc == 135:
+                    # Reconnect after a previously working session got a 135.
+                    # The session may have been stolen temporarily; retry with backoff.
+                    _log.warning(
+                        "MQTT error 135 (Not Authorized) on reconnect — session may "
+                        "have been stolen; retrying in %.0fs",
+                        backoff,
+                    )
+                else:
+                    _log.warning(
+                        "MQTT connection lost (%s), retrying in %.0fs", exc, backoff
+                    )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, backoff_max)
 
             except Exception as exc:
                 self._connected = False
