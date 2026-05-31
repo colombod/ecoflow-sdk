@@ -27,8 +27,11 @@ import uuid
 import aiomqtt
 
 from ecoflow.devices.wave3 import Wave3Device
+from ecoflow.exceptions import EcoFlowConnectionError
+from ecoflow.models.wave3 import Wave3Mode
 from ecoflow.private.auth import PrivateCredentials, login
 from ecoflow.private.proto.decoder import decode
+from ecoflow.private.proto.encoder import build_command
 
 _log = logging.getLogger(__name__)
 
@@ -60,6 +63,7 @@ class Wave3Connection:
         self.devices: dict[str, Wave3Device] = {}
         self._task: asyncio.Task[None] | None = None
         self._ready: asyncio.Event = asyncio.Event()
+        self._publish_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
 
     async def connect(self) -> None:
         """Authenticate, create Wave3Device instances, start the MQTT loop.
@@ -116,15 +120,11 @@ class Wave3Connection:
         """
         tls_ctx = ssl.create_default_context()
         backoff = 1.0
-
         while True:
             try:
-                # QUIRK: client_id must be ANDROID_{UUID}_{userId} — this is what
-                # the EcoFlow private broker requires for authorization. Any other
-                # format results in MQTT error 135 (Not authorized).
                 client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
                 async with aiomqtt.Client(
-                    hostname="mqtt.ecoflow.com",  # private broker — NOT mqtt-e
+                    hostname="mqtt.ecoflow.com",
                     port=8883,
                     username=creds.certificate_account,
                     password=creds.certificate_password,
@@ -135,24 +135,129 @@ class Wave3Connection:
                     for sn in self.devices:
                         await client.subscribe(f"/app/device/property/{sn}", qos=1)
                     self._ready.set()
-                    backoff = 1.0  # reset on successful connect
-
-                    async for message in client.messages:
-                        sn = str(message.topic).rsplit("/", 1)[-1]
-                        if sn in self.devices:
-                            data = decode(bytes(message.payload))
-                            if data:
-                                self.devices[sn]._handle_message(sn, data)
-
+                    backoff = 1.0
+                    async with asyncio.TaskGroup() as tg:
+                        tg.create_task(self._receive_loop(client))
+                        tg.create_task(self._publish_loop(client))
             except asyncio.CancelledError:
-                return  # clean shutdown — do not reconnect
-
+                return
             except Exception as exc:
                 self._ready.clear()
                 _log.warning(
-                    "Wave3 MQTT connection lost (%s), retrying in %.0fs",
-                    exc,
-                    backoff,
+                    "Wave3 MQTT connection lost (%s), retrying in %.0fs", exc, backoff
                 )
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 300.0)
+
+    async def _receive_loop(self, client: aiomqtt.Client) -> None:
+        async for message in client.messages:
+            sn = str(message.topic).rsplit("/", 1)[-1]
+            if sn in self.devices:
+                data = decode(bytes(message.payload))
+                if data:
+                    self.devices[sn]._handle_message(sn, data)
+
+    async def _publish_loop(self, client: aiomqtt.Client) -> None:
+        while True:
+            sn, payload = await self._publish_queue.get()
+            await client.publish(f"/app/device/property/{sn}", payload, qos=1)
+            self._publish_queue.task_done()
+
+    # ---------------------------------------------------------------------------
+    # High-level write commands
+    # ---------------------------------------------------------------------------
+
+    async def send_raw(self, sn: str, payload: bytes) -> None:
+        """Enqueue a raw Protobuf payload for publishing to the device topic.
+
+        Args:
+            sn: Device serial number.
+            payload: Serialised Wave3SetMessage bytes.
+
+        Raises:
+            EcoFlowConnectionError: if the MQTT connection is not ready.
+            ValueError: if sn is not a registered device.
+        """
+        if not self._ready.is_set():
+            raise EcoFlowConnectionError("Wave3 MQTT connection is not ready")
+        if sn not in self.devices:
+            raise ValueError(f"Unknown device SN: {sn!r}")
+        await self._publish_queue.put((sn, payload))
+
+    async def turn_on(self, sn: str) -> None:
+        """Turn the device on (cfg_main_power=True)."""
+        await self.send_raw(sn, build_command(sn, cfg_main_power=True))
+
+    async def turn_off(self, sn: str) -> None:
+        """Pause the device (cfg_sys_pause=True)."""
+        await self.send_raw(sn, build_command(sn, cfg_sys_pause=True))
+
+    async def set_mode(self, sn: str, mode: Wave3Mode) -> None:
+        """Set the operating mode.
+
+        Args:
+            sn: Device serial number.
+            mode: Desired Wave3Mode (must not be NONE — use turn_off() instead).
+
+        Raises:
+            ValueError: if mode is Wave3Mode.NONE.
+        """
+        if mode == Wave3Mode.NONE:
+            raise ValueError("Use turn_off() to stop the device, not set_mode(NONE)")
+        await self.send_raw(
+            sn,
+            build_command(sn, cfg_main_power=True, cfg_wave_operating_mode=int(mode)),
+        )
+
+    async def set_temperature(self, sn: str, temp_c: float) -> None:
+        """Set the target temperature setpoint (16.0–30.0 °C).
+
+        Raises:
+            ValueError: if temp_c is outside the supported range.
+        """
+        if not 16.0 <= temp_c <= 30.0:
+            raise ValueError(f"Temperature {temp_c} out of range (16.0–30.0 °C)")
+        await self.send_raw(sn, build_command(sn, cfg_temp_set=float(temp_c)))
+
+    async def set_fan_speed(self, sn: str, level: int) -> None:
+        """Set the fan speed level (1–5).
+
+        Maps: 1→20, 2→40, 3→60, 4→80, 5→100 (raw protocol values).
+
+        Raises:
+            ValueError: if level is not in range(1, 6).
+        """
+        if level not in range(1, 6):
+            raise ValueError(f"Fan speed level {level} out of range (1–5)")
+        raw = level * 20
+        await self.send_raw(sn, build_command(sn, cfg_airflow_speed=raw))
+
+    async def set_humidity_target(self, sn: str, pct: float) -> None:
+        """Set the target humidity setpoint (40.0–80.0 %).
+
+        Raises:
+            ValueError: if pct is outside the supported range.
+        """
+        if not 40.0 <= pct <= 80.0:
+            raise ValueError(f"Humidity target {pct} out of range (40.0–80.0 %)")
+        await self.send_raw(sn, build_command(sn, cfg_humi_set=float(pct)))
+
+    async def set_charge_limit(self, sn: str, soc_pct: int) -> None:
+        """Set the maximum charge SOC limit (50–100 %).
+
+        Raises:
+            ValueError: if soc_pct is outside the supported range.
+        """
+        if not 50 <= soc_pct <= 100:
+            raise ValueError(f"Charge limit {soc_pct} out of range (50–100 %)")
+        await self.send_raw(sn, build_command(sn, cmsMaxChgSoc=soc_pct))
+
+    async def set_discharge_limit(self, sn: str, soc_pct: int) -> None:
+        """Set the minimum discharge SOC limit (0–30 %).
+
+        Raises:
+            ValueError: if soc_pct is outside the supported range.
+        """
+        if not 0 <= soc_pct <= 30:
+            raise ValueError(f"Discharge limit {soc_pct} out of range (0–30 %)")
+        await self.send_raw(sn, build_command(sn, cmsMinDsgSoc=soc_pct))
