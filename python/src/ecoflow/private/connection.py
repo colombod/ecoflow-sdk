@@ -26,6 +26,7 @@ import uuid
 
 import aiomqtt
 
+from ecoflow.const import TOPIC_DEVICE_SET
 from ecoflow.devices.wave3 import Wave3Device
 from ecoflow.exceptions import EcoFlowConnectionError
 from ecoflow.models.wave3 import Wave3Mode
@@ -45,7 +46,8 @@ class Wave3Connection:
     Authentication: email + password → PrivateCredentials (one-time login).
     Wire format: Protobuf (decoded via ecoflow.private.proto.decoder).
     MQTT broker: mqtt.ecoflow.com:8883 (TLS, NOT the public mqtt-e.ecoflow.com).
-    Topic: /app/device/property/{sn} at QoS 1.
+    Subscribe topic: /app/device/property/{sn} at QoS 1.
+    Command topic: /app/{user_id}/{sn}/thing/property/set at QoS 1.
 
     QUIRK: The private broker is the same for EU and US accounts.
     The public API uses mqtt-e.ecoflow.com for EU — do not use that here.
@@ -138,7 +140,7 @@ class Wave3Connection:
                     backoff = 1.0
                     async with asyncio.TaskGroup() as tg:
                         tg.create_task(self._receive_loop(client))
-                        tg.create_task(self._publish_loop(client))
+                        tg.create_task(self._publish_loop(client, creds.user_id))
             except asyncio.CancelledError:
                 return
             except Exception as exc:
@@ -157,10 +159,11 @@ class Wave3Connection:
                 if data:
                     self.devices[sn]._handle_message(sn, data)
 
-    async def _publish_loop(self, client: aiomqtt.Client) -> None:
+    async def _publish_loop(self, client: aiomqtt.Client, user_id: str) -> None:
         while True:
             sn, payload = await self._publish_queue.get()
-            await client.publish(f"/app/device/property/{sn}", payload, qos=1)
+            topic = TOPIC_DEVICE_SET.format(user_id=user_id, sn=sn)
+            await client.publish(topic, payload, qos=1)
             self._publish_queue.task_done()
 
     # ---------------------------------------------------------------------------
