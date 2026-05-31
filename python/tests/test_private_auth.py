@@ -1,66 +1,41 @@
-"""Tests for ecoflow.private.auth — email/password login returning PrivateCredentials."""  # noqa: E501
+"""Tests for ecoflow.private.auth — email/password login returning PrivateCredentials.
+
+Uses `respx` to mock httpx at the transport layer for precise request inspection.
+"""
 
 from __future__ import annotations
 
 import base64
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+import json
+import urllib.parse
 
 import pytest
+import respx
 
 from ecoflow.exceptions import EcoFlowAuthError
 from ecoflow.private.auth import PrivateCredentials, login
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Constants
 # ---------------------------------------------------------------------------
 
-LOGIN_RESPONSE = {
+LOGIN_URL = "https://api.ecoflow.com/auth/login"
+CERT_URL = "https://api.ecoflow.com/iot-auth/app/certification"
+
+LOGIN_OK = {
     "code": "0",
     "data": {
-        "token": "test_token_abc123",
-        "user": {
-            "userId": "user123",
-        },
+        "token": "tok123",
+        "user": {"userId": 42},
     },
 }
-
-CERT_RESPONSE = {
+CERT_OK = {
     "code": "0",
     "data": {
-        "certificateAccount": "mqtt_user",
-        "certificatePassword": "mqtt_pass",
-        "url": "mqtt.ecoflow.com",
-        "port": "8883",
+        "certificateAccount": "app-abc123",
+        "certificatePassword": "certpass",
     },
 }
-
-
-def make_mock_httpx_cls(
-    login_json: dict[str, Any],
-    cert_json: dict[str, Any] | None = None,
-) -> MagicMock:
-    """Return a mock for httpx.AsyncClient that yields a client with post/get mocked.
-
-    If cert_json is None, defaults to CERT_RESPONSE.
-    """
-    if cert_json is None:
-        cert_json = CERT_RESPONSE
-
-    login_resp = MagicMock()
-    login_resp.json.return_value = login_json
-
-    cert_resp = MagicMock()
-    cert_resp.json.return_value = cert_json
-
-    mock_client = AsyncMock()
-    mock_client.post.return_value = login_resp
-    mock_client.get.return_value = cert_resp
-
-    mock_cls = MagicMock()
-    mock_cls.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
-    return mock_cls
 
 
 # ---------------------------------------------------------------------------
@@ -68,155 +43,158 @@ def make_mock_httpx_cls(
 # ---------------------------------------------------------------------------
 
 
-async def test_login_returns_private_credentials_with_correct_fields() -> None:
+@respx.mock
+async def test_login_success() -> None:
     """login() returns PrivateCredentials with all fields correctly mapped."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        creds = await login("test@example.com", "mypassword")
+    respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    respx.get(CERT_URL).respond(json=CERT_OK)
 
-    assert isinstance(creds, PrivateCredentials)
-    assert creds.certificate_account == "mqtt_user"
-    assert creds.certificate_password == "mqtt_pass"
-    assert creds.user_id == "user123"
+    creds = await login("user@example.com", "mypassword")
 
-
-# ---------------------------------------------------------------------------
-# Test 2 — POSTs to URL containing 'api.ecoflow.com/auth/login'
-# ---------------------------------------------------------------------------
-
-
-async def test_login_posts_to_correct_url() -> None:
-    """POST is made to the EcoFlow private auth endpoint."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        await login("test@example.com", "mypassword")
-
-    mock_client = mock_cls.return_value.__aenter__.return_value
-    call_args = mock_client.post.call_args
-    url = call_args.args[0]
-    assert "api.ecoflow.com/auth/login" in url
+    assert creds == PrivateCredentials(
+        certificate_account="app-abc123",
+        certificate_password="certpass",
+        user_id="42",
+    )
 
 
 # ---------------------------------------------------------------------------
-# Test 3 — Sends email and base64-encoded password in JSON body
+# Test 2 — Non-zero code raises EcoFlowAuthError
 # ---------------------------------------------------------------------------
 
 
-async def test_login_sends_base64_encoded_password_in_json_body() -> None:
-    """Email is sent as-is; password is base64-encoded before sending."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        await login("user@example.com", "secret123")
+@respx.mock
+async def test_login_wrong_password_raises() -> None:
+    """Non-zero code in login response raises EcoFlowAuthError."""
+    respx.post(LOGIN_URL).respond(json={"code": "1000", "message": "wrong password"})
 
-    mock_client = mock_cls.return_value.__aenter__.return_value
-    call_args = mock_client.post.call_args
-    sent_json = call_args.kwargs.get("json")
-    expected_b64 = base64.b64encode(b"secret123").decode()
-    assert sent_json is not None
-    assert sent_json["email"] == "user@example.com"
-    assert sent_json["password"] == expected_b64  # base64-encoded, not plain text
+    with pytest.raises(EcoFlowAuthError):
+        await login("user@example.com", "wrongpass")
 
 
 # ---------------------------------------------------------------------------
-# Test 4 — Sends required extra fields: scene and userType
+# Test 3 — Password is base64-encoded in POST body
 # ---------------------------------------------------------------------------
 
 
-async def test_login_sends_scene_and_user_type() -> None:
-    """scene='IOT_APP' and userType='ECOFLOW' are included in the JSON body."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        await login("user@example.com", "secret123")
+@respx.mock
+async def test_login_password_is_base64_encoded() -> None:
+    """Password is base64-encoded before being sent — never plain text."""
+    post_route = respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    respx.get(CERT_URL).respond(json=CERT_OK)
 
-    mock_client = mock_cls.return_value.__aenter__.return_value
-    call_args = mock_client.post.call_args
-    sent_json = call_args.kwargs.get("json")
-    assert sent_json is not None
-    assert sent_json["scene"] == "IOT_APP"
-    assert sent_json["userType"] == "ECOFLOW"
+    await login("user@example.com", "mypassword")
 
-
-# ---------------------------------------------------------------------------
-# Test 5 — Non-zero code raises EcoFlowAuthError with message text
-# ---------------------------------------------------------------------------
-
-
-async def test_login_raises_auth_error_on_non_zero_code() -> None:
-    """Non-zero code raises EcoFlowAuthError containing the API's message."""
-    error_response = {"code": "1", "message": "Invalid credentials"}
-    mock_cls = make_mock_httpx_cls(error_response)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        with pytest.raises(EcoFlowAuthError, match="Invalid credentials"):
-            await login("bad@example.com", "wrongpass")
+    body = json.loads(post_route.calls.last.request.content)
+    expected_b64 = base64.b64encode(b"mypassword").decode()
+    assert body["password"] == expected_b64
 
 
 # ---------------------------------------------------------------------------
-# Test 6 — Makes two HTTP calls: POST login, then GET certification
+# Test 4 — scene and userType required fields are present in POST body
 # ---------------------------------------------------------------------------
 
 
+@respx.mock
+async def test_login_sends_required_fields() -> None:
+    """scene='IOT_APP' and userType='ECOFLOW' are sent in the login POST body."""
+    post_route = respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    respx.get(CERT_URL).respond(json=CERT_OK)
+
+    await login("user@example.com", "mypassword")
+
+    body = json.loads(post_route.calls.last.request.content)
+    assert body["scene"] == "IOT_APP"
+    assert body["userType"] == "ECOFLOW"
+
+
+# ---------------------------------------------------------------------------
+# Test 5 — Two HTTP calls: POST to /auth/login, GET to /certification
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
 async def test_login_makes_two_http_calls() -> None:
-    """login() makes POST to /auth/login and GET to /iot-auth/app/certification."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        await login("user@example.com", "secret123")
+    """login() makes exactly one POST and one GET to the expected endpoints."""
+    post_route = respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    get_route = respx.get(CERT_URL).respond(json=CERT_OK)
 
-    mock_client = mock_cls.return_value.__aenter__.return_value
-    assert mock_client.post.call_count == 1, "Expected one POST call"
-    assert mock_client.get.call_count == 1, "Expected one GET call (certification)"
+    await login("user@example.com", "mypassword")
 
-    post_url = mock_client.post.call_args.args[0]
-    get_url = mock_client.get.call_args.args[0]
-    assert "auth/login" in post_url
-    assert "iot-auth/app/certification" in get_url
+    assert post_route.call_count == 1, "Expected one POST to /auth/login"
+    assert get_route.call_count == 1, "Expected one GET to /certification"
 
 
 # ---------------------------------------------------------------------------
-# Test 7 — Bearer token from login is forwarded to certification call
+# Test 6 — Bearer token forwarded to certification call
 # ---------------------------------------------------------------------------
 
 
-async def test_login_forwards_token_to_certification_call() -> None:
-    """The token from the login response is sent as Bearer in the cert call."""
-    mock_cls = make_mock_httpx_cls(LOGIN_RESPONSE)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        await login("user@example.com", "secret123")
+@respx.mock
+async def test_login_forwards_bearer_token_to_cert_call() -> None:
+    """Token from login response appears as 'Bearer <token>' in cert GET headers."""
+    respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    get_route = respx.get(CERT_URL).respond(json=CERT_OK)
 
-    mock_client = mock_cls.return_value.__aenter__.return_value
-    get_call = mock_client.get.call_args
-    headers = get_call.kwargs.get("headers", {})
-    assert "authorization" in headers
-    assert headers["authorization"] == "Bearer test_token_abc123"
+    await login("user@example.com", "mypassword")
+
+    headers = dict(get_route.calls.last.request.headers)
+    assert headers.get("authorization") == "Bearer tok123"
 
 
 # ---------------------------------------------------------------------------
-# Test 8 — Integer code=0 is accepted as success
+# Test 7 — userId sent in cert GET request body (form-encoded)
+# QUIRK: EcoFlow cert endpoint expects userId in GET body — not as query param.
+# Source: tolwi/hassio-ecoflow-cloud private_api.py (aiohttp data={"userId": ...})
 # ---------------------------------------------------------------------------
 
 
+@respx.mock
+async def test_cert_sends_user_id_in_request_body() -> None:
+    """userId (from login) is sent in the cert GET body as form-encoded data."""
+    respx.post(LOGIN_URL).respond(json=LOGIN_OK)
+    get_route = respx.get(CERT_URL).respond(json=CERT_OK)
+
+    await login("user@example.com", "mypassword")
+
+    cert_request = get_route.calls.last.request
+    body = dict(urllib.parse.parse_qsl(cert_request.content.decode()))
+    assert body.get("userId") == "42", (
+        f"Expected userId='42' in cert GET body; got body={body!r}. "
+        "EcoFlow cert endpoint requires userId in form-encoded body."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 8 — Integer code=0 is accepted; userId coerced to string
+# ---------------------------------------------------------------------------
+
+
+@respx.mock
 async def test_login_accepts_integer_zero_code_as_success() -> None:
-    """An integer 0 code (not the string '0') is treated as success."""
-    response_int_code = {
-        "code": 0,  # integer, not string
+    """Integer 0 code is accepted as success; integer userId is coerced to str."""
+    login_int_code = {
+        "code": 0,
         "data": {
             "token": "tok",
-            "user": {"userId": 99},  # also integer — must be coerced to str
+            "user": {"userId": 99},
         },
     }
-    mock_cls = make_mock_httpx_cls(response_int_code)
-    with patch("ecoflow.private.auth.httpx.AsyncClient", mock_cls):
-        creds = await login("test@example.com", "password")
+    respx.post(LOGIN_URL).respond(json=login_int_code)
+    respx.get(CERT_URL).respond(json=CERT_OK)
 
-    assert creds.user_id == "99"  # coerced to string
+    creds = await login("test@example.com", "password")
+
+    assert creds.user_id == "99"
 
 
 # ---------------------------------------------------------------------------
-# Test 9 — PrivateCredentials is frozen
+# Test 9 — PrivateCredentials is frozen (immutable)
 # ---------------------------------------------------------------------------
 
 
 def test_private_credentials_is_frozen() -> None:
-    """Assigning to any field of PrivateCredentials raises AttributeError or TypeError."""  # noqa: E501
+    """Assigning to any field of PrivateCredentials raises an error."""
     creds = PrivateCredentials(
         certificate_account="user",
         certificate_password="pass",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -10,9 +11,9 @@ import httpx
 
 from ecoflow.exceptions import EcoFlowAuthError
 
+_LOGGER = logging.getLogger(__name__)
 _LOGIN_URL = "https://api.ecoflow.com/auth/login"
 _CERT_URL = "https://api.ecoflow.com/iot-auth/app/certification"
-_HEADERS = {"lang": "en_US", "country": "US"}
 _TIMEOUT = 30.0
 
 
@@ -26,12 +27,16 @@ class PrivateCredentials:
 
 
 async def login(email: str, password: str) -> PrivateCredentials:
-    """Authenticate with the private EcoFlow API using email and password.
+    """Authenticate with EcoFlow private API using app email and password.
 
-    QUIRK: Password must be base64-encoded before sending (not MD5, not plain text).
-    Confirmed from tolwi/hassio-ecoflow-cloud source (MIT licensed).
-    Two-step auth: POST /auth/login → get token, then GET /iot-auth/app/certification
-    → get MQTT credentials (certificateAccount, certificatePassword).
+    Two-step flow matching tolwi/hassio-ecoflow-cloud implementation:
+    1. POST /auth/login with base64-encoded password → token + userId
+    2. GET  /iot-auth/app/certification with Bearer token + userId body → MQTT creds
+
+    QUIRK: Password must be base64-encoded before sending — NOT plain text.
+    QUIRK: scene="IOT_APP" and userType="ECOFLOW" are required in the login body.
+    QUIRK: userId must be sent as form-encoded body in the GET certification call.
+    Source: tolwi/hassio-ecoflow-cloud private_api.py (MIT licence).
 
     Args:
         email: EcoFlow account email address.
@@ -44,23 +49,26 @@ async def login(email: str, password: str) -> PrivateCredentials:
         EcoFlowAuthError: if the API returns a non-zero code or required
             fields are missing from the response.
     """
-    encoded_password = base64.b64encode(password.encode()).decode()
+    b64_password = base64.b64encode(password.encode()).decode()
+
     async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-        # Step 1: Login to get auth token
-        login_response = await client.post(
+        # Step 1: Login → get token + userId
+        login_resp = await client.post(
             _LOGIN_URL,
             json={
                 "email": email,
-                "password": encoded_password,
+                "password": b64_password,
                 "scene": "IOT_APP",
                 "userType": "ECOFLOW",
             },
-            headers=_HEADERS,
+            headers={"lang": "en_US", "content-type": "application/json"},
         )
-        login_body: dict[str, Any] = login_response.json()
+        login_body: dict[str, Any] = login_resp.json()
 
         if str(login_body.get("code", "-1")) != "0":
-            raise EcoFlowAuthError(str(login_body.get("message", "login failed")))
+            raise EcoFlowAuthError(
+                f"EcoFlow login failed: {login_body.get('message', 'unknown error')}"
+            )
 
         try:
             login_data: dict[str, Any] = login_body["data"]
@@ -69,17 +77,27 @@ async def login(email: str, password: str) -> PrivateCredentials:
         except KeyError as exc:
             raise EcoFlowAuthError(f"missing field in login response: {exc}") from exc
 
-        # Step 2: Get MQTT certification credentials
-        cert_response = await client.get(
+        _LOGGER.debug("Logged in as user_id=%s", user_id)
+
+        # Step 2: Get MQTT credentials using the token.
+        # QUIRK: EcoFlow cert endpoint expects userId in the GET body (form-encoded),
+        # matching the aiohttp data= pattern from tolwi/hassio-ecoflow-cloud.
+        # httpx.AsyncClient.get() does not accept a body; use .request() instead.
+        cert_resp = await client.request(
+            "GET",
             _CERT_URL,
-            headers={**_HEADERS, "authorization": f"Bearer {token}"},
+            data={"userId": user_id},
+            headers={
+                "lang": "en_US",
+                "authorization": f"Bearer {token}",
+                "content-type": "application/json",
+            },
         )
-        cert_body: dict[str, Any] = cert_response.json()
+        cert_body: dict[str, Any] = cert_resp.json()
 
         if str(cert_body.get("code", "-1")) != "0":
-            raise EcoFlowAuthError(
-                str(cert_body.get("message", "certification failed"))
-            )
+            msg = cert_body.get("message", "unknown error")
+            raise EcoFlowAuthError(f"MQTT certification failed: {msg}")
 
         try:
             cert_data: dict[str, Any] = cert_body["data"]
