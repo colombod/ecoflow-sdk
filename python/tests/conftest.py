@@ -57,3 +57,41 @@ def pytest_collection_modifyitems(
         for item in items:
             if item.get_closest_marker("write_integration"):
                 item.add_marker(skip)
+
+
+# ---------------------------------------------------------------------------
+# Private API credential helpers (Wave 3)
+# ---------------------------------------------------------------------------
+
+
+def get_private_email() -> str:
+    """Return ECOFLOW_EMAIL from tests/.env, or skip the test."""
+    import os
+    email = os.getenv("ECOFLOW_EMAIL", "")
+    if not email:
+        pytest.skip(
+            "ECOFLOW_EMAIL not set in tests/.env — skipping private API test"
+        )
+    return email
+
+
+def get_private_password() -> str:
+    """Return ECOFLOW_PASSWORD from tests/.env, or skip the test."""
+    import os
+    password = os.getenv("ECOFLOW_PASSWORD", "")
+    if not password:
+        pytest.skip(
+            "ECOFLOW_PASSWORD not set in tests/.env — skipping private API test"
+        )
+    return password
+
+
+def get_wave3_sn() -> str:
+    """Return ECOFLOW_WAVE3_SN from tests/.env, or skip the test."""
+    import os
+    sn = os.getenv("ECOFLOW_WAVE3_SN", "")
+    if not sn:
+        pytest.skip(
+            "ECOFLOW_WAVE3_SN not set in tests/.env — skipping private API test"
+        )
+    return sn
