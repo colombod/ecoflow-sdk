@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import uuid as _uuid
 from collections.abc import AsyncGenerator
 from types import TracebackType
 from typing import Any
@@ -98,13 +99,21 @@ class EcoFlowClient:
         await self._discover()
         try:
             mqtt_data = await self._rest.get_mqtt_credentials()
+            # QUIRK: EcoFlow public API /certification does not return a clientId field.
+            # An empty client_id causes MQTT error 135 (Not Authorized) on mqtt-e.ecoflow.com.
+            # We generate a UUID-based client ID matching the private API convention.
+            # Confirmed broken 2026-05-31 during STREAM relay investigation.
+            _account = mqtt_data.get("certificateAccount", "")
+            client_id = mqtt_data.get("clientId") or (
+                f"ANDROID_{_uuid.uuid4().hex.upper()}_{_account}"
+            )
             mqtt_creds = MqttCredentials(
                 url=mqtt_data.get("url", "mqtt.ecoflow.com"),
                 port=int(mqtt_data.get("port", 8883)),
                 protocol=mqtt_data.get("protocol", "mqtts"),
                 username=mqtt_data.get("certificateAccount", ""),
                 password=mqtt_data.get("certificatePassword", ""),
-                client_id=mqtt_data.get("clientId", ""),
+                client_id=client_id,
                 # API returns certificateAccount, not userId
                 user_id=mqtt_data.get("certificateAccount", ""),
             )
