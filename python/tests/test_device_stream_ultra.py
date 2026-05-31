@@ -28,7 +28,7 @@ def make_stream_ultra(product_name: str = "STREAM Ultra"):  # type: ignore[retur
     rest = MagicMock()
     rest.get_quota = AsyncMock(return_value=_QUOTA_PAYLOAD)
     return StreamUltraDevice(
-        sn="BK11ZK1B2H5S1478", product_name=product_name, rest=rest
+        sn="BK11TESTSN000001", product_name=product_name, rest=rest
     )
 
 
@@ -114,7 +114,7 @@ def test_stream_ultra_handle_message_updates_status() -> None:
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     device = make_stream_ultra()
-    device._handle_message("BK11ZK1B2H5S1478", _QUOTA_PAYLOAD)  # pyright: ignore[reportPrivateUsage]
+    device._handle_message("BK11TESTSN000001", _QUOTA_PAYLOAD)  # pyright: ignore[reportPrivateUsage]
     assert isinstance(device.status, StreamUltraStatus)
     assert device.status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
 
@@ -155,7 +155,7 @@ async def test_stream_ultra_set_relay2_on() -> None:
         await device.set_relay2(on=True)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgRelay2Onoff": True},
@@ -171,7 +171,7 @@ async def test_stream_ultra_set_relay2_off() -> None:
         await device.set_relay2(on=False)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgRelay2Onoff": False},
@@ -187,7 +187,7 @@ async def test_stream_ultra_set_relay3_on() -> None:
         await device.set_relay3(on=True)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgRelay3Onoff": True},
@@ -203,7 +203,7 @@ async def test_stream_ultra_set_grid_export_enabled() -> None:
         await device.set_grid_export(enabled=True)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgFeedGridMode": 2},
@@ -219,7 +219,7 @@ async def test_stream_ultra_set_grid_export_disabled() -> None:
         await device.set_grid_export(enabled=False)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgFeedGridMode": 1},
@@ -235,7 +235,7 @@ async def test_stream_ultra_set_backup_reserve_valid() -> None:
         await device.set_backup_reserve(soc_pct=20)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {"cfgBackupReverseSoc": 20},
@@ -267,7 +267,7 @@ async def test_stream_ultra_set_self_powered_mode_enabled() -> None:
         await device.set_self_powered_mode(enabled=True)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {
@@ -285,7 +285,7 @@ async def test_stream_ultra_set_ai_schedule_mode_enabled() -> None:
         await device.set_ai_schedule_mode(enabled=True)
     mock_pub.assert_called_once_with(
         {
-            "sn": "BK11ZK1B2H5S1478",
+            "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
             "params": {
@@ -314,7 +314,7 @@ async def test_stream_ac_pro_refresh_returns_status() -> None:
     rest = MagicMock()
     rest.get_quota = AsyncMock(return_value=_QUOTA_PAYLOAD)
     device = StreamAcProDevice(
-        sn="BK31ZK1A4H4R0224", product_name="STREAM AC Pro", rest=rest
+        sn="BK31TESTSN000001", product_name="STREAM AC Pro", rest=rest
     )
     status = await device.refresh()
     assert isinstance(status, StreamUltraStatus)
