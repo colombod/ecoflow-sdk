@@ -128,6 +128,11 @@ class TestTopLevelExports:
 
         assert ecoflow.__version__ == "0.2.0"
 
+    def test_wave3_connection_importable(self) -> None:
+        from ecoflow import Wave3Connection
+
+        assert Wave3Connection.__name__ == "Wave3Connection"
+
     def test_all_list_contains_expected_symbols(self) -> None:
         import ecoflow
 
@@ -156,6 +161,7 @@ class TestTopLevelExports:
             "Wave3Device",
             "SmartHomePanelDevice",
             "DiscoveredDevice",
+            "Wave3Connection",
         }
         actual = set(ecoflow.__all__)
         missing = expected - actual
