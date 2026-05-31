@@ -10,9 +10,9 @@ Usage:
     async with Wave3Connection(
         email="me@example.com",
         password="my_password",
-        device_sns=["AC71ZK1APJ410297"],
+        device_sns=["AC71XXXXXXXXXX"],
     ) as wave3:
-        device = wave3.devices["AC71ZK1APJ410297"]
+        device = wave3.devices["AC71XXXXXXXXXX"]
         await asyncio.sleep(5)   # wait for first MQTT push
         print(device.status.battery_soc)
 """

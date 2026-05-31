@@ -22,17 +22,17 @@ def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]
 
 
 # ---------------------------------------------------------------------------
-# Vector-based test (real MQTT data from BK21Z1BB7H414753)
+# Vector-based test (real MQTT data from BK21XXXXXXXXXX)
 # ---------------------------------------------------------------------------
 
 
 def test_smart_meter_from_quota_vector() -> None:
     """SmartMeterData.from_quota_payload maps the real MQTT vector to expected fields.
 
-    Real data from live device BK21Z1BB7H414753, confirmed 2026-05-29.
+    Real data from live device BK21XXXXXXXXXX, confirmed 2026-05-29.
     """
     payload, expected = load_vector("smart_meter", "payload_status")
-    meter = SmartMeterData.from_quota_payload("BK21Z1BB7H414753", payload)
+    meter = SmartMeterData.from_quota_payload("BK21TESTSN000001", payload)
 
     assert meter.grid_power_watts == pytest.approx(expected["grid_power_watts"])  # pyright: ignore[reportUnknownMemberType]
     assert meter.grid_status == expected["grid_status"]

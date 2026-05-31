@@ -3,10 +3,37 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 
 from ecoflow.models.wave3 import Wave3Mode, Wave3Status
+
+# ---------------------------------------------------------------------------
+# Real device payload fixtures (from live E2E against AC71 series, 2026-05-31)
+# ---------------------------------------------------------------------------
+
+# Real Wave3 active state payload (from live E2E against AC71 series, 2026-05-31)
+ACTIVE_PAYLOAD: dict[str, Any] = {
+    "wave_operating_mode": 1,  # COOLING
+    "dev_sleep_state": 0,  # awake
+    "bms_batt_soc": 84.80,
+    "temp_ambient": 20.78,
+    "temp_indoor_supply_air": 18.74,
+    "current_temp_set": 25.0,  # extracted by decoder from wave_mode_info
+    "current_airflow_speed": 60,
+    "current_submode": 0,
+    "pow_get_ac": 34.0,
+    "pow_in_sum_w": 34.0,
+    "condensate_water_level": 0.0,
+}
+
+# Standby state (partial update — only a few fields reported)
+STANDBY_PAYLOAD: dict[str, Any] = {
+    "wave_operating_mode": 0,  # NONE
+    "dev_sleep_state": 1,  # sleeping
+    "pow_get_ac": 1.54,
+}
 
 
 class TestWave3ModeEnum:
@@ -207,3 +234,61 @@ class TestFromMqttPayload:
         assert status.self_consume_watts == pytest.approx(50.0)
         assert status.water_level == 30
         assert status.updated_at is not None
+
+
+class TestRealDevicePayloads:
+    """Tests using real E2E device observations (2026-05-31, AC71 series).
+
+    ACTIVE_PAYLOAD: Wave 3 actively cooling — 396-byte heartbeat, cmd_id=21.
+    STANDBY_PAYLOAD: Wave 3 idle — 48-byte partial update with only power fields.
+    """
+
+    def test_active_payload_is_on(self) -> None:
+        """Active: dev_sleep_state=0 + wave_operating_mode=1 → is_on=True."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.is_on is True
+
+    def test_active_payload_mode_is_cooling(self) -> None:
+        """wave_operating_mode=1 → Wave3Mode.COOLING."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.mode == Wave3Mode.COOLING
+
+    def test_active_payload_battery_soc(self) -> None:
+        """bms_batt_soc=84.80 from live device."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.battery_soc == pytest.approx(84.80, abs=0.01)
+
+    def test_active_payload_ambient_temp(self) -> None:
+        """temp_ambient=20.78 °C from live device."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.ambient_temp == pytest.approx(20.78, abs=0.01)
+
+    def test_active_payload_target_temp(self) -> None:
+        """current_temp_set=25.0 °C (extracted from wave_mode_info by decoder)."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.target_temp == pytest.approx(25.0, abs=0.01)
+
+    def test_active_payload_fan_level(self) -> None:
+        """current_airflow_speed=60 (raw) → fan_level=3."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.fan_level == 3
+
+    def test_active_payload_ac_power_watts(self) -> None:
+        """pow_get_ac=34.0 W from live device cooling state."""
+        status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
+        assert status.ac_power_watts == pytest.approx(34.0, abs=0.1)
+
+    def test_standby_payload_is_off(self) -> None:
+        """Standby: dev_sleep_state=1 → is_on=False."""
+        status = Wave3Status.from_mqtt_payload(STANDBY_PAYLOAD)
+        assert status.is_on is False
+
+    def test_standby_payload_mode_is_none(self) -> None:
+        """Standby: wave_operating_mode=0 → Wave3Mode.NONE."""
+        status = Wave3Status.from_mqtt_payload(STANDBY_PAYLOAD)
+        assert status.mode == Wave3Mode.NONE
+
+    def test_standby_payload_ac_power_standby_draw(self) -> None:
+        """Standby draw: ~1.54 W AC power even when not cooling."""
+        status = Wave3Status.from_mqtt_payload(STANDBY_PAYLOAD)
+        assert status.ac_power_watts == pytest.approx(1.54, abs=0.1)
