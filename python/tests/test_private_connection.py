@@ -36,7 +36,7 @@ def _make_conn(*sns: str) -> Wave3Connection:
 
 async def _fake_run(conn: Wave3Connection, creds: PrivateCredentials) -> None:
     """Simulate a _run() that immediately signals ready and then waits."""
-    conn._ready.set()
+    conn._ready.set()  # pyright: ignore[reportPrivateUsage]
     await asyncio.sleep(100)  # block until cancelled
 
 
@@ -104,7 +104,7 @@ async def test_connect_creates_wave3_device_instances() -> None:
     assert isinstance(device, Wave3Device)
     assert device.sn == "AC71TEST001"
     assert device.product_name == "Wave 3"
-    assert device._rest is None  # private API — no REST transport
+    assert device._rest is None  # pyright: ignore[reportPrivateUsage]
 
     await conn.close()
 
@@ -135,7 +135,7 @@ async def test_close_cancels_background_task() -> None:
     with p_login, p_run:
         await conn.connect()
 
-    task = conn._task
+    task = conn._task  # pyright: ignore[reportPrivateUsage]
     assert task is not None
     assert not task.done()
 
@@ -171,7 +171,7 @@ async def test_context_manager_calls_connect_and_close() -> None:
             assert "AC71TEST001" in conn.devices
 
     # After exiting the context, task should be done
-    assert conn._task is None or conn._task.done()
+    assert conn._task is None or conn._task.done()  # pyright: ignore[reportPrivateUsage]
 
 
 async def test_context_manager_returns_self() -> None:
@@ -221,7 +221,7 @@ async def test_connect_stores_user_id() -> None:
     with p_login, p_run:
         await conn.connect()
 
-    assert conn._user_id == FAKE_CREDS.user_id  # "987654"
+    assert conn._user_id == FAKE_CREDS.user_id  # pyright: ignore[reportPrivateUsage]
 
     await conn.close()
 
@@ -283,7 +283,7 @@ async def test_run_publishes_get_trigger_after_subscribe() -> None:
     )
 
     with patch("ecoflow.private.connection.aiomqtt.Client", return_value=mock_cm):
-        task = asyncio.create_task(conn._run(creds))
+        task = asyncio.create_task(conn._run(creds))  # pyright: ignore[reportPrivateUsage]
         await asyncio.sleep(0.05)  # let _run() reach subscribe + GET publish
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)
@@ -325,7 +325,7 @@ async def test_run_publishes_get_trigger_for_each_device() -> None:
     )
 
     with patch("ecoflow.private.connection.aiomqtt.Client", return_value=mock_cm):
-        task = asyncio.create_task(conn._run(creds))
+        task = asyncio.create_task(conn._run(creds))  # pyright: ignore[reportPrivateUsage]
         await asyncio.sleep(0.05)
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)

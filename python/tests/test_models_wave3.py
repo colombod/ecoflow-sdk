@@ -20,14 +20,14 @@ def test_wave3_mode_enum_values() -> None:
 def test_wave3_status_default_target_temp() -> None:
     """Wave3Status default target_temp is 22.0."""
     status = Wave3Status(sn="AC71TEST")
-    assert status.target_temp == pytest.approx(22.0)
+    assert status.target_temp == pytest.approx(22.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_wave3_defaults_when_empty() -> None:
     """Wave3Status.from_mqtt_payload applies correct defaults for missing fields."""
     status = Wave3Status.from_mqtt_payload({})
     assert status.online is True
-    assert status.target_temp == pytest.approx(22.0)
+    assert status.target_temp == pytest.approx(22.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 def test_wave3_mode_str_format() -> None:

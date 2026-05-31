@@ -59,8 +59,8 @@ async def test_wave3_private_connects() -> None:
     await conn.connect()
 
     assert sn in conn.devices
-    assert conn._task is not None
-    assert not conn._task.done()
+    assert conn._task is not None  # pyright: ignore[reportPrivateUsage]
+    assert not conn._task.done()  # pyright: ignore[reportPrivateUsage]
 
     await conn.close()
 

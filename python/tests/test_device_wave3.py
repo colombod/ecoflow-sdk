@@ -30,7 +30,7 @@ async def test_wave3_refresh_returns_status() -> None:
     status = await device.refresh()
     assert isinstance(status, Wave3Status)
     assert status.is_on is True
-    assert status.target_temp == pytest.approx(24.0)
+    assert status.target_temp == pytest.approx(24.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 @pytest.mark.asyncio

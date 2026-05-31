@@ -131,12 +131,12 @@ class TestTemperatureFields:
     def test_target_temp_from_payload_is_native_float(self) -> None:
         """24.0 in proto payload → 24.0 in status (no ×10 conversion)."""
         status = Wave3Status.from_mqtt_payload({"current_temp_set": 24.0})
-        assert status.target_temp == pytest.approx(24.0)
+        assert status.target_temp == pytest.approx(24.0)  # pyright: ignore[reportUnknownMemberType]
 
     def test_target_temp_not_divided_by_10(self) -> None:
         """Regression guard: proto sends 24.0 directly, not 240 requiring ÷10."""
         status = Wave3Status.from_mqtt_payload({"current_temp_set": 240.0})
-        assert status.target_temp == pytest.approx(240.0)
+        assert status.target_temp == pytest.approx(240.0)  # pyright: ignore[reportUnknownMemberType]
 
 
 class TestFromMqttPayload:
@@ -148,7 +148,7 @@ class TestFromMqttPayload:
 
     def test_empty_payload_returns_default_target_temp(self) -> None:
         status = Wave3Status.from_mqtt_payload({})
-        assert status.target_temp == pytest.approx(22.0)
+        assert status.target_temp == pytest.approx(22.0)  # pyright: ignore[reportUnknownMemberType]
 
     def test_sets_sn_from_payload(self) -> None:
         status = Wave3Status.from_mqtt_payload({"sn": "AC71XTEST"})
@@ -205,33 +205,33 @@ class TestFromMqttPayload:
         assert status.online is True
         assert status.is_on is True
         assert status.mode == Wave3Mode.COOLING
-        assert status.target_temp == pytest.approx(22.5)
-        assert status.target_temp_high == pytest.approx(25.0)
-        assert status.target_temp_low == pytest.approx(19.0)
-        assert status.ambient_temp == pytest.approx(28.3)
-        assert status.supply_air_temp == pytest.approx(14.0)
-        assert status.condenser_temp == pytest.approx(45.0)
-        assert status.evaporator_temp == pytest.approx(10.0)
-        assert status.outdoor_temp == pytest.approx(30.0)
-        assert status.compressor_discharge_temp == pytest.approx(65.0)
+        assert status.target_temp == pytest.approx(22.5)  # pyright: ignore[reportUnknownMemberType]
+        assert status.target_temp_high == pytest.approx(25.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.target_temp_low == pytest.approx(19.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.ambient_temp == pytest.approx(28.3)  # pyright: ignore[reportUnknownMemberType]
+        assert status.supply_air_temp == pytest.approx(14.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.condenser_temp == pytest.approx(45.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.evaporator_temp == pytest.approx(10.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.outdoor_temp == pytest.approx(30.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.compressor_discharge_temp == pytest.approx(65.0)  # pyright: ignore[reportUnknownMemberType]
         assert status.airflow_speed == 60
         assert status.fan_level == 3
         assert status.submode == 2
-        assert status.ambient_humidity == pytest.approx(65.0)
-        assert status.target_humidity == pytest.approx(50.0)
-        assert status.battery_soc == pytest.approx(80.0)
-        assert status.system_soc == pytest.approx(75.0)
+        assert status.ambient_humidity == pytest.approx(65.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.target_humidity == pytest.approx(50.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.battery_soc == pytest.approx(80.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.system_soc == pytest.approx(75.0)  # pyright: ignore[reportUnknownMemberType]
         assert status.bms_discharge_time_min == 120
         assert status.bms_charge_time_min == 60
         assert status.discharge_time_min == 100
         assert status.charge_time_min == 90
-        assert status.input_power_watts == pytest.approx(1200.0)
-        assert status.output_power_watts == pytest.approx(1100.0)
-        assert status.ac_power_watts == pytest.approx(1000.0)
-        assert status.ac_input_power_watts == pytest.approx(500.0)
-        assert status.battery_power_watts == pytest.approx(300.0)
-        assert status.pv_power_watts == pytest.approx(400.0)
-        assert status.self_consume_watts == pytest.approx(50.0)
+        assert status.input_power_watts == pytest.approx(1200.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.output_power_watts == pytest.approx(1100.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.ac_power_watts == pytest.approx(1000.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.ac_input_power_watts == pytest.approx(500.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.battery_power_watts == pytest.approx(300.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.pv_power_watts == pytest.approx(400.0)  # pyright: ignore[reportUnknownMemberType]
+        assert status.self_consume_watts == pytest.approx(50.0)  # pyright: ignore[reportUnknownMemberType]
         assert status.water_level == 30
         assert status.updated_at is not None
 
@@ -256,17 +256,17 @@ class TestRealDevicePayloads:
     def test_active_payload_battery_soc(self) -> None:
         """bms_batt_soc=84.80 from live device."""
         status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
-        assert status.battery_soc == pytest.approx(84.80, abs=0.01)
+        assert status.battery_soc == pytest.approx(84.80, abs=0.01)  # pyright: ignore[reportUnknownMemberType]
 
     def test_active_payload_ambient_temp(self) -> None:
         """temp_ambient=20.78 °C from live device."""
         status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
-        assert status.ambient_temp == pytest.approx(20.78, abs=0.01)
+        assert status.ambient_temp == pytest.approx(20.78, abs=0.01)  # pyright: ignore[reportUnknownMemberType]
 
     def test_active_payload_target_temp(self) -> None:
         """current_temp_set=25.0 °C (extracted from wave_mode_info by decoder)."""
         status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
-        assert status.target_temp == pytest.approx(25.0, abs=0.01)
+        assert status.target_temp == pytest.approx(25.0, abs=0.01)  # pyright: ignore[reportUnknownMemberType]
 
     def test_active_payload_fan_level(self) -> None:
         """current_airflow_speed=60 (raw) → fan_level=3."""
@@ -276,7 +276,7 @@ class TestRealDevicePayloads:
     def test_active_payload_ac_power_watts(self) -> None:
         """pow_get_ac=34.0 W from live device cooling state."""
         status = Wave3Status.from_mqtt_payload(ACTIVE_PAYLOAD)
-        assert status.ac_power_watts == pytest.approx(34.0, abs=0.1)
+        assert status.ac_power_watts == pytest.approx(34.0, abs=0.1)  # pyright: ignore[reportUnknownMemberType]
 
     def test_standby_payload_is_off(self) -> None:
         """Standby: dev_sleep_state=1 → is_on=False."""
@@ -291,4 +291,4 @@ class TestRealDevicePayloads:
     def test_standby_payload_ac_power_standby_draw(self) -> None:
         """Standby draw: ~1.54 W AC power even when not cooling."""
         status = Wave3Status.from_mqtt_payload(STANDBY_PAYLOAD)
-        assert status.ac_power_watts == pytest.approx(1.54, abs=0.1)
+        assert status.ac_power_watts == pytest.approx(1.54, abs=0.1)  # pyright: ignore[reportUnknownMemberType]

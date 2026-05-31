@@ -177,7 +177,7 @@ class Wave3Connection:
             if sn in self.devices:
                 data = decode(bytes(message.payload))
                 if data:
-                    self.devices[sn]._handle_message(sn, data)
+                    self.devices[sn]._handle_message(sn, data)  # pyright: ignore[reportPrivateUsage]
 
     async def _publish_loop(self, client: aiomqtt.Client, user_id: str) -> None:
         while True:
