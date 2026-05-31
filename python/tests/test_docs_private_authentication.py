@@ -3,10 +3,10 @@
 import re
 from pathlib import Path
 
-# The doc lives in the outer repo's docs/api/ directory.
-# From ecoflow-python/python/tests/ we need to go up 4 levels to reach the repo root.
+# The doc ships with the library at python/docs/api/ inside the repo.
+# From tests/ go up 2 levels to reach the python/ directory.
 DOC_PATH = (
-    Path(__file__).parent.parent.parent.parent
+    Path(__file__).parent.parent
     / "docs"
     / "api"
     / "private-authentication.md"
