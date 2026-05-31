@@ -1,20 +1,24 @@
 """Raw MQTT diagnostic — uses the EXACT same auth and topic as Wave3Connection.
 Prints every byte that arrives on the subscription topic.
 """
+
 import asyncio, os, sys, ssl, uuid
+
 sys.path.insert(0, "src")
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv(Path("tests/.env"))
+
 
 async def main():
     from ecoflow.private.auth import login
     from ecoflow.private.proto.decoder import decode
     import aiomqtt
 
-    email    = os.environ["ECOFLOW_EMAIL"]
+    email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn       = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
+    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
 
     print(f"=== RAW MQTT DIAGNOSTIC for {sn} ===")
     print("Step 1: Authenticating...")
@@ -24,7 +28,7 @@ async def main():
     print(f"  cert_password len   : {len(creds.certificate_password)} chars")
 
     client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
-    topic     = f"/app/device/property/{sn}"
+    topic = f"/app/device/property/{sn}"
     print(f"\nStep 2: Connecting to mqtt.ecoflow.com:8883")
     print(f"  client_id : {client_id}")
     print(f"  topic     : {topic}")
@@ -71,5 +75,6 @@ async def main():
         print("  - Device is either offline, or EcoFlow cloud doesn't push")
         print("    unsolicited heartbeats to this topic")
         print("  => The device may need a GET request to trigger a push")
+
 
 asyncio.run(main())

@@ -1,16 +1,20 @@
 """Check if device SN is visible on this EcoFlow account via REST API."""
+
 import asyncio, os, sys, base64
+
 sys.path.insert(0, "src")
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv(Path("tests/.env"))
+
 
 async def main():
     import httpx
 
-    email    = os.environ["ECOFLOW_EMAIL"]
+    email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn       = os.environ.get("ECOFLOW_WAVE3_SN", "")
+    sn = os.environ.get("ECOFLOW_WAVE3_SN", "")
 
     encoded_password = base64.b64encode(password.encode()).decode()
     headers = {"lang": "en_US", "country": "US"}
@@ -19,8 +23,12 @@ async def main():
         # Login
         resp = await client.post(
             "https://api.ecoflow.com/auth/login",
-            json={"email": email, "password": encoded_password,
-                  "scene": "IOT_APP", "userType": "ECOFLOW"},
+            json={
+                "email": email,
+                "password": encoded_password,
+                "scene": "IOT_APP",
+                "userType": "ECOFLOW",
+            },
             headers=headers,
         )
         body = resp.json()
@@ -49,5 +57,6 @@ async def main():
                 print(f"  SN={sn_d:30s}  name={name:30s}  online={online}")
         else:
             print(f"Unexpected device list format: {body2}")
+
 
 asyncio.run(main())

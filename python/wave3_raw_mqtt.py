@@ -1,12 +1,17 @@
 """Diagnostic: show raw MQTT messages so we can see what's arriving vs what's parsed."""
+
 import asyncio, os, sys
+
 sys.path.insert(0, "src")
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv(Path("tests/.env"))
+
 
 async def main():
     import logging
+
     # Enable INFO so we can see connection messages without debug spam
     logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s %(message)s")
     # Silence noisy loggers
@@ -17,9 +22,9 @@ async def main():
     from ecoflow.private.connection import PrivateConnection
     import aiomqtt
 
-    email    = os.environ["ECOFLOW_EMAIL"]
+    email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn       = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
+    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
 
     print(f"=== RAW MQTT DIAGNOSTIC for {sn} ===")
     creds = await PrivateCredentials.login(email=email, password=password)
@@ -50,7 +55,9 @@ async def main():
         async with client.messages() as messages:
             for t in topics:
                 await client.subscribe(t)
-            print("\nMQTT connected + subscribed. Listening 60s for any message on any topic...")
+            print(
+                "\nMQTT connected + subscribed. Listening 60s for any message on any topic..."
+            )
             deadline = asyncio.get_event_loop().time() + 60
             count = 0
             async for msg in messages:
@@ -74,6 +81,9 @@ async def main():
                 print("Possible causes:")
                 print("  1. Device is truly offline / not on WiFi")
                 print("  2. Topics are wrong for this firmware version")
-                print("  3. Cloud broker doesn't push unsolicited; need a GET request first")
+                print(
+                    "  3. Cloud broker doesn't push unsolicited; need a GET request first"
+                )
+
 
 asyncio.run(main())

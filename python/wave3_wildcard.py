@@ -1,17 +1,21 @@
 """Subscribe to ALL EcoFlow topics for this user/device to see what arrives."""
+
 import asyncio, os, sys, ssl, uuid
+
 sys.path.insert(0, "src")
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv(Path("tests/.env"))
+
 
 async def main():
     from ecoflow.private.auth import login
     import aiomqtt
 
-    email    = os.environ["ECOFLOW_EMAIL"]
+    email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn       = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
+    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
 
     print("Authenticating...")
     creds = await login(email, password)
@@ -19,10 +23,10 @@ async def main():
 
     # Subscribe to every possible topic for this device
     topics = [
-        f"/app/device/property/{sn}",          # production topic
-        f"/app/{creds.user_id}/{sn}/#",         # all user-device subtopics
-        f"/open/{creds.user_id}/{sn}/#",        # public-API style (just in case)
-        f"#",                                    # ALL traffic (diagnostic only)
+        f"/app/device/property/{sn}",  # production topic
+        f"/app/{creds.user_id}/{sn}/#",  # all user-device subtopics
+        f"/open/{creds.user_id}/{sn}/#",  # public-API style (just in case)
+        f"#",  # ALL traffic (diagnostic only)
     ]
 
     client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
@@ -41,7 +45,9 @@ async def main():
             timeout=15,
         ) as client:
             # Try the production topic first
-            print(f"Subscribing to /app/device/property/{sn} and /app/{creds.user_id}/{sn}/#")
+            print(
+                f"Subscribing to /app/device/property/{sn} and /app/{creds.user_id}/{sn}/#"
+            )
             await client.subscribe(f"/app/device/property/{sn}", qos=1)
             await client.subscribe(f"/app/{creds.user_id}/{sn}/#", qos=1)
             print("Subscribed. Waiting 45s for ANY message...\n")
@@ -52,7 +58,9 @@ async def main():
                     async for msg in client.messages:
                         count += 1
                         payload = bytes(msg.payload)
-                        print(f"[MSG #{count}] topic={msg.topic}  len={len(payload)}b  hex={payload[:24].hex()}")
+                        print(
+                            f"[MSG #{count}] topic={msg.topic}  len={len(payload)}b  hex={payload[:24].hex()}"
+                        )
                         if count >= 5:
                             break
             except TimeoutError:
@@ -68,16 +76,21 @@ async def main():
                         async for msg in client.messages:
                             wc_count += 1
                             payload = bytes(msg.payload)
-                            print(f"  [WILDCARD] topic={msg.topic}  len={len(payload)}b")
+                            print(
+                                f"  [WILDCARD] topic={msg.topic}  len={len(payload)}b"
+                            )
                             if wc_count >= 3:
                                 break
                 except TimeoutError:
                     pass
                 if wc_count == 0:
-                    print("  RESULT: 0 messages on # wildcard — broker connects but device is silent")
+                    print(
+                        "  RESULT: 0 messages on # wildcard — broker connects but device is silent"
+                    )
                 else:
                     print(f"  RESULT: {wc_count} messages on #")
     except Exception as e:
         print(f"MQTT error: {e}")
+
 
 asyncio.run(main())
