@@ -2,19 +2,25 @@
 Prints every byte that arrives on the subscription topic.
 """
 
-import asyncio, os, sys, ssl, uuid
+import asyncio
+import os
+import ssl
+import sys
+import uuid
 
 sys.path.insert(0, "src")
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(Path("tests/.env"))
 
 
-async def main():
+async def main() -> None:
+    import aiomqtt
+
     from ecoflow.private.auth import login
     from ecoflow.private.proto.decoder import decode
-    import aiomqtt
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
@@ -29,7 +35,7 @@ async def main():
 
     client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
     topic = f"/app/device/property/{sn}"
-    print(f"\nStep 2: Connecting to mqtt.ecoflow.com:8883")
+    print("\nStep 2: Connecting to mqtt.ecoflow.com:8883")
     print(f"  client_id : {client_id}")
     print(f"  topic     : {topic}")
 
@@ -45,7 +51,7 @@ async def main():
         timeout=30,
     ) as client:
         await client.subscribe(topic, qos=1)
-        print(f"\nStep 3: Subscribed. Listening 60s for any message...\n")
+        print("\nStep 3: Subscribed. Listening 60s for any message...\n")
 
         deadline = asyncio.get_event_loop().time() + 60
         count = 0
@@ -61,7 +67,7 @@ async def main():
                     if data:
                         print(f"  DECODED   : {data}")
                     else:
-                        print(f"  DECODED   : (empty / unrecognised proto)")
+                        print("  DECODED   : (empty / unrecognised proto)")
                 except Exception as e:
                     print(f"  DECODE ERR: {e}")
                 if asyncio.get_event_loop().time() > deadline:

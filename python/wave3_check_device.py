@@ -1,20 +1,23 @@
 """Check if device SN is visible on this EcoFlow account via REST API."""
 
-import asyncio, os, sys, base64
+import asyncio
+import base64
+import os
+import sys
 
 sys.path.insert(0, "src")
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(Path("tests/.env"))
 
 
-async def main():
+async def main() -> None:
     import httpx
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn = os.environ.get("ECOFLOW_WAVE3_SN", "")
 
     encoded_password = base64.b64encode(password.encode()).decode()
     headers = {"lang": "en_US", "country": "US"}

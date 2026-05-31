@@ -1,17 +1,23 @@
 """Subscribe to ALL EcoFlow topics for this user/device to see what arrives."""
 
-import asyncio, os, sys, ssl, uuid
+import asyncio
+import os
+import ssl
+import sys
+import uuid
 
 sys.path.insert(0, "src")
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(Path("tests/.env"))
 
 
-async def main():
-    from ecoflow.private.auth import login
+async def main() -> None:
     import aiomqtt
+
+    from ecoflow.private.auth import login
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
@@ -20,14 +26,6 @@ async def main():
     print("Authenticating...")
     creds = await login(email, password)
     print(f"  user_id={creds.user_id}  cert_account={creds.certificate_account}")
-
-    # Subscribe to every possible topic for this device
-    topics = [
-        f"/app/device/property/{sn}",  # production topic
-        f"/app/{creds.user_id}/{sn}/#",  # all user-device subtopics
-        f"/open/{creds.user_id}/{sn}/#",  # public-API style (just in case)
-        f"#",  # ALL traffic (diagnostic only)
-    ]
 
     client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
     tls_ctx = ssl.create_default_context()
@@ -46,7 +44,8 @@ async def main():
         ) as client:
             # Try the production topic first
             print(
-                f"Subscribing to /app/device/property/{sn} and /app/{creds.user_id}/{sn}/#"
+                f"Subscribing to /app/device/property/{sn}"
+                f" and /app/{creds.user_id}/{sn}/#"
             )
             await client.subscribe(f"/app/device/property/{sn}", qos=1)
             await client.subscribe(f"/app/{creds.user_id}/{sn}/#", qos=1)
@@ -59,7 +58,9 @@ async def main():
                         count += 1
                         payload = bytes(msg.payload)
                         print(
-                            f"[MSG #{count}] topic={msg.topic}  len={len(payload)}b  hex={payload[:24].hex()}"
+                            f"[MSG #{count}] topic={msg.topic}"
+                            f"  len={len(payload)}b"
+                            f"  hex={payload[:24].hex()}"
                         )
                         if count >= 5:
                             break
@@ -85,7 +86,8 @@ async def main():
                     pass
                 if wc_count == 0:
                     print(
-                        "  RESULT: 0 messages on # wildcard — broker connects but device is silent"
+                        "  RESULT: 0 messages on # wildcard"
+                        " — broker connects but device is silent"
                     )
                 else:
                     print(f"  RESULT: {wc_count} messages on #")

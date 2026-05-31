@@ -1,15 +1,18 @@
 """Diagnostic: show raw MQTT messages so we can see what's arriving vs what's parsed."""
 
-import asyncio, os, sys
+import asyncio
+import os
+import sys
 
 sys.path.insert(0, "src")
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(Path("tests/.env"))
 
 
-async def main():
+async def main() -> None:
     import logging
 
     # Enable INFO so we can see connection messages without debug spam
@@ -18,9 +21,9 @@ async def main():
     for name in ("aiomqtt", "ecoflow.private.auth"):
         logging.getLogger(name).setLevel(logging.WARNING)
 
-    from ecoflow.private.auth import PrivateCredentials
-    from ecoflow.private.connection import PrivateConnection
     import aiomqtt
+
+    from ecoflow.private.auth import PrivateCredentials
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
@@ -56,14 +59,14 @@ async def main():
             for t in topics:
                 await client.subscribe(t)
             print(
-                "\nMQTT connected + subscribed. Listening 60s for any message on any topic..."
+                "\nMQTT connected + subscribed."
+                " Listening 60s for any message on any topic..."
             )
             deadline = asyncio.get_event_loop().time() + 60
             count = 0
             async for msg in messages:
                 count += 1
                 payload_bytes = bytes(msg.payload)
-                payload_preview = payload_bytes[:120]
                 print(f"\n[MSG #{count}] topic={msg.topic}")
                 print(f"  len={len(payload_bytes)} bytes")
                 # Try to show hex of first 32 bytes
@@ -73,7 +76,7 @@ async def main():
                     text = payload_bytes.decode("utf-8")
                     print(f"  utf8={text[:200]}")
                 except Exception:
-                    print(f"  (binary payload)")
+                    print("  (binary payload)")
                 if asyncio.get_event_loop().time() > deadline:
                     break
             if count == 0:
@@ -82,7 +85,8 @@ async def main():
                 print("  1. Device is truly offline / not on WiFi")
                 print("  2. Topics are wrong for this firmware version")
                 print(
-                    "  3. Cloud broker doesn't push unsolicited; need a GET request first"
+                    "  3. Cloud broker doesn't push unsolicited;"
+                    " need a GET request first"
                 )
 
 

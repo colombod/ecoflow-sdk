@@ -1,13 +1,16 @@
-import asyncio, os, sys
+import asyncio
+import os
+import sys
 
 sys.path.insert(0, "src")
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv(Path("tests/.env"))
 
 
-async def main():
+async def main() -> None:
     from ecoflow.private import Wave3Connection
 
     email = os.environ["ECOFLOW_EMAIL"]
