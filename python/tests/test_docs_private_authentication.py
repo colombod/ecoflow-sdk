@@ -5,12 +5,7 @@ from pathlib import Path
 
 # The doc ships with the library at python/docs/api/ inside the repo.
 # From tests/ go up 2 levels to reach the python/ directory.
-DOC_PATH = (
-    Path(__file__).parent.parent
-    / "docs"
-    / "api"
-    / "private-authentication.md"
-)
+DOC_PATH = Path(__file__).parent.parent / "docs" / "api" / "private-authentication.md"
 
 
 def _read_doc() -> str:
