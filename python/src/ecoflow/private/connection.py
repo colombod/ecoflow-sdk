@@ -20,6 +20,7 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import ssl
 import uuid
@@ -66,6 +67,7 @@ class Wave3Connection:
         self._task: asyncio.Task[None] | None = None
         self._ready: asyncio.Event = asyncio.Event()
         self._publish_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
+        self._user_id: str = ""  # set after login in connect()
 
     async def connect(self) -> None:
         """Authenticate, create Wave3Device instances, start the MQTT loop.
@@ -77,6 +79,7 @@ class Wave3Connection:
             TimeoutError: if MQTT does not connect within _CONNECT_TIMEOUT_S.
         """
         creds = await login(self._email, self._password)
+        self._user_id = creds.user_id
         self.devices = {
             sn: Wave3Device(sn=sn, product_name="Wave 3", rest=None) for sn in self._sns
         }
@@ -136,6 +139,23 @@ class Wave3Connection:
                 ) as client:
                     for sn in self.devices:
                         await client.subscribe(f"/app/device/property/{sn}", qos=1)
+                    # Trigger immediate state dump from each device.
+                    # Without this, the Wave 3 is silent until the next heartbeat.
+                    # QUIRK: GET published to /app/{user_id}/{sn}/thing/property/get
+                    # triggers the device to dump its full state on
+                    # /app/device/property/{sn}.
+                    for sn in self.devices:
+                        get_topic = f"/app/{creds.user_id}/{sn}/thing/property/get"
+                        get_payload = json.dumps(
+                            {
+                                "version": "1.0",
+                                "sn": sn,
+                                "moduleType": 0,
+                                "operateType": "get",
+                                "params": {},
+                            }
+                        ).encode()
+                        await client.publish(get_topic, get_payload, qos=1)
                     self._ready.set()
                     backoff = 1.0
                     async with asyncio.TaskGroup() as tg:

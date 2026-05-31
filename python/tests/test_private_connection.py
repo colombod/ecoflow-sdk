@@ -7,7 +7,8 @@ No real network calls — no credentials required.
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, patch
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -205,3 +206,131 @@ async def test_connect_raises_timeout_if_ready_never_set() -> None:
     with p_login, p_run, p_timeout:
         with pytest.raises((TimeoutError, asyncio.TimeoutError)):
             await conn.connect()
+
+
+# ---------------------------------------------------------------------------
+# connect() — stores _user_id after login
+# ---------------------------------------------------------------------------
+
+
+async def test_connect_stores_user_id() -> None:
+    """connect() stores creds.user_id in self._user_id after login."""
+    conn = _make_conn("AC71TEST001")
+    p_login = patch(_LOGIN_PATH, new=AsyncMock(return_value=FAKE_CREDS))
+    p_run = patch.object(conn, "_run", side_effect=_make_run_se(conn))
+    with p_login, p_run:
+        await conn.connect()
+
+    assert conn._user_id == FAKE_CREDS.user_id  # "987654"
+
+    await conn.close()
+
+
+# ---------------------------------------------------------------------------
+# _run() — GET trigger published after subscribe
+# ---------------------------------------------------------------------------
+
+
+def _make_mock_aiomqtt_client() -> tuple[MagicMock, list[tuple[str, bytes]]]:
+    """Build a mock aiomqtt.Client that records publish calls.
+
+    Returns (client_mock, published_list) where published_list accumulates
+    (topic, payload) tuples for every publish() call.
+    The client's .messages async-generator blocks forever (never yields a
+    message) so _receive_loop stays idle until the task is cancelled.
+    """
+    published: list[tuple[str, bytes]] = []
+
+    async def _fake_publish(topic: str, payload: bytes, *, qos: int = 0) -> None:
+        published.append((topic, bytes(payload)))
+
+    async def _never_yield():  # pragma: no cover
+        await asyncio.sleep(1_000)
+        if False:  # noqa: SIM210
+            yield  # makes it an async generator
+
+    mock_client = MagicMock()
+    mock_client.subscribe = AsyncMock()
+    mock_client.publish = AsyncMock(side_effect=_fake_publish)
+    mock_client.messages = _never_yield()
+
+    return mock_client, published
+
+
+async def test_run_publishes_get_trigger_after_subscribe() -> None:
+    """_run() publishes a JSON GET payload to /app/{user_id}/{sn}/thing/property/get
+    for every device SN immediately after the subscribe loop."""
+    conn = Wave3Connection(
+        email="test@example.com",
+        password="test_pass",
+        device_sns=["SN_ALPHA"],
+    )
+    conn.devices = {
+        "SN_ALPHA": Wave3Device(sn="SN_ALPHA", product_name="Wave 3", rest=None),
+    }
+
+    mock_client, published = _make_mock_aiomqtt_client()
+
+    # Wrap mock_client in an async context manager (async with aiomqtt.Client(...) as c)
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+    creds = PrivateCredentials(
+        certificate_account="acct",
+        certificate_password="pwd",
+        user_id="USER42",
+    )
+
+    with patch("ecoflow.private.connection.aiomqtt.Client", return_value=mock_cm):
+        task = asyncio.create_task(conn._run(creds))
+        await asyncio.sleep(0.05)  # let _run() reach subscribe + GET publish
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    expected_topic = "/app/USER42/SN_ALPHA/thing/property/get"
+    topics = [t for t, _ in published]
+    assert expected_topic in topics, f"GET trigger not published; got: {topics}"
+
+    # Verify payload structure
+    for topic, payload in published:
+        if topic == expected_topic:
+            data = json.loads(payload)
+            assert data["operateType"] == "get"
+            assert data["sn"] == "SN_ALPHA"
+            assert data["version"] == "1.0"
+
+
+async def test_run_publishes_get_trigger_for_each_device() -> None:
+    """_run() publishes a GET trigger for every device in self.devices."""
+    sns = ["SN_ONE", "SN_TWO", "SN_THREE"]
+    conn = Wave3Connection(
+        email="test@example.com",
+        password="test_pass",
+        device_sns=sns,
+    )
+    conn.devices = {
+        sn: Wave3Device(sn=sn, product_name="Wave 3", rest=None) for sn in sns
+    }
+
+    mock_client, published = _make_mock_aiomqtt_client()
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_cm.__aexit__ = AsyncMock(return_value=None)
+
+    creds = PrivateCredentials(
+        certificate_account="acct",
+        certificate_password="pwd",
+        user_id="USERXYZ",
+    )
+
+    with patch("ecoflow.private.connection.aiomqtt.Client", return_value=mock_cm):
+        task = asyncio.create_task(conn._run(creds))
+        await asyncio.sleep(0.05)
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    published_topics = {t for t, _ in published}
+    for sn in sns:
+        expected = f"/app/USERXYZ/{sn}/thing/property/get"
+        assert expected in published_topics, f"Missing GET trigger for {sn}"
