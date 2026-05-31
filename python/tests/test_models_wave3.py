@@ -28,3 +28,10 @@ def test_wave3_defaults_when_empty() -> None:
     status = Wave3Status.from_mqtt_payload({})
     assert status.online is True
     assert status.target_temp == pytest.approx(22.0)
+
+
+def test_wave3_mode_str_format() -> None:
+    """Wave3Mode.__str__ output is stable across Python versions."""
+    assert str(Wave3Mode.COOLING) == "Wave3Mode.COOLING"
+    assert str(Wave3Mode.NONE) == "Wave3Mode.NONE"
+    assert str(Wave3Mode.HEATING) == "Wave3Mode.HEATING"

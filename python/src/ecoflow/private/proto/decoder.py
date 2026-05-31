@@ -44,14 +44,14 @@ def decode(raw: bytes) -> dict[str, Any]:
     Pipeline:
     1. Parse outer Wave3SetMessage envelope.
     2. XOR-decrypt pdata if enc_type==1 and src!=32.
-    3. Dispatch inner message by cmd_func/cmd_id.
+    3. Dispatch inner message by cmd_func/cmd_id — cmd_ids 1 and 21 only.
     4. Flatten proto fields to dict via ListFields().
     5. Extract per-mode setpoints from wave_mode_info.
 
     Returns {} on any failure — never raises.
     """
     try:
-        msg = wave3_pb2.Wave3SetMessage()
+        msg = wave3_pb2.Wave3SetMessage()  # type: ignore[attr-defined]
         msg.ParseFromString(raw)
         if not msg.HasField("header"):
             return {}
@@ -63,12 +63,7 @@ def decode(raw: bytes) -> dict[str, Any]:
         cmd_func = getattr(h, "cmd_func", 0)
         cmd_id = getattr(h, "cmd_id", 0)
         if cmd_func == 254 and cmd_id in (1, 21):
-            inner: Any = wave3_pb2.Wave3DisplayPropertyUpload()
-        elif cmd_func == 254 and cmd_id == 22:
-            if hasattr(wave3_pb2, "Wave3RuntimePropertyUpload"):
-                inner = wave3_pb2.Wave3RuntimePropertyUpload()
-            else:
-                return {}
+            inner: Any = wave3_pb2.Wave3DisplayPropertyUpload()  # type: ignore[attr-defined]
         else:
             return {}
         inner.ParseFromString(pdata)

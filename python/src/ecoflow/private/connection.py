@@ -22,7 +22,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import ssl
-import time
+import uuid
 
 import aiomqtt
 
@@ -119,12 +119,16 @@ class Wave3Connection:
 
         while True:
             try:
+                # QUIRK: client_id must be ANDROID_{UUID}_{userId} — this is what
+                # the EcoFlow private broker requires for authorization. Any other
+                # format results in MQTT error 135 (Not authorized).
+                client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
                 async with aiomqtt.Client(
                     hostname="mqtt.ecoflow.com",  # private broker — NOT mqtt-e
                     port=8883,
                     username=creds.certificate_account,
                     password=creds.certificate_password,
-                    identifier=f"{creds.certificate_account}_{int(time.time())}",
+                    identifier=client_id,
                     keepalive=60,
                     tls_context=tls_ctx,
                 ) as client:

@@ -86,7 +86,7 @@ def test_decode_unknown_cmd_func_returns_empty_dict() -> None:
 
 
 def test_decode_cmd_id_not_in_dispatch_returns_empty_dict() -> None:
-    """cmd_func=254 but cmd_id not in (1, 21, 22) returns {}."""
+    """cmd_func=254 but cmd_id not in (1, 21) returns {}."""
     from ecoflow.private.proto.decoder import decode
 
     inner = _make_display_upload(pow_in_sum_w=100.0)

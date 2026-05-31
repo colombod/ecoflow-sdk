@@ -1,5 +1,11 @@
 {
   "include": ["src", "tests"],
+  "exclude": [
+    "src/ecoflow/private/proto/wave3_pb2.py",
+    "src/ecoflow/private/proto/decoder.py",
+    "tests/test_private_proto.py",
+    "tests/test_private_decoder.py"
+  ],
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.11",

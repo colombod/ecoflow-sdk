@@ -30,6 +30,11 @@ class TestWave3ModeEnum:
     def test_thermostatic_is_5(self) -> None:
         assert Wave3Mode.THERMOSTATIC.value == 5
 
+    def test_str_format_includes_class_name(self) -> None:
+        """str(Wave3Mode.X) returns 'Wave3Mode.X' across Python versions."""
+        assert str(Wave3Mode.COOLING) == "Wave3Mode.COOLING"
+        assert str(Wave3Mode.NONE) == "Wave3Mode.NONE"
+
 
 class TestIsOnDerivation:
     """is_on is derived from dev_sleep_state AND wave_operating_mode."""

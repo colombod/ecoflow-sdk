@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import IntEnum
 from typing import Any
@@ -47,6 +47,9 @@ class Wave3Status:
     outdoor_temp: float = 0.0  # temp_outdoor_ambient
     compressor_discharge_temp: float = 0.0  # temp_compressor_discharge
     airflow_speed: int = 20  # current_airflow_speed (raw: 20/40/60/80/100)
+    # NOTE: fan_level 1–5 is a read-only status field (from raw airflow_speed).
+    # It is NOT the same scale as Wave3Device.set_fan_speed() (0–3: auto/low/mid/high).
+    # Do not pass fan_level directly to set_fan_speed().
     fan_level: int = 1  # mapped: {20:1, 40:2, 60:3, 80:4, 100:5}
     submode: int = 0  # current_submode: 0=none, 2=boost, 3=sleep, 4=eco
     ambient_humidity: float = 0.0  # humi_ambient
@@ -66,11 +69,6 @@ class Wave3Status:
     self_consume_watts: float = 0.0  # pow_get_self_consume
     water_level: int = 0  # condensate_water_level (0-100%)
     updated_at: datetime | None = None
-    _FAN_SPEED_MAP: dict[int, int] = field(
-        default_factory=lambda: {20: 1, 40: 2, 60: 3, 80: 4, 100: 5},
-        repr=False,
-        compare=False,
-    )
 
     @classmethod
     def from_mqtt_payload(cls, payload: dict[str, Any]) -> Wave3Status:

@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ecoflow.devices.base import BaseDevice
 from ecoflow.models.wave3 import Wave3Mode, Wave3Status
+
+if TYPE_CHECKING:
+    from ecoflow.transport.mqtt import MqttTransport
+    from ecoflow.transport.rest import RestTransport
 
 _log = logging.getLogger(__name__)
 
@@ -14,8 +18,23 @@ _log = logging.getLogger(__name__)
 class Wave3Device(BaseDevice):
     """EcoFlow Wave 3 portable AC with mode/temperature/fan controls."""
 
-    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
-        super().__init__(**kwargs)
+    # Wave3Device allows rest=None for the private MQTT-only API path.
+    # Override the base class type to reflect this valid configuration.
+    _rest: RestTransport | None
+
+    def __init__(
+        self,
+        sn: str,
+        product_name: str,
+        rest: RestTransport | None = None,
+        mqtt: MqttTransport | None = None,
+    ) -> None:
+        super().__init__(
+            sn=sn,
+            product_name=product_name,
+            rest=rest,  # type: ignore[arg-type]  # Wave3Device supports rest=None
+            mqtt=mqtt,
+        )
         self.status: Wave3Status | None = None
         self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
 
@@ -96,7 +115,11 @@ class Wave3Device(BaseDevice):
         """Set the fan speed level.
 
         Args:
-            level: 0=auto, 1=low, 2=medium, 3=high
+            level: 0=auto, 1=low, 2=medium, 3=high.
+
+        NOTE: This scale (0–3) is different from Wave3Status.fan_level (1–5),
+        which is a read-only status field mapped from the raw airflow_speed.
+        Do not pass Wave3Status.fan_level directly to this method.
 
         Raises:
             ValueError: if level is not 0, 1, 2, or 3.
