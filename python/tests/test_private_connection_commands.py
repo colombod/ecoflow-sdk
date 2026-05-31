@@ -66,8 +66,13 @@ async def test_send_raw_raises_for_unknown_sn() -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_turn_on_publishes_main_power_true() -> None:
-    """turn_on() puts a payload on the queue with cfg_main_power=True."""
+async def test_turn_on_publishes_main_power_and_cooling_mode() -> None:
+    """turn_on() puts a payload with cfg_main_power=True AND cfg_wave_operating_mode=1.
+
+    QUIRK: cfg_main_power=True alone is not sufficient — is_on requires
+    wave_operating_mode != 0.  turn_on() defaults to COOLING (1) so the
+    device actually reports is_on=True after receiving the command.
+    """
     conn = _make_conn()
     conn._ready.set()
 
@@ -77,6 +82,7 @@ async def test_turn_on_publishes_main_power_true() -> None:
     assert sn_queued == _SN
     inner = _decode_config_write(payload)
     assert inner.cfg_main_power is True
+    assert inner.cfg_wave_operating_mode == 1  # COOLING — required for is_on=True
 
 
 async def test_turn_off_publishes_sys_pause() -> None:

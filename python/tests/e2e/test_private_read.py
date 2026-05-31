@@ -107,19 +107,34 @@ async def test_wave3_private_receives_status() -> None:
         print(
             f"\n[Wave 3 Status] sn={status.sn} online={status.online} "
             f"battery_soc={status.battery_soc} ambient_temp={status.ambient_temp} "
-            f"mode={status.mode} updated_at={status.updated_at}"
+            f"mode={status.mode} ac_power_watts={status.ac_power_watts} "
+            f"updated_at={status.updated_at}"
         )
 
-        # At least one sensor reading must be non-default (non-zero)
+        # At least one sensor reading must be non-default (non-zero).
+        #
+        # QUIRK: the Wave 3 sends two classes of MQTT message:
+        #   - Full heartbeat (47 keys, cmd_id=21) — includes battery_soc,
+        #     ambient_temp, wave_operating_mode. Fires every ~17-20 s but
+        #     ONLY while the compressor is actively running.
+        #   - Partial update (2-3 keys, cmd_id=21) — includes ac_power_watts
+        #     and a few other fields. Fires periodically even in standby.
+        #
+        # After a turn_off() (e.g. at the end of the write-integration test
+        # sequence), the device enters standby and only partial updates arrive.
+        # Including ac_power_watts != 0.0 ensures the assertion holds whether
+        # the device is cooling or in standby.
         has_non_default = (
             status.battery_soc != 0.0
             or status.ambient_temp != 0.0
             or status.mode.value != 0
+            or status.ac_power_watts != 0.0  # always present from partial updates
         )
         assert has_non_default, (
             f"{sn}: all sensor fields are at default values "
             f"(battery_soc={status.battery_soc}, "
             f"ambient_temp={status.ambient_temp}, "
-            f"mode={status.mode.value}). "
+            f"mode={status.mode.value}, "
+            f"ac_power_watts={status.ac_power_watts}). "
             "Check cmd_func/cmd_id dispatch in decoder.py."
         )

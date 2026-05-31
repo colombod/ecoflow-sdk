@@ -208,8 +208,20 @@ class Wave3Connection:
         await self._publish_queue.put((sn, payload))
 
     async def turn_on(self, sn: str) -> None:
-        """Turn the device on (cfg_main_power=True)."""
-        await self.send_raw(sn, build_command(sn, cfg_main_power=True))
+        """Turn the device on in default cooling mode.
+
+        Sends cfg_main_power=True AND cfg_wave_operating_mode=COOLING(1).
+
+        QUIRK: cfg_main_power=True alone is not sufficient — the Wave 3
+        is_on derivation requires wave_operating_mode != 0 in addition
+        to dev_sleep_state != 1. Without an explicit mode the device wakes
+        from sleep but keeps wave_operating_mode=0, so is_on stays False.
+        Defaulting to COOLING matches the physical power-button behaviour.
+        """
+        await self.send_raw(
+            sn,
+            build_command(sn, cfg_main_power=True, cfg_wave_operating_mode=1),
+        )
 
     async def turn_off(self, sn: str) -> None:
         """Pause the device (cfg_sys_pause=True)."""
