@@ -25,12 +25,9 @@ from tests.conftest import get_private_email, get_private_password, get_wave3_sn
 
 @pytest.mark.integration
 async def test_wave3_private_login_succeeds() -> None:
-    """Login returns PrivateCredentials with non-empty MQTT credentials.
-
-    Failure hint: if EcoFlowAuthError, credentials may be incorrect
-    or the API contract may have changed. Current encoding: base64
-    (auth.py). Do NOT try MD5 — it does not work.
-    """
+    """Login returns PrivateCredentials with non-empty MQTT credentials."""
+    # If this fails with auth error, check that ECOFLOW_PASSWORD in tests/.env is
+    # the plain text app password — no MD5 or base64 encoding needed.
     email = get_private_email()
     password = get_private_password()
 
