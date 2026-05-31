@@ -133,6 +133,12 @@ class TestTopLevelExports:
 
         assert Wave3Connection.__name__ == "Wave3Connection"
 
+    def test_wave3_mode_importable_from_private(self) -> None:
+        """Wave3Mode is re-exported from ecoflow.private for user convenience."""
+        from ecoflow.private import Wave3Mode  # noqa: PLC0415
+
+        assert Wave3Mode.__name__ == "Wave3Mode"
+
     def test_all_list_contains_expected_symbols(self) -> None:
         import ecoflow
 

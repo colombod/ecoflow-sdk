@@ -10,6 +10,9 @@ If protobuf is not installed, importing this module raises ImportError with
 a clear install instruction — the error appears at import time, not at first use.
 """
 
+# Wave3Mode is re-exported here for user convenience — it does not require protobuf.
+from ecoflow.models.wave3 import Wave3Mode
+
 try:
     from ecoflow.private.connection import Wave3Connection
 except ImportError as exc:
@@ -21,4 +24,4 @@ except ImportError as exc:
         ) from exc
     raise
 
-__all__ = ["Wave3Connection"]
+__all__ = ["Wave3Connection", "Wave3Mode"]
