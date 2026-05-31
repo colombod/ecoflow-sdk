@@ -146,7 +146,7 @@ async def test_smart_meter_exported_energy() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Wave 3 integration tests — hardware-validated (SN: AC71XXXXXXXXXX02)
+# Wave 3 integration tests — hardware-validated (SN: AC71XXXXXXXXXX)
 # ---------------------------------------------------------------------------
 
 

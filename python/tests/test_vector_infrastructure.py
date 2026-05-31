@@ -150,7 +150,7 @@ class TestSmartPlugVectors:
 class TestStreamUltraVectors:
     """Verify stream_ultra test vector files exist with correct content.
 
-    Confirmed from live STREAM Ultra BK11XXXXXXXXXX01, 2026-05.
+    Confirmed from live STREAM Ultra BK11XXXXXXXXXX, 2026-05.
     """
 
     def test_stream_ultra_payload_json_exists(self) -> None:
@@ -164,7 +164,7 @@ class TestStreamUltraVectors:
         ).exists(), "stream_ultra payload_status.expected.json must exist"
 
     def test_stream_ultra_payload_content(self) -> None:
-        """Vector uses real MQTT data from BK11XXXXXXXXXX01, 2026-05-29."""
+        """Vector uses real MQTT data from BK11XXXXXXXXXX, 2026-05-29."""
         data = json.loads(
             (VECTORS_DIR / "stream_ultra" / "payload_status.json").read_text()
         )

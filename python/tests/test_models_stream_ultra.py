@@ -1,7 +1,7 @@
 """Tests for StreamUltraStatus model (STREAM Ultra and STREAM AC Pro).
 
 Covers from_quota_payload() with real MQTT vectors confirmed from live devices
-BK11XXXXXXXXXX01 (STREAM Ultra master) and BK31 (STREAM AC Pro slave), 2026-05-29.
+BK11XXXXXXXXXX (STREAM Ultra master) and BK31 (STREAM AC Pro slave), 2026-05-29.
 """
 
 from __future__ import annotations
@@ -26,12 +26,12 @@ def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]
 def test_stream_ultra_from_quota_vector() -> None:
     """StreamUltraStatus.from_quota_payload maps the real MQTT vector to expected.
 
-    Real data from live device BK11XXXXXXXXXX01, confirmed 2026-05-29.
+    Real data from live device BK11XXXXXXXXXX, confirmed 2026-05-29.
     """
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     payload, expected = load_vector("stream_ultra", "payload_status")
-    status = StreamUltraStatus.from_quota_payload("BK11XXXXXXXXXX01", payload)
+    status = StreamUltraStatus.from_quota_payload("BK11TESTSN000001", payload)
 
     assert status.batt_soc == pytest.approx(expected["batt_soc"])  # pyright: ignore[reportUnknownMemberType]
     assert status.cascade_soc == expected["cascade_soc"]
@@ -51,7 +51,7 @@ def test_stream_ultra_sn_is_set() -> None:
     """from_quota_payload stores the SN on the status object."""
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
-    sn = "BK11XXXXXXXXXX01"
+    sn = "BK11TESTSN000001"
     status = StreamUltraStatus.from_quota_payload(sn, {})
     assert status.sn == sn
 
@@ -416,7 +416,7 @@ def test_stream_ultra_vector_new_fields() -> None:
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     payload, expected = load_vector("stream_ultra", "payload_status")
-    status = StreamUltraStatus.from_quota_payload("BK11XXXXXXXXXX01", payload)
+    status = StreamUltraStatus.from_quota_payload("BK11TESTSN000001", payload)
 
     assert status.soc_precise == pytest.approx(expected["soc_precise"])  # pyright: ignore[reportUnknownMemberType]
     assert status.remaining_cap_mah == expected["remaining_cap_mah"]

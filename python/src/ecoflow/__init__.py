@@ -30,6 +30,12 @@ from ecoflow.models import (
     Wave3Status,
 )
 
+# Wave3Connection is an optional import — requires pip install ecoflow-python[wave3]
+try:
+    from ecoflow.private import Wave3Connection
+except ImportError:
+    pass  # protobuf not installed — Wave3Connection silently unavailable
+
 __version__ = "0.2.0"
 
 __all__ = [
@@ -56,4 +62,5 @@ __all__ = [
     "Wave3Device",
     "SmartHomePanelDevice",
     "DiscoveredDevice",
+    "Wave3Connection",  # requires pip install ecoflow-python[wave3]
 ]

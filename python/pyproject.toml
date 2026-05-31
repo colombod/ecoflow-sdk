@@ -35,6 +35,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+wave3 = ["protobuf>=4.0"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -43,6 +44,7 @@ dev = [
     "ruff>=0.6",
     "pyright>=1.1",
     "python-dotenv>=1.0",
+    "protobuf>=4.0",
 ]
 
 [project.urls]
@@ -78,6 +80,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN"]
+"src/ecoflow/private/proto/wave3_pb2.py" = ["E501"]  # generated file — binary descriptor line
 
 [tool.pyright]
 include = ["src", "tests"]

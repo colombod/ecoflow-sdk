@@ -50,4 +50,4 @@ def test_models_package_exports_all_typed_models() -> None:
     assert StreamUltraStatus.__name__ == "StreamUltraStatus"
     assert Wave3Status.__name__ == "Wave3Status"
     assert WATTS_RAW_FACTOR == 0.1
-    assert Wave3Mode.COOL.value == 0
+    assert Wave3Mode.NONE.value == 0
