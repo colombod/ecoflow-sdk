@@ -13,7 +13,7 @@ class SmartMeterData:
 
     NOTE: Smart Meter returns empty {} from REST /quota/all.
     Data arrives exclusively via MQTT topic /open/{user_id}/{sn}/quota.
-    Confirmed from live device BK21TESTSN000001 on 2026-05-29.
+    Confirmed from live device BK21XXXXXXXXXX on 2026-05-29.
     """
 
     sn: str = ""
