@@ -3,8 +3,10 @@
   "exclude": [
     "src/ecoflow/private/proto/wave3_pb2.py",
     "src/ecoflow/private/proto/decoder.py",
+    "src/ecoflow/private/proto/encoder.py",
     "tests/test_private_proto.py",
-    "tests/test_private_decoder.py"
+    "tests/test_private_decoder.py",
+    "tests/test_private_encoder.py"
   ],
   "venvPath": ".",
   "venv": ".venv",
