@@ -223,3 +223,67 @@ async def test_global_events_yields_from_mqtt_subscriptions() -> None:
 
     assert plug.data is not None
     assert plug.data.is_on is True
+
+
+@respx.mock
+async def test_connect_injects_mqtt_into_devices() -> None:
+    """Devices must have their _mqtt attribute set after connect().
+
+    Bug: _discover() creates devices with mqtt=self._mqtt which is None at
+    that point. After MqttTransport is created, devices still hold None and
+    cannot publish commands (set_relay2, set_relay3, etc.) even though MQTT
+    is live and delivering messages via callbacks.
+    """
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/device/list").mock(
+        return_value=Response(
+            200,
+            json={
+                "code": 0,
+                "data": [
+                    {
+                        "sn": "BK11ZK1B2H5S1478",
+                        "productName": "STREAM Ultra",
+                        "online": 1,
+                    },
+                ],
+            },
+        )
+    )
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/certification").mock(
+        return_value=Response(
+            200,
+            json={
+                "code": 0,
+                "data": {
+                    "certificateAccount": "open-testuser",
+                    "certificatePassword": "s3cr3t",
+                    "url": "mqtt.ecoflow.com",
+                    "port": "8883",
+                    "protocol": "mqtts",
+                },
+            },
+        )
+    )
+
+    fake_mqtt_instance = AsyncMock()
+    fake_mqtt_instance.connected = True
+    fake_mqtt_instance.on_message = lambda sn, cb, **kw: None
+    fake_mqtt_instance.connect = AsyncMock()
+    fake_mqtt_instance.disconnect = AsyncMock()
+    fake_mqtt_instance.creds = AsyncMock()
+    fake_mqtt_instance.creds.user_id = "open-testuser"
+
+    with patch("ecoflow.client.MqttTransport", return_value=fake_mqtt_instance):
+        client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
+        await client.connect()
+
+    assert len(client.stream_units) == 1
+    device = client.stream_units[0]
+
+    # After connect(), the device's _mqtt must be the live transport — not None.
+    # Without the fix, device._mqtt is None (set during _discover() before
+    # MqttTransport was created) and set_relay2() raises EcoFlowConnectionError.
+    assert device._mqtt is not None, (  # pyright: ignore[reportPrivateUsage]
+        "device._mqtt is None after connect() — relay commands will always fail. "
+        "Fix: backfill device._mqtt = self._mqtt after MqttTransport is created."
+    )

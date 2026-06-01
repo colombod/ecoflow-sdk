@@ -120,6 +120,12 @@ class EcoFlowClient:
                 user_id=mqtt_data.get("certificateAccount", ""),
             )
             self._mqtt = MqttTransport(mqtt_creds)
+            # Backfill the mqtt reference into all devices.  Devices were
+            # created during _discover() before MqttTransport existed, so
+            # their _mqtt attribute is still None.  Without this, _publish()
+            # always raises EcoFlowConnectionError even when MQTT is live.
+            for device in self._all_typed:
+                device._mqtt = self._mqtt  # noqa: SLF001
             # Register callbacks BEFORE connect() so _run() subscribes to all
             # devices in one shot and captures the broker's initial state dump.
             for device in self._all_typed:
