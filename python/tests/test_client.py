@@ -267,7 +267,7 @@ async def test_connect_injects_mqtt_into_devices() -> None:
 
     fake_mqtt_instance = AsyncMock()
     fake_mqtt_instance.connected = True
-    fake_mqtt_instance.on_message = lambda sn, cb, **kw: None
+    fake_mqtt_instance.on_message = lambda sn, cb, **kw: None  # pyright: ignore[reportUnknownLambdaType]
     fake_mqtt_instance.connect = AsyncMock()
     fake_mqtt_instance.disconnect = AsyncMock()
     fake_mqtt_instance.creds = AsyncMock()

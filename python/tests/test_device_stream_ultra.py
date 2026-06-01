@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -150,7 +151,7 @@ def test_stream_ultra_accumulates_mqtt_chunks() -> None:
 def _assert_stream_envelope(
     mock_pub: AsyncMock,
     *,
-    expected_params: dict,
+    expected_params: dict[str, Any],
     sn: str = "BK11TESTSN000001",
 ) -> None:
     """Assert that _publish was called once with a complete STREAM envelope.
@@ -161,7 +162,7 @@ def _assert_stream_envelope(
     non-empty string rather than a specific value.
     """
     assert mock_pub.call_count == 1
-    cmd: dict = mock_pub.call_args[0][0]
+    cmd: dict[str, Any] = mock_pub.call_args[0][0]
     assert cmd["from"] == "ecoflow-python"
     assert isinstance(cmd["id"], str) and len(cmd["id"]) > 0
     assert cmd["version"] == "1.0"
