@@ -11,17 +11,17 @@ Python SDK for monitoring and controlling EcoFlow energy devices via the public 
 
 ## Supported Devices
 
-| Device | SN Prefix | API Path |
-|--------|-----------|----------|
-| STREAM Ultra | `BK11` | Public Developer API |
-| STREAM AC Pro | `BK31` | Public Developer API |
-| Smart Plug | `HW52` | Public Developer API |
-| Smart Home Meter | `BK21` | Public Developer API |
-| Delta Pro / Pro 3 / 2 / 2 Max | – | Public Developer API |
-| River Pro / 2 / 2 Max / 2 Pro | – | Public Developer API |
-| PowerStream (600W / 800W) | – | Public Developer API |
-| Wave 3 AC | `AC71` | Private API (Wave 3 extra) |
-| Smart Home Panel 2 | – | Public Developer API (partial) |
+| Device | SN Prefix | API Path | Write commands |
+|--------|-----------|----------|----------------|
+| STREAM Ultra | `BK11` | Public Developer API | `set_relay2/3(on/off)`, `set_charge_limit`, `set_discharge_limit`, `set_grid_export`, `set_backup_reserve` ✅ |
+| STREAM AC Pro | `BK31` | Public Developer API | same as STREAM Ultra ✅ |
+| Smart Plug | `HW52` | Public Developer API | `turn_on()`, `turn_off()`, `toggle()`, `set_brightness()` |
+| Smart Home Meter | `BK21` | Public Developer API | — (read-only) |
+| Delta Pro / Pro 3 / 2 / 2 Max | – | Public Developer API | `set_charge_limit`, `set_discharge_limit`, `set_ac_output`, `set_dc_output` |
+| River Pro / 2 / 2 Max / 2 Pro | – | Public Developer API | `set_charge_limit`, `set_discharge_limit`, `set_ac_output`, `set_dc_output` |
+| PowerStream (600W / 800W) | – | Public Developer API | `set_feed_in_power()` |
+| Wave 3 AC | `AC71` | Private API (Wave 3 extra) | `turn_on/off()`, `set_temperature()`, `set_mode()`, `set_fan_speed()` |
+| Smart Home Panel 2 | – | Public Developer API (partial) | — |
 
 ---
 
@@ -91,6 +91,37 @@ All devices are auto-discovered on `connect()`. Available collections:
 | `client.stream_units` | STREAM Ultra / AC Pro |
 | `client.wave3_units` | Wave 3 (public-side stub) |
 | `client.unknown_devices` | Unrecognised devices |
+
+---
+
+## Quick Start — STREAM Control
+
+```python
+import asyncio
+from ecoflow import EcoFlowClient
+
+# Control STREAM relay (turn on/off AC output socket)
+async def main():
+    async with EcoFlowClient(
+        access_key="your_access_key",
+        secret_key="your_secret_key",
+        region="EU",    # or "US"
+    ) as client:
+        stream = client.stream_units[0]
+        await asyncio.sleep(15)              # wait for MQTT data
+
+        s = stream.status
+        print(f"Battery: {s.batt_soc:.0f}%  Grid: {s.grid_power_watts:.0f}W")
+        print(f"Relay2: {s.relay2_on}  Relay3: {s.relay3_on}")
+
+        await stream.set_relay2(on=True)     # enable AC output socket 2
+        await stream.set_relay3(on=False)    # disable AC output socket 3
+        await stream.set_charge_limit(80)    # limit charging to 80% SOC
+
+asyncio.run(main())
+```
+
+> ✅ Relay and charge-limit commands validated against real BK11 / BK31 hardware (2026-06-01).
 
 ---
 
