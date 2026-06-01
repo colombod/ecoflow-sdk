@@ -219,6 +219,49 @@ asyncio.run(main())
 
 ---
 
+## Controlling STREAM Devices
+
+> ✅ Validated against real STREAM Ultra (BK11) and STREAM AC Pro (BK31) hardware.
+
+Both STREAM Ultra (`BK11`) and STREAM AC Pro (`BK31`) support the following write commands:
+
+| Command | Description |
+|---------|-------------|
+| `set_relay2(on=True/False)` | Enable/disable AC output socket 2 |
+| `set_relay3(on=True/False)` | Enable/disable AC output socket 3 |
+| `set_charge_limit(soc_pct)` | Limit max SOC (50–100%) |
+| `set_discharge_limit(soc_pct)` | Minimum discharge SOC (0–30%) |
+| `set_grid_export(enabled)` | Enable/disable grid export |
+| `set_backup_reserve(soc_pct)` | Set backup reserve SOC |
+
+```python
+import asyncio
+from ecoflow import EcoFlowClient
+
+async def main() -> None:
+    async with EcoFlowClient(
+        access_key="YOUR_ACCESS_KEY",
+        secret_key="YOUR_SECRET_KEY",
+        region="EU",
+    ) as client:
+        stream = client.stream_units[0]
+        await asyncio.sleep(15)   # wait for MQTT data
+
+        s = stream.status
+        print(f"Battery: {s.batt_soc:.0f}%  Grid: {s.grid_power_watts:.0f}W")
+        print(f"Relay2: {s.relay2_on}  Relay3: {s.relay3_on}")
+
+        await stream.set_relay2(on=True)     # enable AC output socket 2
+        await stream.set_relay3(on=False)    # disable AC output socket 3
+        await stream.set_charge_limit(80)    # limit charging to 80% SOC
+
+asyncio.run(main())
+```
+
+Note: applies to both STREAM Ultra (`BK11`) and STREAM AC Pro (`BK31`).
+
+---
+
 ## Error Handling
 
 All library exceptions inherit from `EcoFlowError`:
