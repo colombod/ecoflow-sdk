@@ -147,100 +147,89 @@ def test_stream_ultra_accumulates_mqtt_chunks() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _assert_stream_envelope(
+    mock_pub: AsyncMock,
+    *,
+    expected_params: dict,
+    sn: str = "BK11TESTSN000001",
+) -> None:
+    """Assert that _publish was called once with a complete STREAM envelope.
+
+    STREAM devices require dirDest=1, dirSrc=1, dest=2, needAck=True plus a
+    from/id/version outer wrapper — without these the device silently ignores
+    commands.  The `id` field is a sequential counter so we only check it is a
+    non-empty string rather than a specific value.
+    """
+    assert mock_pub.call_count == 1
+    cmd: dict = mock_pub.call_args[0][0]
+    assert cmd["from"] == "ecoflow-python"
+    assert isinstance(cmd["id"], str) and len(cmd["id"]) > 0
+    assert cmd["version"] == "1.0"
+    assert cmd["sn"] == sn
+    assert cmd["cmdId"] == 17
+    assert cmd["cmdFunc"] == 254
+    assert cmd["dirDest"] == 1
+    assert cmd["dirSrc"] == 1
+    assert cmd["dest"] == 2
+    assert cmd["needAck"] is True
+    assert cmd["params"] == expected_params
+
+
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay2_on() -> None:
-    """set_relay2(on=True) publishes relay2Onoff=1 (correct name, integer value)."""
+    """set_relay2(on=True) publishes cfgRelay2Onoff=True with full STREAM envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay2(on=True)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"relay2Onoff": 1},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgRelay2Onoff": True})
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay2_off() -> None:
-    """set_relay2(on=False) publishes relay2Onoff=0 (correct name, integer value)."""
+    """set_relay2(on=False) publishes cfgRelay2Onoff=False with full STREAM envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay2(on=False)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"relay2Onoff": 0},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgRelay2Onoff": False})
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay3_on() -> None:
-    """set_relay3(on=True) publishes relay3Onoff=1 (correct name, integer value)."""
+    """set_relay3(on=True) publishes cfgRelay3Onoff=True with full STREAM envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay3(on=True)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"relay3Onoff": 1},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgRelay3Onoff": True})
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_grid_export_enabled() -> None:
-    """set_grid_export(enabled=True) publishes cfgFeedGridMode=2."""
+    """set_grid_export(enabled=True) publishes cfgFeedGridMode=2 in full envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_grid_export(enabled=True)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"cfgFeedGridMode": 2},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgFeedGridMode": 2})
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_grid_export_disabled() -> None:
-    """set_grid_export(enabled=False) publishes cfgFeedGridMode=1."""
+    """set_grid_export(enabled=False) publishes cfgFeedGridMode=1 in full envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_grid_export(enabled=False)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"cfgFeedGridMode": 1},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgFeedGridMode": 1})
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_backup_reserve_valid() -> None:
-    """set_backup_reserve(soc_pct=20) publishes cfgBackupReverseSoc=20."""
+    """set_backup_reserve(soc_pct=20) publishes cfgBackupReverseSoc=20 in full envelope.
+
+    Validates the complete STREAM command wrapper is present.
+    """
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_backup_reserve(soc_pct=20)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {"cfgBackupReverseSoc": 20},
-        }
-    )
+    _assert_stream_envelope(mock_pub, expected_params={"cfgBackupReverseSoc": 20})
 
 
 @pytest.mark.asyncio
@@ -261,39 +250,29 @@ async def test_stream_ultra_set_backup_reserve_rejects_above_95() -> None:
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_self_powered_mode_enabled() -> None:
-    """set_self_powered_mode(enabled=True) publishes correct params."""
+    """set_self_powered_mode(enabled=True) publishes correct params in full envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_self_powered_mode(enabled=True)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {
-                "cfgEnergyStrategyOperateMode": {"operateSelfPoweredOpen": True}
-            },
-        }
+    _assert_stream_envelope(
+        mock_pub,
+        expected_params={
+            "cfgEnergyStrategyOperateMode": {"operateSelfPoweredOpen": True}
+        },
     )
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_ai_schedule_mode_enabled() -> None:
-    """set_ai_schedule_mode(enabled=True) publishes correct params."""
+    """set_ai_schedule_mode(enabled=True) publishes correct params in full envelope."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_ai_schedule_mode(enabled=True)
-    mock_pub.assert_called_once_with(
-        {
-            "sn": "BK11TESTSN000001",
-            "cmdId": 17,
-            "cmdFunc": 254,
-            "params": {
-                "cfgEnergyStrategyOperateMode": {
-                    "operateIntelligentScheduleModeOpen": True
-                }
-            },
-        }
+    _assert_stream_envelope(
+        mock_pub,
+        expected_params={
+            "cfgEnergyStrategyOperateMode": {"operateIntelligentScheduleModeOpen": True}
+        },
     )
 
 
