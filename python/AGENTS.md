@@ -339,6 +339,57 @@ display or act on `battery_soc` if `is_on` is `False`.
 
 ---
 
+## 🚨 STREAM DEVICE QUIRKS
+
+### Quirk 13: Commands Need Full Envelope (dirDest/dirSrc/dest/needAck/from/id/version)
+
+**DISCOVERED: 2026-06-01.** STREAM devices silently ignore set commands that do not include
+the full message envelope. The original `_stream_cmd()` skeleton only had `sn/cmdId/cmdFunc/params`.
+All seven additional fields are required or the device acknowledges nothing and its state does
+not change:
+
+| Field | Required value | Purpose |
+|-------|---------------|---------|
+| `dirDest` | `1` | routing direction to device |
+| `dirSrc` | `1` | routing direction from client |
+| `dest` | `2` | destination node identifier |
+| `needAck` | `True` | request device acknowledgement |
+| `from` | `"ecoflow-python"` | client identifier string |
+| `id` | `str(next(_seq))` | monotonic per-command sequence number |
+| `version` | `"1.0"` | protocol version |
+
+**Fix (commit 7a37ca7):** `_stream_cmd()` in `devices/stream_ultra.py` now builds the
+full envelope before passing to `_publish()`:
+
+```python
+def _stream_cmd(self, params: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "from": "ecoflow-python",
+        "id": str(next(_seq)),
+        "version": "1.0",
+        "sn": self.sn,
+        "cmdId": 17,
+        "cmdFunc": 254,
+        "dirDest": 1,
+        "dirSrc": 1,
+        "dest": 2,
+        "needAck": True,
+        "params": params,
+    }
+```
+
+This applies to **ALL STREAM commands**: `set_relay2`, `set_relay3`, `set_grid_export`,
+`set_backup_reserve`, `set_self_powered_mode`, `set_ai_schedule_mode`.
+
+**Source:** tolwi/hassio-ecoflow-cloud `stream_ac.py` `switches()` — production-validated
+envelope used by a deployed Home Assistant integration.
+
+**Validated live (2026-06-01):** `set_relay2(on=True)` / `set_relay2(on=False)` confirmed
+working on BK11 STREAM Ultra — `relay2_on` toggled correctly as verified by REST `/quota/all`
+refresh after each command.
+
+---
+
 ## Public API Device Limitations (Confirmed Live)
 
 ### Wave 3 Returns Error 1006
@@ -508,10 +559,10 @@ the typed status dataclass on each update).
   as `client.panels` — devices go into `_all_typed` only.
 - **`MicroInverterDevice`**: Reuses `SmartMeterData` (labeled temporary). PowerStream 600W and
   800W are indistinguishable via API.
-- **STREAM relay write commands** (`set_relay2`, `set_relay3`): Implemented, implementation is
-  correct, but **not yet E2E validated against real hardware**. MQTT was blocked during
-  validation due to daily quota exhaustion (see Quirk 1). First opportunity to validate: after
-  midnight UTC resets the quota, with all other MQTT clients stopped.
+- **STREAM relay write commands** (`set_relay2`, `set_relay3`): **Validated on 2026-06-01.**
+  `set_relay2(on=True/False)` confirmed working on BK11 STREAM Ultra — `relay2_on` toggled
+  correctly via REST `/quota/all` refresh. The full envelope quirk (Quirk 13) was the missing
+  piece. `set_relay3` follows identical envelope structure and is expected to work the same way.
 - **Public API MQTT for STREAM devices**: MQTT reads work in principle (topic confirmed:
   `/open/{certAccount}/{sn}/quota`) but could not be validated live due to the quota incident.
   REST reads (`device.refresh()`) are confirmed working.
