@@ -1,0 +1,222 @@
+digraph ecoflow_overview {
+
+    // ── Graph-level attributes ─────────────────────────────────────────────
+    graph [
+        fontname  = "Helvetica,Arial,sans-serif"
+        fontsize  = 12
+        rankdir   = TB
+        splines   = polyline
+        nodesep   = 0.55
+        ranksep   = 0.70
+        pad       = 0.4
+        bgcolor   = "white"
+        label     = "ecoflow-python — Architecture Overview"
+        labelloc  = t
+        labeljust = c
+    ]
+
+    node [
+        fontname  = "Helvetica,Arial,sans-serif"
+        fontsize  = 11
+        style     = "filled,rounded"
+        shape     = box
+        penwidth  = 1.4
+        margin    = "0.20,0.12"
+    ]
+
+    edge [
+        fontname  = "Helvetica,Arial,sans-serif"
+        fontsize  = 9
+        color     = "#555555"
+        fontcolor = "#333333"
+        penwidth  = 1.3
+        arrowsize = 0.8
+    ]
+
+    // ── Cluster: Your Application ─────────────────────────────────────────
+    subgraph cluster_user {
+        label     = "Your Application"
+        style     = invis
+        margin    = 14
+
+        user_code [
+            label     = "Your Code"
+            fillcolor = "#E8F4FD"
+            color     = "#6BAED6"
+        ]
+    }
+
+    // ── Cluster: Public Developer API ─────────────────────────────────────
+    subgraph cluster_public {
+        label     = "Public Developer API"
+        style     = filled
+        fillcolor = "#F0FAF2"
+        color     = "#4CAF50"
+        penwidth  = 1.8
+        margin    = 16
+
+        client [
+            label     = "EcoFlowClient\naccessKey + secretKey"
+            fillcolor = "#D4EDDA"
+            color     = "#4CAF50"
+        ]
+
+        rest [
+            label     = "REST Transport\nHTTP + HMAC signing"
+            fillcolor = "#FFF3CD"
+            color     = "#E6A817"
+        ]
+
+        mqtt_pub [
+            label     = "MQTT Transport\nTLS + auto-reconnect"
+            fillcolor = "#FFF3CD"
+            color     = "#E6A817"
+        ]
+    }
+
+    // ── Cluster: Private API (Wave 3) ─────────────────────────────────────
+    subgraph cluster_private {
+        label     = "Private API (Wave 3)"
+        style     = "filled,dashed"
+        fillcolor = "#FEF2F2"
+        color     = "#E57373"
+        penwidth  = 1.8
+        margin    = 16
+
+        wave3conn [
+            label     = "Wave3Connection\nemail + password"
+            fillcolor = "#F8D7DA"
+            color     = "#E57373"
+            style     = "filled,rounded,dashed"
+        ]
+
+        priv_auth [
+            label     = "Private Auth\nbase64 + 2-step login"
+            fillcolor = "#F8D7DA"
+            color     = "#E57373"
+            style     = "filled,rounded,dashed"
+        ]
+
+        proto [
+            label     = "Protobuf Layer\ndecode + encode"
+            fillcolor = "#F8D7DA"
+            color     = "#E57373"
+            style     = "filled,rounded,dashed"
+        ]
+    }
+
+    // ── Cluster: EcoFlow Cloud ────────────────────────────────────────────
+    subgraph cluster_cloud {
+        label     = "EcoFlow Cloud"
+        style     = filled
+        fillcolor = "#FAFAFA"
+        color     = "#AAAAAA"
+        penwidth  = 1.5
+        margin    = 16
+
+        ecoflow_rest [
+            label     = "EcoFlow REST API\napi-e.ecoflow.com"
+            fillcolor = "#F5F5F5"
+            color     = "#AAAAAA"
+            shape     = note
+            style     = "filled"
+        ]
+
+        mqtt_broker [
+            label     = "EcoFlow MQTT\nmqtt-e.ecoflow.com\nJSON"
+            fillcolor = "#F5F5F5"
+            color     = "#AAAAAA"
+            shape     = note
+            style     = "filled"
+        ]
+
+        priv_broker [
+            label     = "EcoFlow MQTT\nmqtt.ecoflow.com\nProtobuf"
+            fillcolor = "#F5F5F5"
+            color     = "#AAAAAA"
+            shape     = note
+            style     = "filled,dashed"
+        ]
+    }
+
+    // ── Cluster: Device State (output) ────────────────────────────────────
+    subgraph cluster_output {
+        label     = "Device State"
+        style     = filled
+        fillcolor = "#F5F0FC"
+        color     = "#9575CD"
+        penwidth  = 1.8
+        margin    = 16
+
+        devices [
+            label     = "9 Device Types\nBattery · Plug · Meter\nSTREAM · Wave3 · ..."
+            fillcolor = "#E2D9F3"
+            color     = "#9575CD"
+        ]
+
+        models [
+            label     = "Status Models\nBatteryStatus · Wave3Status\nStreamUltraStatus ..."
+            fillcolor = "#E2D9F3"
+            color     = "#9575CD"
+        ]
+
+        commands [
+            label     = "Write Commands\nturn_on/off · set_mode\nset_temperature ..."
+            fillcolor = "#E2D9F3"
+            color     = "#9575CD"
+        ]
+    }
+
+    // ── Cluster: Legend ───────────────────────────────────────────────────
+    subgraph cluster_legend {
+        label     = "Legend"
+        style     = filled
+        fillcolor = "#FAFAFA"
+        color     = "#CCCCCC"
+        penwidth  = 1.2
+        margin    = 12
+
+        solid_line [
+            label = "── Public API"
+            shape = plaintext
+            style = ""
+        ]
+
+        dashed_line [
+            label = "- - Private API (Wave 3)\n      pip install ecoflow-python[wave3]"
+            shape = plaintext
+            style = ""
+        ]
+    }
+
+    // ── Edges: Public path ────────────────────────────────────────────────
+    user_code   -> client      [label = "API keys"]
+    client      -> rest        [label = "signs requests"]
+    client      -> mqtt_pub    [label = "MQTT credentials"]
+    rest        -> ecoflow_rest [label = "discovers devices"]
+    mqtt_pub    -> mqtt_broker  [label = "subscribes JSON"]
+
+    // ── Edges: Cloud → SDK ────────────────────────────────────────────────
+    ecoflow_rest -> devices    [label = "device list"]
+    mqtt_broker  -> devices    [label = "status events"]
+
+    // ── Edges: Private path ───────────────────────────────────────────────
+    user_code   -> wave3conn   [label = "email + password"  style = dashed  color = "#E57373"]
+    wave3conn   -> priv_auth   [label = "login"             style = dashed  color = "#E57373"]
+    priv_auth   -> priv_broker [label = "cert credentials"  style = dashed  color = "#E57373"]
+    priv_broker -> proto       [label = "binary Protobuf"   style = dashed  color = "#E57373"]
+    proto       -> devices     [label = "decoded status"    style = dashed  color = "#E57373"]
+
+    // ── Edges: Output ─────────────────────────────────────────────────────
+    devices     -> models      [label = "typed snapshots"]
+    user_code   -> commands    [label = "control calls"]
+    commands    -> mqtt_pub    [label = "publishes JSON"]
+    commands    -> proto       [label = "publishes Protobuf" style = dashed  color = "#E57373"]
+
+    // ── Rank hints ────────────────────────────────────────────────────────
+    { rank = same; rest; mqtt_pub; wave3conn }
+    { rank = same; ecoflow_rest; mqtt_broker; priv_broker }
+    { rank = same; priv_auth; proto }
+    { rank = same; devices; models; commands }
+
+}

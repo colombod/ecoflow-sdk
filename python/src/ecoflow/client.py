@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib as _hashlib
 import logging
 from collections.abc import AsyncGenerator
 from types import TracebackType
@@ -98,17 +99,33 @@ class EcoFlowClient:
         await self._discover()
         try:
             mqtt_data = await self._rest.get_mqtt_credentials()
+            # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per day per
+            # account. Random UUIDs burn this quota instantly (one per restart).
+            # A stable, deterministic ID reuses the same slot on every reconnect.
+            # Source: EcoFlow community reports (ioBroker,
+            # hassio-ecoflow-cloud issue trackers).
+            _account = mqtt_data.get("certificateAccount", "")
+            # Derive a stable ID: short hash of the account so it's always the
+            # same across restarts, but doesn't expose the full account string.
+            _stable_suffix = _hashlib.sha256(_account.encode()).hexdigest()[:12]
+            client_id = mqtt_data.get("clientId") or f"ecoflow-sdk-{_stable_suffix}"
             mqtt_creds = MqttCredentials(
                 url=mqtt_data.get("url", "mqtt.ecoflow.com"),
                 port=int(mqtt_data.get("port", 8883)),
                 protocol=mqtt_data.get("protocol", "mqtts"),
                 username=mqtt_data.get("certificateAccount", ""),
                 password=mqtt_data.get("certificatePassword", ""),
-                client_id=mqtt_data.get("clientId", ""),
+                client_id=client_id,
                 # API returns certificateAccount, not userId
                 user_id=mqtt_data.get("certificateAccount", ""),
             )
             self._mqtt = MqttTransport(mqtt_creds)
+            # Backfill the mqtt reference into all devices.  Devices were
+            # created during _discover() before MqttTransport existed, so
+            # their _mqtt attribute is still None.  Without this, _publish()
+            # always raises EcoFlowConnectionError even when MQTT is live.
+            for device in self._all_typed:
+                device._mqtt = self._mqtt  # noqa: SLF001
             # Register callbacks BEFORE connect() so _run() subscribes to all
             # devices in one shot and captures the broker's initial state dump.
             for device in self._all_typed:
