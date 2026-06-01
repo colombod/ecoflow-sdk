@@ -149,7 +149,7 @@ def test_stream_ultra_accumulates_mqtt_chunks() -> None:
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay2_on() -> None:
-    """set_relay2(on=True) publishes the correct STREAM command envelope."""
+    """set_relay2(on=True) publishes relay2Onoff=1 (correct name, integer value)."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay2(on=True)
@@ -158,14 +158,14 @@ async def test_stream_ultra_set_relay2_on() -> None:
             "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
-            "params": {"cfgRelay2Onoff": True},
+            "params": {"relay2Onoff": 1},
         }
     )
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay2_off() -> None:
-    """set_relay2(on=False) publishes cfgRelay2Onoff=False."""
+    """set_relay2(on=False) publishes relay2Onoff=0 (correct name, integer value)."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay2(on=False)
@@ -174,14 +174,14 @@ async def test_stream_ultra_set_relay2_off() -> None:
             "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
-            "params": {"cfgRelay2Onoff": False},
+            "params": {"relay2Onoff": 0},
         }
     )
 
 
 @pytest.mark.asyncio
 async def test_stream_ultra_set_relay3_on() -> None:
-    """set_relay3(on=True) publishes cfgRelay3Onoff=True."""
+    """set_relay3(on=True) publishes relay3Onoff=1 (correct name, integer value)."""
     device = make_stream_ultra()
     with patch.object(device, "_publish", new_callable=AsyncMock) as mock_pub:
         await device.set_relay3(on=True)
@@ -190,7 +190,7 @@ async def test_stream_ultra_set_relay3_on() -> None:
             "sn": "BK11TESTSN000001",
             "cmdId": 17,
             "cmdFunc": 254,
-            "params": {"cfgRelay3Onoff": True},
+            "params": {"relay3Onoff": 1},
         }
     )
 

@@ -75,12 +75,20 @@ class StreamUltraDevice(BaseDevice):
     # ------------------------------------------------------------------
 
     async def set_relay2(self, *, on: bool) -> None:
-        """Turn AC outlet 1 (relay2) on or off."""
-        await self._publish(self._stream_cmd({"cfgRelay2Onoff": on}))
+        """Enable or disable AC output relay 2 (outlet 1).
+
+        on=True sends relay2Onoff=1 (ON); on=False sends relay2Onoff=0 (OFF).
+        Field name and integer value confirmed from ioBroker.ecoflow-mqtt docs.
+        """
+        await self._publish(self._stream_cmd({"relay2Onoff": 1 if on else 0}))
 
     async def set_relay3(self, *, on: bool) -> None:
-        """Turn AC outlet 2 (relay3) on or off."""
-        await self._publish(self._stream_cmd({"cfgRelay3Onoff": on}))
+        """Enable or disable AC output relay 3 (outlet 2).
+
+        on=True sends relay3Onoff=1 (ON); on=False sends relay3Onoff=0 (OFF).
+        Field name and integer value confirmed from ioBroker.ecoflow-mqtt docs.
+        """
+        await self._publish(self._stream_cmd({"relay3Onoff": 1 if on else 0}))
 
     async def set_grid_export(self, *, enabled: bool) -> None:
         """Enable or disable grid export (feed-in) mode."""
