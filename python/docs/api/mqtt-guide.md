@@ -128,6 +128,39 @@ Field names match the REST `/iot-open/sign/device/quota/all` response for the sa
 
 ---
 
+## STREAM Device Write Commands
+
+STREAM devices require a specific command envelope for ALL write operations. Missing any of
+the envelope fields causes the device to silently ignore the command.
+
+### Required Envelope
+
+```json
+{
+  "from": "ecoflow-python",
+  "id": "1",
+  "version": "1.0",
+  "sn": "BK11XXXXXXXXXX",
+  "cmdId": 17,
+  "cmdFunc": 254,
+  "dirDest": 1,
+  "dirSrc": 1,
+  "dest": 2,
+  "needAck": true,
+  "params": {
+    "cfgRelay2Onoff": true
+  }
+}
+```
+
+Note: `params` uses `cfg`-prefixed field names for write operations (e.g. `cfgRelay2Onoff`),
+while the STATUS fields in telemetry use the plain name (e.g. `relay2Onoff`). These are
+different field names — the `cfg` prefix means "configure".
+
+Source: tolwi/hassio-ecoflow-cloud stream_ac.py (production-validated).
+
+---
+
 ## ⚠️ Public API Quota Limits — Read This Before Writing Any MQTT Code
 
 ### Limit 1: ~10 Unique Client IDs Per Day Per Account
