@@ -1,0 +1,277 @@
+digraph ecoflow_device_model {
+    // ── Graph-level attributes ─────────────────────────────────────────────────
+    graph [
+        fontname  = "Helvetica,Arial,sans-serif"
+        rankdir   = TB
+        splines   = curved
+        nodesep   = 0.55
+        ranksep   = 1.5
+        pad       = 0.7
+        bgcolor   = white
+        label     = "EcoFlow Python Library — Device Model\nClass Hierarchy  ·  Capabilities  ·  API Paths"
+        labelloc  = t
+        fontsize  = 17
+        fontcolor = "#212529"
+    ]
+    node [ fontname="Helvetica,Arial,sans-serif"  fontsize=11  shape=plain ]
+    edge [ fontname="Helvetica,Arial,sans-serif"  fontsize=9   color="#495057"
+           arrowhead=empty  arrowsize=1.2 ]
+
+    // ── BaseDevice ─────────────────────────────────────────────────────────────
+    base_device [ label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7" BGCOLOR="white">
+        <TR><TD COLSPAN="2" BGCOLOR="#495057" ALIGN="CENTER">
+            <FONT COLOR="white"><B> BaseDevice </B></FONT>
+            <FONT COLOR="#ADB5BD" POINT-SIZE="9"> · devices/base.py</FONT>
+        </TD></TR>
+        <TR><TD ALIGN="LEFT" VALIGN="TOP"><I>interface</I></TD>
+            <TD ALIGN="LEFT">
+                sn · product_name<BR/>
+                events() async generator<BR/>
+                on_update(callback)<BR/>
+                _publish(payload) → MQTT
+            </TD></TR>
+        </TABLE>
+    > ]
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Public Developer API cluster
+    //  JSON over MQTT  ·  accessKey + secretKey
+    //  Brokers: mqtt.ecoflow.com  /  mqtt-e.ecoflow.com (EU)
+    //  Topics: /open/{user_id}/{sn}/quota  ·  /open/{user_id}/{sn}/set
+    // ══════════════════════════════════════════════════════════════════════════
+    subgraph cluster_public {
+        label     = "Public Developer API  ·  JSON MQTT  ·  accessKey + secretKey  ·  mqtt.ecoflow.com / mqtt-e.ecoflow.com (EU)"
+        style     = rounded
+        color     = "#1565C0"
+        fontcolor = "#1565C0"
+        fontsize  = 11
+        bgcolor   = "#F5F9FF"
+
+        // ── BatteryDevice — green (full read + write) ──────────────────────
+        battery_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#D4EDDA">
+            <TR><TD COLSPAN="2" BGCOLOR="#28A745" ALIGN="CENTER"><FONT COLOR="white"><B> BatteryDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">EF… · BK… · R…  (DELTA Pro/2/Max · RIVER 2/Pro/Max)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                soc%  ·  charge_remaining_min  ·  discharge_remaining_min<BR/>
+                ac_in_watts  ·  ac_out_watts  ·  dc_out_watts<BR/>
+                mppt_input_watts  ·  usb_output_watts<BR/>
+                inverter_temp  ·  ac/dc_output_enabled<BR/>
+                BMS modules: soc/volt/amp/temp/cycles/health<BR/>
+                expansion_modules  ·  solar_input
+            </TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
+                set_charge_limit(50–100%)<BR/>
+                set_discharge_limit(0–30%)<BR/>
+                set_ac_output(enabled)  ·  set_dc_output(enabled)<BR/>
+                set_ac_charging_power(watts)
+            </TD></TR>
+            </TABLE>
+        > ]
+
+        // ── SmartPlugDevice — green (full read + write) ────────────────────
+        plug_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#D4EDDA">
+            <TR><TD COLSPAN="2" BGCOLOR="#28A745" ALIGN="CENTER"><FONT COLOR="white"><B> SmartPlugDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">HW52…  (Smart Plug)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                watts  ·  amps  ·  volts<BR/>
+                is_on  ·  brightness
+            </TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
+                turn_on()  ·  turn_off()  ·  toggle()<BR/>
+                set_brightness(0–1023)<BR/>
+                set_max_watts(0–2500W)
+            </TD></TR>
+            </TABLE>
+        > ]
+
+        // ── SmartMeterDevice — blue (read-only) ────────────────────────────
+        meter_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#E8F4FD">
+            <TR><TD COLSPAN="2" BGCOLOR="#1A6FA8" ALIGN="CENTER"><FONT COLOR="white"><B> SmartMeterDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">BK21…  (Smart Meter)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                grid_watts  ·  power_factor<BR/>
+                voltage / current / power  per phase L1–L3<BR/>
+                phase active flags<BR/>
+                total/today/exported energy kWh<BR/>
+                per-phase lifetime kWh
+            </TD></TR>
+            <TR><TD ALIGN="LEFT"><B>Control</B></TD><TD ALIGN="LEFT"><I>— read-only —</I></TD></TR>
+            </TABLE>
+        > ]
+
+        // ── MicroInverterDevice — amber (partial model) ────────────────────
+        inverter_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#FFF3CD">
+            <TR><TD COLSPAN="2" BGCOLOR="#856404" ALIGN="CENTER"><FONT COLOR="white"><B> MicroInverterDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">PowerStream  (600W · 800W)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                pv_watts  ·  battery_watts  ·  grid_watts<BR/>
+                <I>(model: SmartMeterData — temporary)</I>
+            </TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
+                set_feed_in_power(0–800W)
+            </TD></TR>
+            </TABLE>
+        > ]
+
+        // ── SmartHomePanelDevice — amber (partial, no typed model) ─────────
+        panel_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#FFF3CD">
+            <TR><TD COLSPAN="2" BGCOLOR="#856404" ALIGN="CENTER"><FONT COLOR="white"><B> SmartHomePanelDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">various  (Smart Home Panel 2)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                raw_fields dict<BR/>
+                <I>(no typed model — PARTIAL)</I>
+            </TD></TR>
+            <TR><TD ALIGN="LEFT"><B>Control</B></TD><TD ALIGN="LEFT"><I>— none implemented —</I></TD></TR>
+            </TABLE>
+        > ]
+
+        // ── StreamUltraDevice — green (full read + write) ──────────────────
+        stream_ultra [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#D4EDDA">
+            <TR><TD COLSPAN="2" BGCOLOR="#28A745" ALIGN="CENTER"><FONT COLOR="white"><B> StreamUltraDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">BK11…  (STREAM Ultra)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                batt_soc%  ·  soc_precise  ·  cascade_soc<BR/>
+                grid_watts  ·  pv_watts  ·  load_watts  ·  battery_watts<BR/>
+                load_from_battery / grid / pv_watts<BR/>
+                relay2_on  ·  relay3_on  ·  backup_reserve_soc<BR/>
+                temp  ·  health%  ·  remaining_cap_wh<BR/>
+                charge/discharge_remaining_min
+            </TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
+                set_charge_limit(50–100%)<BR/>
+                set_discharge_limit(0–30%)<BR/>
+                set_relay2(on/off)  ·  set_relay3(on/off)<BR/>
+                set_grid_export(enabled)<BR/>
+                set_backup_reserve(3–95%)<BR/>
+                set_self_powered_mode(enabled)<BR/>
+                set_ai_schedule_mode(enabled)
+            </TD></TR>
+            </TABLE>
+        > ]
+
+        // ── StreamAcProDevice — green (inherits StreamUltraDevice) ─────────
+        stream_ac_pro [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#D4EDDA">
+            <TR><TD COLSPAN="2" BGCOLOR="#28A745" ALIGN="CENTER"><FONT COLOR="white"><B> StreamAcProDevice </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">BK31…  (STREAM AC Pro)</TD></TR>
+            <TR><TD ALIGN="LEFT"><B>Read</B></TD><TD ALIGN="LEFT"><I>inherits all from StreamUltraDevice</I></TD></TR>
+            <TR><TD ALIGN="LEFT"><B>Control</B></TD><TD ALIGN="LEFT"><I>inherits all from StreamUltraDevice</I></TD></TR>
+            <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="9">Same quota/all payload format  ·  same command interface</FONT></TD></TR>
+            </TABLE>
+        > ]
+
+    } // end cluster_public
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Private API cluster
+    //  Protobuf over MQTT  ·  email + password  ·  Wave3Connection
+    //  Broker: mqtt.ecoflow.com:8883 (TLS)
+    //  Topics: /app/device/property/{sn}  ·  /app/{user_id}/{sn}/thing/property/set
+    // ══════════════════════════════════════════════════════════════════════════
+    subgraph cluster_private {
+        label     = "Private API  ·  Protobuf MQTT  ·  email + password  ·  Wave3Connection  ·  mqtt.ecoflow.com:8883"
+        style     = rounded
+        color     = "#842029"
+        fontcolor = "#842029"
+        fontsize  = 11
+        bgcolor   = "#FFF5F5"
+
+        // ── Wave3Device — rose (private Protobuf API) ──────────────────────
+        wave3_device [ label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#F8D7DA">
+            <TR><TD COLSPAN="2" BGCOLOR="#842029" ALIGN="CENTER"><FONT COLOR="white"><B> Wave3Device </B></FONT></TD></TR>
+            <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">AC71…  (Wave 3 portable AC)</TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Read</B></TD><TD ALIGN="LEFT">
+                battery_soc%  ·  ambient_temp°C<BR/>
+                mode (cool/heat/fan/dry/thermo)  ·  fan_level (1–5)<BR/>
+                target_temp  ·  water_level  ·  ambient_humidity<BR/>
+                ac/battery/pv_power_watts
+            </TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
+                turn_on()  ·  turn_off()<BR/>
+                set_mode(Wave3Mode)<BR/>
+                set_temperature(16–30°C)<BR/>
+                set_fan_speed(0–3)  ·  set_humidity_target(40–80%)<BR/>
+                set_charge_limit(50–100%)<BR/>
+                set_discharge_limit(0–30%)
+            </TD></TR>
+            <TR><TD COLSPAN="2" BGCOLOR="#FFE0E3" ALIGN="LEFT">
+                <FONT POINT-SIZE="9">Public REST returns error 1006 — use Wave3Connection<BR/>
+                Topic: /app/device/property/{sn}</FONT>
+            </TD></TR>
+            </TABLE>
+        > ]
+
+    } // end cluster_private
+
+    // ── DiscoveredDevice (@dataclass — not a BaseDevice subclass) ─────────────
+    discovered_device [ label=<
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5" BGCOLOR="#F8F9FA">
+        <TR><TD COLSPAN="2" BGCOLOR="#6C757D" ALIGN="CENTER">
+            <FONT COLOR="white"><B> DiscoveredDevice </B></FONT>
+            <FONT COLOR="#CED4DA" POINT-SIZE="9"> @dataclass</FONT>
+        </TD></TR>
+        <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">any unrecognized prefix</TD></TR>
+        <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Fields</B></TD><TD ALIGN="LEFT">
+            sn  ·  product_name  ·  online<BR/>
+            raw dict passthrough
+        </TD></TR>
+        <TR><TD ALIGN="LEFT"><B>Control</B></TD><TD ALIGN="LEFT"><I>— none —</I></TD></TR>
+        <TR><TD COLSPAN="2" BGCOLOR="#E9ECEF" ALIGN="LEFT">
+            <FONT POINT-SIZE="9">Not a BaseDevice subclass<BR/>
+            surfaced via client.unknown_devices</FONT>
+        </TD></TR>
+        </TABLE>
+    > ]
+
+    // ── Inheritance edges  (hollow arrowhead = extends) ────────────────────────
+    base_device    -> battery_device
+    base_device    -> plug_device
+    base_device    -> meter_device
+    base_device    -> inverter_device
+    base_device    -> panel_device
+    base_device    -> stream_ultra
+    base_device    -> wave3_device
+    stream_ultra   -> stream_ac_pro
+
+    // ── Layout edge for DiscoveredDevice (invisible — not an inheritance) ──────
+    base_device -> discovered_device [ style=invis ]
+
+    // ── Rank constraints ───────────────────────────────────────────────────────
+    { rank=same
+      battery_device; plug_device; meter_device
+      inverter_device; panel_device; stream_ultra
+      wave3_device; discovered_device }
+
+    { rank=same; stream_ac_pro }
+
+    // ── Legend ─────────────────────────────────────────────────────────────────
+    subgraph cluster_legend {
+        label     = "Legend"
+        style     = rounded
+        color     = "#6C757D"
+        fontcolor = "#6C757D"
+        fontsize  = 10
+
+        legend [ shape=plain  label=<
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="5">
+            <TR><TD BGCOLOR="#D4EDDA" ALIGN="LEFT"><B>Green </B> Public API — full read + write</TD></TR>
+            <TR><TD BGCOLOR="#E8F4FD" ALIGN="LEFT"><B>Blue  </B> Public API — read-only</TD></TR>
+            <TR><TD BGCOLOR="#FFF3CD" ALIGN="LEFT"><B>Amber </B> Public API — partial support</TD></TR>
+            <TR><TD BGCOLOR="#F8D7DA" ALIGN="LEFT"><B>Rose  </B> Private Protobuf API (Wave3Connection)</TD></TR>
+            <TR><TD BGCOLOR="#F8F9FA" ALIGN="LEFT"><B>Gray  </B> Standalone @dataclass (not BaseDevice)</TD></TR>
+            <TR><TD ALIGN="LEFT">hollow arrowhead  =  class inheritance (extends)</TD></TR>
+            </TABLE>
+        > ]
+    }
+
+    { rank=sink; legend }
+
+} // end digraph ecoflow_device_model

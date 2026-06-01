@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import itertools as _itertools
 from typing import Any
 
 from ecoflow.devices.base import BaseDevice
 from ecoflow.models.stream_ultra import StreamUltraStatus
+
+# Module-level sequential counter for STREAM command `id` field.
+# Must be module-level (not class-level) to avoid issues with itertools.count
+# used as a class variable descriptor.
+_seq = _itertools.count(1)
 
 
 class StreamUltraDevice(BaseDevice):
@@ -38,11 +44,24 @@ class StreamUltraDevice(BaseDevice):
     # ------------------------------------------------------------------
 
     def _stream_cmd(self, params: dict[str, Any]) -> dict[str, Any]:
-        """Build a STREAM command envelope for the Public API."""
+        """Build a complete STREAM set command with all required envelope fields.
+
+        QUIRK: STREAM devices require dirDest=1, dirSrc=1, dest=2, needAck=True
+        plus a from/id/version wrapper — without these, the device silently
+        ignores commands.
+        Source: tolwi/hassio-ecoflow-cloud stream_ac.py switches() implementation.
+        """
         return {
+            "from": "ecoflow-python",
+            "id": str(next(_seq)),
+            "version": "1.0",
             "sn": self.sn,
             "cmdId": 17,
             "cmdFunc": 254,
+            "dirDest": 1,
+            "dirSrc": 1,
+            "dest": 2,
+            "needAck": True,
             "params": params,
         }
 
@@ -75,11 +94,19 @@ class StreamUltraDevice(BaseDevice):
     # ------------------------------------------------------------------
 
     async def set_relay2(self, *, on: bool) -> None:
-        """Turn AC outlet 1 (relay2) on or off."""
+        """Enable or disable AC output relay 2 (outlet 1).
+
+        on=True sends cfgRelay2Onoff=True (ON); on=False sends False (OFF).
+        Field name and boolean value confirmed from tolwi/hassio-ecoflow-cloud.
+        """
         await self._publish(self._stream_cmd({"cfgRelay2Onoff": on}))
 
     async def set_relay3(self, *, on: bool) -> None:
-        """Turn AC outlet 2 (relay3) on or off."""
+        """Enable or disable AC output relay 3 (outlet 2).
+
+        on=True sends cfgRelay3Onoff=True (ON); on=False sends False (OFF).
+        Field name and boolean value confirmed from tolwi/hassio-ecoflow-cloud.
+        """
         await self._publish(self._stream_cmd({"cfgRelay3Onoff": on}))
 
     async def set_grid_export(self, *, enabled: bool) -> None:

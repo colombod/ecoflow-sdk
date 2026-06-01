@@ -423,3 +423,154 @@ def test_stream_ultra_vector_new_fields() -> None:
     assert status.full_cap_mah == expected["full_cap_mah"]
     wh_approx = pytest.approx(expected["remaining_cap_wh"], abs=5.0)  # pyright: ignore[reportUnknownMemberType]
     assert status.remaining_cap_wh == wh_approx
+
+
+# ---------------------------------------------------------------------------
+# Real device relay2 ON/OFF snapshots (BK11TESTSN000001, 2026-06-01)
+# ---------------------------------------------------------------------------
+#
+# Captured via REST /quota/all after set_relay2(on=False) and set_relay2(on=True).
+# Raw camelCase field names are exactly what the EcoFlow REST API returns.
+# relay2Onoff: 0 = OFF, 1 = ON  (integer, converted via bool() in from_quota_payload).
+#
+# Context: device was charging from grid at ~89 % SOC. Load stayed at ~864–866 W
+# across both states; only relay2Onoff toggled. relay3 remained 0 in both states.
+# feed_grid_mode=2 (auto), backup_reserve_soc=13 (configured prior to test).
+
+RELAY_OFF_PAYLOAD: dict[str, Any] = {
+    # Battery
+    "bmsBattSoc": 89.0,
+    # Power flows
+    "powGetSysGrid": 78.0,
+    "powGetSysLoad": 863.8072,
+    "powGetBpCms": -786.7334,
+    "powGetPvSum": 0.0,
+    # Settings
+    "cmsMaxChgSoc": 95,
+    "cmsMinDsgSoc": 10,
+    "feedGridMode": 2,
+    "backupReverseSoc": 13,
+    # Relays — OFF state
+    "relay2Onoff": 0,
+    "relay3Onoff": 0,
+}
+
+RELAY_ON_PAYLOAD: dict[str, Any] = {
+    # Battery
+    "bmsBattSoc": 89.0,
+    # Power flows (slight natural variation between readings)
+    "powGetSysGrid": 82.0,
+    "powGetSysLoad": 866.09973,
+    "powGetBpCms": -784.09973,
+    "powGetPvSum": 0.0,
+    # Settings (unchanged)
+    "cmsMaxChgSoc": 95,
+    "cmsMinDsgSoc": 10,
+    "feedGridMode": 2,
+    "backupReverseSoc": 13,
+    # Relays — ON state (relay2 toggled, relay3 unchanged)
+    "relay2Onoff": 1,
+    "relay3Onoff": 0,
+}
+
+
+class TestStreamUltraRealRelaySnapshots:
+    """Tests using real REST snapshots from live BK11 STREAM Ultra (2026-06-01).
+
+    RELAY_OFF_PAYLOAD: after set_relay2(on=False) — relay2Onoff=0.
+    RELAY_ON_PAYLOAD:  after set_relay2(on=True)  — relay2Onoff=1.
+    """
+
+    def test_relay2_off_payload_relay2_on_is_false(self) -> None:
+        """relay2Onoff=0 in REST payload → relay2_on=False."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_OFF_PAYLOAD
+        )
+        assert status.relay2_on is False
+
+    def test_relay2_on_payload_relay2_on_is_true(self) -> None:
+        """relay2Onoff=1 in REST payload → relay2_on=True."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_ON_PAYLOAD
+        )
+        assert status.relay2_on is True
+
+    def test_relay2_off_payload_relay3_on_is_false(self) -> None:
+        """relay3Onoff=0 in RELAY_OFF state → relay3_on=False."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_OFF_PAYLOAD
+        )
+        assert status.relay3_on is False
+
+    def test_relay2_on_payload_relay3_on_is_false(self) -> None:
+        """relay3Onoff=0 unchanged when relay2 toggled ON → relay3_on=False."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_ON_PAYLOAD
+        )
+        assert status.relay3_on is False
+
+    def test_relay2_off_payload_batt_soc(self) -> None:
+        """bmsBattSoc=89.0 from live device in relay=OFF state."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_OFF_PAYLOAD
+        )
+        assert status.batt_soc == pytest.approx(89.0)  # pyright: ignore[reportUnknownMemberType]
+
+    def test_relay2_on_payload_batt_soc(self) -> None:
+        """bmsBattSoc=89.0 unchanged from live device in relay=ON state."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_ON_PAYLOAD
+        )
+        assert status.batt_soc == pytest.approx(89.0)  # pyright: ignore[reportUnknownMemberType]
+
+    def test_relay2_off_payload_feed_grid_mode(self) -> None:
+        """feedGridMode=2 (auto) preserved from live device snapshot."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_OFF_PAYLOAD
+        )
+        assert status.feed_grid_mode == 2
+
+    def test_relay2_on_payload_backup_reserve_soc(self) -> None:
+        """backupReverseSoc=13 preserved in relay=ON state."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        status = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_ON_PAYLOAD
+        )
+        assert status.backup_reserve_soc == 13
+
+    def test_relay_toggle_only_changes_relay2_on(self) -> None:
+        """Toggling relay2 only changes relay2_on; other fields stay consistent."""
+        from ecoflow.models.stream_ultra import StreamUltraStatus
+
+        s_off = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_OFF_PAYLOAD
+        )
+        s_on = StreamUltraStatus.from_quota_payload(
+            "BK11TESTSN000001", RELAY_ON_PAYLOAD
+        )
+
+        # Only relay2_on should differ
+        assert s_off.relay2_on is False
+        assert s_on.relay2_on is True
+
+        # relay3, SOC, charge limits — unchanged between snapshots
+        assert s_off.relay3_on == s_on.relay3_on
+        assert s_off.batt_soc == pytest.approx(s_on.batt_soc)  # pyright: ignore[reportUnknownMemberType]
+        assert s_off.max_charge_soc == s_on.max_charge_soc
+        assert s_off.min_discharge_soc == s_on.min_discharge_soc
+        assert s_off.backup_reserve_soc == s_on.backup_reserve_soc
