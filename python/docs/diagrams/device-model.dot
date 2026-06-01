@@ -145,11 +145,11 @@ digraph ecoflow_device_model {
                 charge/discharge_remaining_min
             </TD></TR>
             <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT">
-                set_charge_limit(50–100%)<BR/>
-                set_discharge_limit(0–30%)<BR/>
-                set_relay2(on/off)  ·  set_relay3(on/off)<BR/>
-                set_grid_export(enabled)<BR/>
-                set_backup_reserve(3–95%)<BR/>
+                set_relay2(on/off) ✓  ·  set_relay3(on/off) ✓<BR/>
+                set_charge_limit(50–100%) ✓ (envelope fixed)<BR/>
+                set_discharge_limit(0–30%) ✓<BR/>
+                set_grid_export(enabled) ✓<BR/>
+                set_backup_reserve(3–95%) ✓<BR/>
                 set_self_powered_mode(enabled)<BR/>
                 set_ai_schedule_mode(enabled)
             </TD></TR>
@@ -162,7 +162,7 @@ digraph ecoflow_device_model {
             <TR><TD COLSPAN="2" BGCOLOR="#28A745" ALIGN="CENTER"><FONT COLOR="white"><B> StreamAcProDevice </B></FONT></TD></TR>
             <TR><TD ALIGN="LEFT"><I>SN</I></TD><TD ALIGN="LEFT">BK31…  (STREAM AC Pro)</TD></TR>
             <TR><TD ALIGN="LEFT"><B>Read</B></TD><TD ALIGN="LEFT"><I>inherits all from StreamUltraDevice</I></TD></TR>
-            <TR><TD ALIGN="LEFT"><B>Control</B></TD><TD ALIGN="LEFT"><I>inherits all from StreamUltraDevice</I></TD></TR>
+            <TR><TD ALIGN="LEFT" VALIGN="TOP"><B>Control</B></TD><TD ALIGN="LEFT"><I>inherits all from StreamUltraDevice<BR/>(relay2/3 ✓ validated)</I></TD></TR>
             <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="9">Same quota/all payload format  ·  same command interface</FONT></TD></TR>
             </TABLE>
         > ]
@@ -268,6 +268,7 @@ digraph ecoflow_device_model {
             <TR><TD BGCOLOR="#F8D7DA" ALIGN="LEFT"><B>Rose  </B> Private Protobuf API (Wave3Connection)</TD></TR>
             <TR><TD BGCOLOR="#F8F9FA" ALIGN="LEFT"><B>Gray  </B> Standalone @dataclass (not BaseDevice)</TD></TR>
             <TR><TD ALIGN="LEFT">hollow arrowhead  =  class inheritance (extends)</TD></TR>
+            <TR><TD ALIGN="LEFT">✓  =  command validated against real hardware</TD></TR>
             </TABLE>
         > ]
     }
