@@ -1,7 +1,8 @@
 # ecoflow-python
 
-[![PyPI version](https://img.shields.io/pypi/v/ecoflow-python.svg)](https://pypi.org/project/ecoflow-python/)
-[![CI](https://github.com/colombod/ecoflow-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/colombod/ecoflow-sdk/actions)
+[![PyPI](https://img.shields.io/pypi/v/ecoflow-python)](https://pypi.org/project/ecoflow-python/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 
 ![Architecture Overview](docs/diagrams/overview.svg)
 
@@ -28,15 +29,13 @@ Python SDK for monitoring and controlling EcoFlow energy devices via the public 
 ## Installation
 
 ```bash
-pip install ecoflow-python              # public API (most devices)
-pip install "ecoflow-python[wave3]"     # + Wave 3 AC support
-```
-
-Or with `uv`:
-
-```bash
+# Using uv (recommended)
 uv add ecoflow-python
 uv add "ecoflow-python[wave3]"
+
+# Using pip
+pip install ecoflow-python
+pip install "ecoflow-python[wave3]"
 ```
 
 ---
@@ -196,4 +195,4 @@ Copy `tests/.env.example` → `tests/.env` and fill in credentials before runnin
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE) for details.
