@@ -1,0 +1,288 @@
+// ============================================================================
+// EcoFlow Python Library — Authentication Flows
+// Two parallel paths: Public Developer API (left) vs Private API (right)
+// ============================================================================
+
+digraph ecoflow_auth_flow {
+
+    // ── Graph-level attributes ────────────────────────────────────────────────
+    graph [
+        fontname = "Helvetica,Arial,sans-serif"
+        rankdir  = TB
+        nodesep  = 1.0
+        ranksep  = 0.58
+        pad      = "0.7,0.5"
+        label    = "EcoFlow Python Library — Authentication Flows"
+        labelloc = t
+        fontsize = 20
+        bgcolor  = "white"
+        compound = true
+    ]
+
+    // ── Default node style ────────────────────────────────────────────────────
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        style    = "filled,rounded"
+        shape    = box
+        width    = 3.5
+        height   = 0.55
+        margin   = "0.22,0.10"
+    ]
+
+    // ── Default edge style ────────────────────────────────────────────────────
+    edge [
+        fontname  = "Helvetica,Arial,sans-serif"
+        fontsize  = 9
+        arrowsize = 0.72
+        color     = "#555555"
+    ]
+
+    // ── Invisible alignment spine ─────────────────────────────────────────────
+    // Ranks s0–s9 anchor each row so both columns stay vertically aligned.
+    node [style=invis, width=0.01, height=0.01, margin="0,0", label=""]
+    s0; s1; s2; s3; s4; s5; s6; s7; s8; s9
+    s0 -> s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 -> s8 -> s9
+        [style=invis, weight=50]
+
+    // ── Restore node defaults for visible nodes ───────────────────────────────
+    node [
+        style  = "filled,rounded"
+        shape  = box
+        width  = 3.5
+        height = 0.55
+        margin = "0.22,0.10"
+    ]
+
+    // =========================================================================
+    // COLUMN HEADERS
+    // =========================================================================
+
+    title_pub [
+        label     = "PUBLIC DEVELOPER API\naccessKey + secretKey"
+        fillcolor = "#C3E6CB"
+        fontsize  = 13
+        height    = 0.68
+        width     = 3.8
+    ]
+    title_priv [
+        label     = "PRIVATE API\nemail + password  (Wave 3 only)"
+        fillcolor = "#F5B7BA"
+        fontsize  = 13
+        height    = 0.68
+        width     = 3.8
+    ]
+
+    // =========================================================================
+    // PUBLIC API — Steps
+    // =========================================================================
+
+    pub1 [
+        label     = "① Developer registers\ndeveloper-eu.ecoflow.com"
+        fillcolor = "#E8F4FD"
+    ]
+    pub2 [
+        label     = "② Obtain credentials\naccessKey  +  secretKey"
+        fillcolor = "#E8F4FD"
+    ]
+    pub3 [
+        label     = "③ Sign every REST call  (HMAC-SHA256)\nInput: accessKey + nonce + timestamp + secretKey\nHeaders: accessKey | timestamp | nonce | sign"
+        fillcolor = "#D4EDDA"
+        height    = 0.85
+    ]
+    pub4 [
+        label     = "④ GET /iot-open/sign/certification\n→  certificateAccount\n→  certificatePassword\n→  url: mqtt-e.ecoflow.com  port: 8883"
+        fillcolor = "#F5F5F5"
+        height    = 1.02
+    ]
+    pub5 [
+        label     = "⑤ MQTT credentials assembled\ncertificateAccount  /  certificatePassword\nClientID: ANDROID_{UUID}_{certificateAccount}"
+        fillcolor = "#FFF3CD"
+        height    = 0.85
+    ]
+    pub6 [
+        label     = "⑥ MQTT Connect  (TLS)\nmqtt-e.ecoflow.com : 8883\nUser: certificateAccount  ·  Pass: certificatePassword"
+        fillcolor = "#FFF3CD"
+        height    = 0.85
+    ]
+    pub7 [
+        label     = "⑦ Topics — JSON payloads\nSub: /open/{certAccount}/{sn}/quota\nPub: /open/{certAccount}/{sn}/set"
+        fillcolor = "#D4EDDA"
+        height    = 0.85
+    ]
+
+    // =========================================================================
+    // PRIVATE API — Steps
+    // =========================================================================
+
+    priv1 [
+        label     = "① EcoFlow app account\nemail  +  password"
+        fillcolor = "#E8F4FD"
+    ]
+    priv2 [
+        label     = "② Encode password\npassword  →  base64(password)"
+        fillcolor = "#F8D7DA"
+    ]
+    priv3 [
+        label     = "③ POST https://api.ecoflow.com/auth/login\n{ email,  password: base64(pw),\n  scene: \"IOT_APP\",  userType: \"ECOFLOW\" }\n→  token  +  user.userId"
+        fillcolor = "#F5F5F5"
+        height    = 1.10
+    ]
+    priv4 [
+        label     = "④ Auth data extracted\nBearer token  +  userId"
+        fillcolor = "#F8D7DA"
+    ]
+    priv5 [
+        label     = "⑤ GET https://api.ecoflow.com/iot-auth/app/certification\nAuthorization: Bearer {token}  ·  Body: {userId}\n→  certificateAccount  +  certificatePassword"
+        fillcolor = "#F5F5F5"
+        height    = 0.85
+    ]
+    priv6 [
+        label     = "⑥ MQTT credentials assembled\ncertificateAccount  /  certificatePassword\nClientID: ANDROID_{UUID}_{userId}"
+        fillcolor = "#FFF3CD"
+        height    = 0.85
+    ]
+    priv7 [
+        label     = "⑦ MQTT Connect  (TLS)\nmqtt.ecoflow.com : 8883\nUser: certificateAccount  ·  Pass: certificatePassword"
+        fillcolor = "#FFF3CD"
+        height    = 0.85
+    ]
+    priv8 [
+        label     = "⑧ Topics — XOR-encrypted Protobuf\nSub: /app/device/property/{sn}\nPub GET: /app/{userId}/{sn}/thing/property/get\nPub SET: /app/{userId}/{sn}/thing/property/set"
+        fillcolor = "#F8D7DA"
+        height    = 1.10
+    ]
+    priv9 [
+        label     = "⑨ Send GET trigger\nPublish GET after subscribe\nDevice stays silent until polled"
+        fillcolor = "#F8D7DA"
+        height    = 0.85
+    ]
+
+    // =========================================================================
+    // QUIRK ANNOTATIONS  (note shape = folded-corner callout)
+    // =========================================================================
+
+    quirk_broker [
+        label     = "⚠ Different brokers!\nPublic:  mqtt-e.ecoflow.com\nPrivate: mqtt.ecoflow.com"
+        shape     = note
+        fillcolor = "#FFE5B4"
+        style     = filled
+        fontsize  = 9
+        width     = 2.05
+        height    = 0.72
+    ]
+    quirk_xor [
+        label     = "⚠ XOR encryption\nenc_type=1  AND  src ≠ 32\n→ XOR each byte with (seq & 0xFF)"
+        shape     = note
+        fillcolor = "#FFF9C4"
+        style     = filled
+        fontsize  = 9
+        width     = 2.05
+        height    = 0.72
+    ]
+    quirk_get [
+        label     = "⚠ GET trigger required\nDevice is silent after subscribe\nuntil first GET is published"
+        shape     = note
+        fillcolor = "#FFF9C4"
+        style     = filled
+        fontsize  = 9
+        width     = 2.05
+        height    = 0.72
+    ]
+
+    // =========================================================================
+    // RANK ALIGNMENT CONSTRAINTS
+    // Each row: spine anchor + left column + right column [+ optional quirk note]
+    // =========================================================================
+
+    { rank=same; s0; title_pub;  title_priv                    }
+    { rank=same; s1; pub1;       priv1                         }
+    { rank=same; s2; pub2;       priv2                         }
+    { rank=same; s3; pub3;       priv3                         }
+    { rank=same; s4; pub4;       priv4                         }
+    { rank=same; s5; pub5;       priv5                         }
+    { rank=same; s6; pub6;       priv6                         }
+    { rank=same; s7; pub7;       priv7;     quirk_broker       }
+    { rank=same; s8;             priv8;     quirk_xor          }
+    { rank=same; s9;             priv9;     quirk_get          }
+
+    // =========================================================================
+    // PUBLIC FLOW — Edges
+    // =========================================================================
+
+    title_pub -> pub1
+    pub1      -> pub2
+    pub2      -> pub3
+    pub3      -> pub4
+    pub4      -> pub5
+    pub5      -> pub6
+    pub6      -> pub7
+
+    // =========================================================================
+    // PRIVATE FLOW — Edges
+    // =========================================================================
+
+    title_priv -> priv1
+    priv1      -> priv2
+    priv2      -> priv3
+    priv3      -> priv4
+    priv4      -> priv5
+    priv5      -> priv6
+    priv6      -> priv7
+    priv7      -> priv8
+    priv8      -> priv9
+
+    // =========================================================================
+    // LEFT-TO-RIGHT COLUMN ORDERING  (invisible; keeps public left, private right)
+    // =========================================================================
+
+    title_pub -> title_priv [style=invis]
+    pub1      -> priv1      [style=invis]
+    pub2      -> priv2      [style=invis]
+    pub3      -> priv3      [style=invis]
+    pub4      -> priv4      [style=invis]
+    pub5      -> priv5      [style=invis]
+    pub6      -> priv6      [style=invis]
+    pub7      -> priv7      [style=invis]
+
+    // =========================================================================
+    // QUIRK ANNOTATION CONNECTIONS
+    // constraint=false so they don't affect rank placement
+    // =========================================================================
+
+    priv7 -> quirk_broker [style=dashed, color="#999999", arrowhead=none, constraint=false]
+    priv8 -> quirk_xor    [style=dashed, color="#999999", arrowhead=none, constraint=false]
+    priv9 -> quirk_get    [style=dashed, color="#999999", arrowhead=none, constraint=false]
+
+    // =========================================================================
+    // LEGEND
+    // =========================================================================
+
+    subgraph cluster_legend {
+        label    = "Legend"
+        fontsize = 11
+        style    = dashed
+        color    = "#AAAAAA"
+        margin   = 10
+        bgcolor  = "white"
+
+        node [width=2.1, height=0.38, margin="0.15,0.06"]
+
+        leg_user  [label="User / Developer",         fillcolor="#E8F4FD"]
+        leg_pub   [label="Public API step",           fillcolor="#D4EDDA"]
+        leg_priv  [label="Private API step",          fillcolor="#F8D7DA"]
+        leg_cloud [label="EcoFlow Cloud service",     fillcolor="#F5F5F5"]
+        leg_mqtt  [label="MQTT connection",           fillcolor="#FFF3CD"]
+        leg_note  [label="⚠ Quirk / Warning",
+                   shape=note, fillcolor="#FFF9C4", style=filled]
+
+        // Layout legend items as a vertical list
+        leg_user -> leg_pub -> leg_priv -> leg_cloud -> leg_mqtt -> leg_note
+            [style=invis]
+    }
+
+    // Anchor legend below the main flows
+    priv9 -> leg_user [style=invis, weight=3]
+    pub7  -> leg_user [style=invis, weight=3]
+
+}

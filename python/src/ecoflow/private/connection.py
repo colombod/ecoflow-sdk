@@ -20,10 +20,10 @@ Usage:
 from __future__ import annotations
 
 import asyncio
+import hashlib as _hashlib
 import json
 import logging
 import ssl
-import uuid
 
 import aiomqtt
 
@@ -127,13 +127,20 @@ class Wave3Connection:
         backoff = 1.0
         while True:
             try:
-                client_id = f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"
+                # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per
+                # day per account. Random UUIDs burn this quota instantly.
+                # A stable, deterministic ID reuses the same slot on reconnect.
+                # Source: EcoFlow community reports (ioBroker,
+                # hassio-ecoflow-cloud issue trackers).
+                _hash = _hashlib.sha256(creds.user_id.encode()).hexdigest()
+                _stable_suffix = _hash[:12]
+                identifier = f"ecoflow-private-{_stable_suffix}"
                 async with aiomqtt.Client(
                     hostname="mqtt.ecoflow.com",
                     port=8883,
                     username=creds.certificate_account,
                     password=creds.certificate_password,
-                    identifier=client_id,
+                    identifier=identifier,
                     keepalive=60,
                     tls_context=tls_ctx,
                 ) as client:
