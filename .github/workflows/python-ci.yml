@@ -41,8 +41,13 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration and not write_integration" -v
 
-  # Live tests are deliberately NOT run in CI: they would share the account's
-  # single MQTT session with the owner's live system (AGENTS.md Quirk 2), and
-  # write tests move real hardware. Run them ad hoc on a trusted machine
-  # instead — see python/docs/api/live-testing.md. Captured, redacted payloads
-  # (tests/vectors/captured/) are replayed offline by the unit tests above.
+      # The live REST/MQTT test modules, replayed offline against every
+      # redacted recording in tests/recordings/ (tests/support/replay.py).
+      # No secrets, no network: the SDK talks to a fake REST server and broker.
+      - name: Replay recorded sessions
+        run: uv run pytest tests/e2e --live=replay -v
+
+  # Real live tests are deliberately NOT run in CI: they would share the
+  # account's single MQTT session with the owner's live system (AGENTS.md
+  # Quirk 2), and write tests move real hardware. Run them ad hoc on a trusted
+  # machine instead — see python/docs/api/live-testing.md.

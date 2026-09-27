@@ -26,9 +26,16 @@ class StreamUltraDevice(BaseDevice):
         self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
 
     async def refresh(self) -> StreamUltraStatus:
-        """Fetch current device state via REST and return a StreamUltraStatus."""
+        """Fetch current device state via REST and return a StreamUltraStatus.
+
+        REST values are merged into the state accumulated from MQTT rather
+        than replacing it: REST ``quota/all`` has only ~15 system keys, and
+        the battery pack (soc, vol, cycles, capacity) is only reported over
+        MQTT — a cascade slave's real SOC would otherwise drop back to 0.
+        """
         raw = await self._rest.get_quota(self.sn)
-        self.status = StreamUltraStatus.from_quota_payload(self.sn, raw)
+        self._raw_data.update(raw)
+        self.status = StreamUltraStatus.from_quota_payload(self.sn, self._raw_data)
         self.status.product_name = self.product_name
         return self.status
 

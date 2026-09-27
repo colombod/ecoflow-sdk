@@ -1,10 +1,10 @@
 """Normalisation of public Developer API quota payloads.
 
-REST ``/quota/all`` returns a flat dict of quota keys, but MQTT pushes on
-``/open/{account}/{sn}/quota`` wrap the same keys in an envelope whose shape
-depends on the device family:
+REST ``/quota/all`` returns a flat dict of quota keys. MQTT pushes on
+``/open/{account}/{sn}/quota`` are flat for some families (STREAM and Smart
+Meter — recorded live 2026-09-27; returned unchanged) and wrapped for others:
 
-* STREAM / DELTA Pro 3 / Smart Meter: ``{"params": {"bmsBattSoc": 47, ...}}``
+* DELTA Pro 3 (per reference):        ``{"params": {"bmsBattSoc": 47, ...}}``
 * Smart Plug / PowerStream:           ``{"cmdFunc": 2, "cmdId": 1, "param": {...}}``
   — REST exposes these keys as ``"2_1.watts"``, so the push is prefixed the same
 * DELTA 2 / RIVER 2 families:         ``{"typeCode": "pdStatus", "params": {...}}``

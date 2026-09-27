@@ -41,6 +41,23 @@ _log = logging.getLogger(__name__)
 _CONNECT_TIMEOUT_S: float = 15.0
 
 
+def private_client_id(user_id: str) -> str:
+    """MQTT client ID for the private (app) broker: stable AND well-formed.
+
+    QUIRK (format): the private broker only authorises client IDs shaped
+    ``ANDROID_<32 upper-case hex>_<userId>``, as the EcoFlow app sends them; any
+    other shape is refused with 135 (Not authorized). Commit 67c3c87 replaced
+    this with ``ecoflow-private-<hash>`` and every Wave 3 connection failed
+    from then on (seen live 2026-09-27).
+
+    QUIRK (quota, AGENTS.md Quirk 1): the broker allows ~10 unique client IDs
+    per account per day, so the hex part is derived from ``user_id`` instead of
+    ``uuid4()`` — every reconnect reuses the same ID.
+    """
+    digest = _hashlib.sha256(user_id.encode()).hexdigest()[:32].upper()
+    return f"ANDROID_{digest}_{user_id}"
+
+
 class Wave3Connection:
     """Manages Wave 3 device connections via EcoFlow's private MQTT API.
 
@@ -68,6 +85,7 @@ class Wave3Connection:
         self._ready: asyncio.Event = asyncio.Event()
         self._publish_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
         self._user_id: str = ""  # set after login in connect()
+        self._fatal_error: EcoFlowConnectionError | None = None
 
     async def connect(self) -> None:
         """Authenticate, create Wave3Device instances, start the MQTT loop.
@@ -96,6 +114,9 @@ class Wave3Connection:
             raise TimeoutError(
                 f"Wave3 MQTT connection timed out after {_CONNECT_TIMEOUT_S:.0f}s"
             ) from None
+        if self._fatal_error is not None:
+            await self.close()
+            raise self._fatal_error
 
     async def close(self) -> None:
         """Cancel the background MQTT task and wait for it to finish."""
@@ -125,22 +146,15 @@ class Wave3Connection:
         """
         tls_ctx = ssl.create_default_context()
         backoff = 1.0
+        ever_connected = False
         while True:
             try:
-                # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per
-                # day per account. Random UUIDs burn this quota instantly.
-                # A stable, deterministic ID reuses the same slot on reconnect.
-                # Source: EcoFlow community reports (ioBroker,
-                # hassio-ecoflow-cloud issue trackers).
-                _hash = _hashlib.sha256(creds.user_id.encode()).hexdigest()
-                _stable_suffix = _hash[:12]
-                identifier = f"ecoflow-private-{_stable_suffix}"
                 async with aiomqtt.Client(
                     hostname="mqtt.ecoflow.com",
                     port=8883,
                     username=creds.certificate_account,
                     password=creds.certificate_password,
-                    identifier=identifier,
+                    identifier=private_client_id(creds.user_id),
                     keepalive=60,
                     tls_context=tls_ctx,
                 ) as client:
@@ -163,6 +177,7 @@ class Wave3Connection:
                             }
                         ).encode()
                         await client.publish(get_topic, get_payload, qos=1)
+                    ever_connected = True
                     self._ready.set()
                     backoff = 1.0
                     async with asyncio.TaskGroup() as tg:
@@ -170,6 +185,27 @@ class Wave3Connection:
                         tg.create_task(self._publish_loop(client, creds.user_id))
             except asyncio.CancelledError:
                 return
+            except aiomqtt.MqttCodeError as exc:
+                if exc.rc == 135 and not ever_connected:
+                    # QUIRK 5 (AGENTS.md), as in MqttTransport: a 135 on the very
+                    # first CONNACK will not clear by retrying — another session
+                    # holds the account, the daily client-ID quota is spent, or
+                    # the client ID has the wrong shape. Fail fast and say so.
+                    self._fatal_error = EcoFlowConnectionError(
+                        "Wave 3 MQTT error 135 (Not authorized) on first connect. "
+                        "Close the EcoFlow app / other clients using this account "
+                        "(one session per account); if nothing else is connected, "
+                        "the daily client-ID quota may be spent (resets at midnight "
+                        "UTC). Not retrying."
+                    )
+                    self._ready.set()
+                    return
+                self._ready.clear()
+                _log.warning(
+                    "Wave3 MQTT connection lost (%s), retrying in %.0fs", exc, backoff
+                )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 300.0)
             except Exception as exc:
                 self._ready.clear()
                 _log.warning(

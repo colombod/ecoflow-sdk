@@ -84,6 +84,29 @@ async def test_get_quota_returns_data() -> None:
 
 
 @respx.mock
+async def test_get_sends_no_json_content_type() -> None:
+    # Live-verified: a GET carrying "Content-Type: application/json" makes the
+    # API verify the signature without the query params → 8521, while the
+    # SDK signs them. Only requests with a JSON body may declare it.
+    route = respx.get(f"{BASE}/iot-open/sign/device/quota/all").mock(
+        return_value=Response(200, json={"code": "0", "data": {}})
+    )
+    async with RestTransport(CREDS, region="EU") as client:
+        await client.get_quota("EB12345")
+    assert "content-type" not in route.calls.last.request.headers
+
+
+@respx.mock
+async def test_put_sends_json_content_type() -> None:
+    route = respx.put(f"{BASE}/iot-open/sign/device/quota").mock(
+        return_value=Response(200, json={"code": "0", "data": {}})
+    )
+    async with RestTransport(CREDS, region="EU") as client:
+        await client.set_quota("EB12345", {"maxChargeSoc": 90})
+    assert route.calls.last.request.headers["content-type"] == "application/json"
+
+
+@respx.mock
 async def test_set_quota_puts_payload() -> None:
     sn = "EB12345"
     respx.put(f"{BASE}/iot-open/sign/device/quota").mock(

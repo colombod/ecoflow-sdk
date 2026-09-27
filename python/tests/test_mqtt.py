@@ -21,6 +21,23 @@ MQTT_CREDS = MqttCredentials(
 )
 
 
+async def test_connect_fails_fast_on_windows_proactor_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """aiomqtt needs add_reader/add_writer; Windows' default Proactor loop has
+    neither. Without this check connect() retried silently until its timeout."""
+    import ecoflow.transport.mqtt as mqtt_module
+
+    running = type(asyncio.get_running_loop())
+    monkeypatch.setattr(mqtt_module.sys, "platform", "win32")
+    monkeypatch.setattr(asyncio, "ProactorEventLoop", running, raising=False)
+    client_cls = MagicMock()
+    with patch("ecoflow.transport.mqtt.aiomqtt.Client", client_cls):
+        with pytest.raises(EcoFlowConnectionError, match="SelectorEventLoop"):
+            await MqttTransport(MQTT_CREDS).connect()
+    client_cls.assert_not_called()  # never touches the broker
+
+
 async def test_mqtt_client_can_be_constructed() -> None:
     client = MqttTransport(MQTT_CREDS)
     assert client is not None

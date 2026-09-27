@@ -44,6 +44,26 @@ async def test_stream_ultra_refresh_returns_status() -> None:
     assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
 
 
+async def test_refresh_keeps_pack_soc_learned_over_mqtt() -> None:
+    """Seen live: a cascade-slave AC Pro's REST has cmsBattSoc=0; its real SOC
+    only arrives in the MQTT battery-pack push. refresh() must merge REST into
+    the MQTT state, not replace it, or the SOC drops back to 0."""
+    device = make_stream_ultra(product_name="STREAM AC Pro")
+    device._rest.get_quota.return_value = {**_QUOTA_PAYLOAD, "cmsBattSoc": 0.0}  # pyright: ignore[reportPrivateUsage, reportAttributeAccessIssue, reportUnknownMemberType]
+    device._handle_message(device.sn, {"soc": 13, "vol": 19251, "cycles": 294})  # pyright: ignore[reportPrivateUsage]
+    status = await device.refresh()
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.cycles == 294
+    assert status.relay2_on is False  # REST values still land
+
+
+async def test_refresh_rest_values_override_older_mqtt_values() -> None:
+    device = make_stream_ultra()
+    device._handle_message(device.sn, {"powGetSysLoad": 5.0})  # pyright: ignore[reportPrivateUsage]
+    status = await device.refresh()
+    assert status.load_power_watts == pytest.approx(1112.0)  # pyright: ignore[reportUnknownMemberType]
+
+
 @pytest.mark.asyncio
 async def test_stream_ultra_refresh_sets_product_name() -> None:
     """refresh() attaches product_name to the returned status."""
