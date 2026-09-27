@@ -64,7 +64,8 @@ addopts = "-ra -q --strict-markers"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
-    "integration: read-only E2E tests against real EcoFlow accounts",
+    "integration: read-only E2E tests against real EcoFlow accounts (need --live)",
+    "live_rest: live test that only uses REST — never opens MQTT (runs with --live=rest)",
     "write_integration: write E2E tests that alter real device state (requires double opt-in)",
     "slow: slow tests",
 ]
@@ -83,6 +84,6 @@ ignore = []
 "src/ecoflow/private/proto/wave3_pb2.py" = ["E501"]  # generated file — binary descriptor line
 
 [tool.pyright]
-include = ["src", "tests"]
+include = ["src", "tests", "scripts"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"

@@ -82,9 +82,14 @@ EcoFlowError                    ← base; catch-all
 tests/
 ├── test_*.py                         — Unit tests (mocked, no real devices, ~400 tests)
 │   ├── test_models_wave3_private.py  — ACTIVE_PAYLOAD/STANDBY_PAYLOAD fixtures from real device
-│   └── test_private_decoder.py       — XOR decryption + Protobuf dispatch tests
-├── conftest.py                       — Credential helpers (skip if tests/.env missing)
+│   ├── test_private_decoder.py       — XOR decryption + Protobuf dispatch tests
+│   └── test_captured_vectors.py      — Offline MQTT-vs-REST replay of tests/vectors/captured/
+├── conftest.py                       — --live tier gate + credential helpers
+├── support/consistency.py            — MQTT-vs-REST stable-field comparison (live + offline)
 └── e2e/
+    ├── conftest.py                   — public_creds / rest_client / mqtt_client fixtures
+    ├── test_live_rest.py             — Tier 1: REST only (--live=rest)
+    ├── test_live_mqtt.py             — Tier 2: MQTT agrees with REST (--live=mqtt)
     ├── test_read.py                  — Read integration tests (real devices, @pytest.mark.integration)
     ├── test_private_read.py          — Wave 3 private API read tests (@pytest.mark.integration)
     └── write/                        — Write tests (@pytest.mark.write_integration,
@@ -453,11 +458,16 @@ via the API. This is labeled "temporary" in the code.
 ## Running Tests
 
 ```bash
-# Unit tests only (fast, no real devices needed) — ~400 tests
+# Unit tests only (fast, no real devices needed) — also replays captured vectors
 uv run pytest -m "not integration and not write_integration" -q
 
-# Integration read tests (requires real devices + tests/.env)
-uv run pytest -m "integration" -v -s --timeout=60
+# Live tests NEVER run without an explicit --live tier (even with tests/.env).
+# Full runbook: docs/api/live-testing.md. Never run live tests in CI.
+uv run pytest tests/e2e/test_live_rest.py --live=rest -v -s     # REST only, HA-safe
+uv run pytest tests/e2e -m integration --live=mqtt -v -s        # takes MQTT session
+
+# Capture redacted real payloads for offline replay (REST-only by default)
+uv run python scripts/capture_vectors.py --check-signature
 
 # Wave 3 write tests (EXPLICIT OPT-IN ONLY — touches real hardware)
 ECOFLOW_ENABLE_WRITE_TESTS=true \
@@ -563,8 +573,15 @@ variables (`os.environ["ECOFLOW_WAVE3_SN"]`) and skip with `pytest.skip` if not 
 ### `on_update` Callback Pattern
 
 All typed devices support `device.on_update(callback)` for synchronous callbacks that fire on
-every incoming MQTT update. For async streaming, use `device.events()` (async generator yielding
-the typed status dataclass on each update).
+every incoming MQTT update. For async streaming, use `device.events()` (each iterator gets its
+own ordered buffer of 100 updates; oldest dropped if the consumer falls behind), or
+`await device.wait_for_update()` inside `asyncio.timeout(...)` for the next one.
+`EcoFlowClient.events()` merges all devices as `{"sn", "product_name", "data"}`.
+Before 2026-09, `device.events()` never yielded (it polled a field nothing set) and
+`client.events()` was a stub.
+
+`EcoFlowClient(..., enable_mqtt=False)` is REST-only: it never opens MQTT, so it can run
+alongside Home Assistant without taking the account's single session (Quirk 2).
 
 ---
 
@@ -572,9 +589,9 @@ the typed status dataclass on each update).
 
 - All feature work on `feat/` branches
 - PRs only into `main`
-- CI runs: `ruff format --check`, `ruff check`, `pyright`, `pytest` (unit + integration read)
-- Integration tests require real devices and are skipped automatically in CI (no `tests/.env`)
-- Write tests are never run in CI
+- CI runs: `ruff format --check`, `ruff check`, `pyright`, `pytest` (unit tests only)
+- Live tests (read and write) are never run in CI — they would share the owner's MQTT
+  session. Run them ad hoc: `docs/api/live-testing.md`
 
 ---
 

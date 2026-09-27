@@ -10,6 +10,10 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- `device.events()` now yields every update (it previously never yielded), and
+  `EcoFlowClient.events()` merges all devices (was a stub).
+- Messages sharing a timestamp are no longer discarded as stale (only strictly
+  older ones are); coarse clocks could drop chunks of a state dump.
 - REST signature now covers the request parameters (sorted query params, or the
   flattened JSON body for `PUT`), as the EcoFlow Developer API spec requires.
   Previously only `accessKey`/`nonce`/`timestamp` were signed.
@@ -24,7 +28,19 @@ This project uses [semantic versioning](https://semver.org/).
   battery commands.
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
+### Added
+- `EcoFlowClient(..., enable_mqtt=False)` REST-only mode — never opens MQTT, so it
+  can run alongside another integration using the same keys.
+- `device.wait_for_update()` — await the next MQTT update (bound it with
+  `asyncio.timeout`).
+- Tiered live tests behind an explicit `--live=rest|mqtt` flag, an MQTT-vs-REST
+  consistency check, `scripts/capture_vectors.py` (redacted payload capture) and
+  offline replay of captured vectors. Runbook: `docs/api/live-testing.md`.
+
 ### Changed
+- Live integration tests are no longer part of CI.
+- `ecoflow.__version__` is read from the installed package metadata (was stuck at
+  `"0.2.0"`).
 - `wave3_*.py` investigation scripts no longer default to a hardcoded device
   serial; set `ECOFLOW_WAVE3_SN`. `wave3_diag.py` / `wave3_wildcard.py` are
   flagged as burning MQTT client-ID quota (random `uuid4()` IDs).

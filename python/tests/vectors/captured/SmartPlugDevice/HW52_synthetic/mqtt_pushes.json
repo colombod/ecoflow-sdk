@@ -1,0 +1,19 @@
+[
+  {
+    "cmdFunc": 2,
+    "cmdId": 1,
+    "id": 3,
+    "param": {
+      "brightness": 1023,
+      "consWatt": -2690,
+      "current": 1598,
+      "freq": 50,
+      "runTime": 1846450,
+      "switchSta": true,
+      "temp": 36,
+      "volt": 242,
+      "watts": 2640
+    },
+    "version": "1.0"
+  }
+]
