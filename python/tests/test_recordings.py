@@ -67,6 +67,20 @@ def _transport() -> MqttTransport:
     return MqttTransport(creds)
 
 
+async def _rest_only_status(sn: str) -> Any:  # noqa: ANN401
+    """REST-only status from a separate client (inside an active ReplaySession).
+
+    Not ``device.refresh()`` on the MQTT-fed device: STREAM refresh merges REST
+    into the MQTT state, which would compare the pushes with themselves.
+    """
+    client = EcoFlowClient(REPLAY_ACCESS_KEY, REPLAY_SECRET_KEY, enable_mqtt=False)
+    await client.connect()
+    try:
+        return await _typed(client)[sn].refresh()
+    finally:
+        await client.disconnect()
+
+
 def _device_cases() -> list[Any]:
     return [
         pytest.param(rec, sn, id=f"{rec.name}/{sn[:4]}{sn[-2:]}")
@@ -96,7 +110,7 @@ async def test_mqtt_pushes_agree_with_rest(recording: Recording, sn: str) -> Non
             mqtt_status = _current(device)
             if str(recording.quota.get(sn, {}).get("code")) != "0":
                 pytest.skip(f"{sn[:4]}: REST quota not available (e.g. Wave 3 → 1006)")
-            rest_status = await device.refresh()
+            rest_status = await _rest_only_status(sn)
         finally:
             await client.disconnect()
     if type(rest_status) not in CHECKS:
@@ -119,7 +133,7 @@ async def test_replay_detects_unnormalised_envelope() -> None:
             device = _typed(client)[sn]
             for push in recording.pushes(sn):
                 device._handle_message(sn, push)  # noqa: SLF001 — bypasses normalisation
-            result = compare(_current(device), await device.refresh())
+            result = compare(_current(device), await _rest_only_status(sn))
         finally:
             await client.disconnect()
     assert not result.ok
