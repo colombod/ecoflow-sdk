@@ -37,8 +37,15 @@ This project uses [semantic versioning](https://semver.org/).
 - `device.wait_for_update()` — await the next MQTT update (bound it with
   `asyncio.timeout`).
 - Tiered live tests behind an explicit `--live=rest|mqtt` flag, an MQTT-vs-REST
-  consistency check, `scripts/capture_vectors.py` (redacted payload capture) and
-  offline replay of captured vectors. Runbook: `docs/api/live-testing.md`.
+  consistency check and `scripts/capture_vectors.py`. Runbook:
+  `docs/api/live-testing.md`.
+- Record/replay simulation for CI: `capture_vectors.py --record NAME` writes a
+  redacted `tests/recordings/NAME/recording.json` (full REST bodies + raw MQTT
+  timeline); `pytest tests/e2e --live=replay` runs the live REST/MQTT test modules
+  offline against every recording through the real SDK code, with a
+  signature-verifying fake REST server and a fake MQTT broker
+  (`tests/support/replay.py`). CI runs it on every push. `tests/test_recordings.py`
+  adds per-recording MQTT-vs-REST agreement and a PII guard.
 
 ### Changed
 - Live integration tests are no longer part of CI.

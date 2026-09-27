@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "captured_at": "synthetic",
+    "duration_s": 3,
+    "region": "EU",
+    "sdk_version": "synthetic",
+    "source": "synthetic: STREAM Ultra from tests/vectors/stream_ultra/payload_status.json, its MQTT side split into two flat chunks (live 2026-09-27: STREAM pushes carry no envelope); Smart Plug from tests/vectors/smart_plug/payload_power.json with the {cmdFunc:2, cmdId:1, param} envelope (confirmed live); Wave 3 answers 1006 as confirmed live. Not a live capture \u2014 kept for the Wave 3 and full-field STREAM cases."
+  },
+  "mqtt": [
+    {
+      "payload": {
+        "actSoc": 46.0,
+        "bmsBattSoc": 47.0,
+        "cascadeSysSoc": 44,
+        "cmsBattSoc": 45.0,
+        "f32ShowSoc": 45.540928,
+        "inputWatts": 970,
+        "outputWatts": 0,
+        "powGetBpCms": 4185.465,
+        "powGetPvSum": 0.0,
+        "powGetSysGrid": 4924.0,
+        "powGetSysLoad": 738.6836,
+        "temp": 35
+      },
+      "sn": "BK11XXXXXXXXXX01",
+      "t": 0.4
+    },
+    {
+      "payload": {
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "id": 3,
+        "param": {
+          "brightness": 1023,
+          "consWatt": -2690,
+          "current": 1598,
+          "freq": 50,
+          "runTime": 1846450,
+          "switchSta": true,
+          "temp": 36,
+          "volt": 242,
+          "watts": 2640
+        },
+        "version": "1.0"
+      },
+      "sn": "HW52XXXXXXXXXX02",
+      "t": 0.6
+    },
+    {
+      "payload": {
+        "backupReverseSoc": 13,
+        "chgDsgState": 2,
+        "cmsMaxChgSoc": 95,
+        "cmsMinDsgSoc": 10,
+        "cycles": 219,
+        "designCap": 100000,
+        "feedGridMode": 2,
+        "fullCap": 100000,
+        "relay2Onoff": false,
+        "relay3Onoff": false,
+        "remainCap": 46495,
+        "soh": 100,
+        "vBat": 20135
+      },
+      "sn": "BK11XXXXXXXXXX01",
+      "t": 0.9
+    },
+    {
+      "payload": {
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "id": 3,
+        "param": {
+          "brightness": 1023,
+          "consWatt": -2690,
+          "current": 1598,
+          "freq": 50,
+          "runTime": 1846450,
+          "switchSta": true,
+          "temp": 36,
+          "volt": 242,
+          "watts": 2640
+        },
+        "version": "1.0"
+      },
+      "sn": "HW52XXXXXXXXXX02",
+      "t": 2.5
+    }
+  ],
+  "rest": {
+    "device_list": [
+      {
+        "online": 1,
+        "sn": "BK11XXXXXXXXXX01"
+      },
+      {
+        "online": 1,
+        "productName": "Smart Plug",
+        "sn": "HW52XXXXXXXXXX02"
+      },
+      {
+        "online": 1,
+        "sn": "AC71XXXXXXXXXX03"
+      }
+    ],
+    "quota": {
+      "AC71XXXXXXXXXX03": {
+        "code": "1006",
+        "message": "current device is not allowed to get device info"
+      },
+      "BK11XXXXXXXXXX01": {
+        "code": "0",
+        "data": {
+          "actSoc": 46.0,
+          "backupReverseSoc": 13,
+          "bmsBattSoc": 47.0,
+          "cascadeSysSoc": 44,
+          "chgDsgState": 2,
+          "cmsBattSoc": 45.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "cycles": 219,
+          "designCap": 100000,
+          "f32ShowSoc": 45.540928,
+          "feedGridMode": 2,
+          "fullCap": 100000,
+          "inputWatts": 970,
+          "outputWatts": 0,
+          "powGetBpCms": 4185.465,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 4924.0,
+          "powGetSysLoad": 738.6836,
+          "relay2Onoff": false,
+          "relay3Onoff": false,
+          "remainCap": 46495,
+          "soh": 100,
+          "temp": 35,
+          "vBat": 20135
+        },
+        "message": "Success"
+      },
+      "HW52XXXXXXXXXX02": {
+        "code": "0",
+        "data": {
+          "2_1.brightness": 1023,
+          "2_1.consWatt": -2690,
+          "2_1.current": 1598,
+          "2_1.freq": 50,
+          "2_1.runTime": 1846450,
+          "2_1.switchSta": true,
+          "2_1.temp": 36,
+          "2_1.volt": 242,
+          "2_1.watts": 2640
+        },
+        "message": "Success"
+      }
+    }
+  }
+}

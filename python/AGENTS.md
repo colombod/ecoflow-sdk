@@ -83,13 +83,15 @@ tests/
 ├── test_*.py                         — Unit tests (mocked, no real devices, ~400 tests)
 │   ├── test_models_wave3_private.py  — ACTIVE_PAYLOAD/STANDBY_PAYLOAD fixtures from real device
 │   ├── test_private_decoder.py       — XOR decryption + Protobuf dispatch tests
-│   └── test_captured_vectors.py      — Offline MQTT-vs-REST replay of tests/vectors/captured/
+│   └── test_recordings.py            — Per-recording MQTT-vs-REST agreement, replay-server checks, PII guard
 ├── conftest.py                       — --live tier gate + credential helpers
 ├── support/consistency.py            — MQTT-vs-REST stable-field comparison (live + offline)
+├── support/replay.py                 — ReplaySession: fake REST server (verifies signatures) + fake broker
+├── recordings/<name>/recording.json  — Redacted real sessions (+ synthetic/) replayed by --live=replay
 └── e2e/
     ├── conftest.py                   — public_creds / rest_client / mqtt_client fixtures
-    ├── test_live_rest.py             — Tier 1: REST only (--live=rest)
-    ├── test_live_mqtt.py             — Tier 2: MQTT agrees with REST (--live=mqtt)
+    ├── test_live_rest.py             — Tier 1: REST only (--live=rest; replayable)
+    ├── test_live_mqtt.py             — Tier 2: MQTT agrees with REST (--live=mqtt; replayable)
     ├── test_read.py                  — Read integration tests (real devices, @pytest.mark.integration)
     ├── test_private_read.py          — Wave 3 private API read tests (@pytest.mark.integration)
     └── write/                        — Write tests (@pytest.mark.write_integration,
@@ -402,16 +404,31 @@ refresh after each command.
 
 ---
 
-### Quirk 14: MQTT Pushes Are Wrapped — REST Is Flat
+### Quirk 14: Some MQTT Pushes Are Wrapped — REST Is Flat
 
-REST `/quota/all` returns a flat dict, but MQTT `/quota` pushes wrap the same keys
-in a family-specific envelope:
+REST `/quota/all` returns a flat dict. MQTT `/quota` pushes are flat for some
+families and wrapped in a family-specific envelope for others:
 
-| Family | MQTT push | Equivalent REST keys |
-|--------|-----------|----------------------|
-| STREAM, Smart Meter, DELTA Pro 3 | `{"params": {"bmsBattSoc": 47}}` | `bmsBattSoc` |
-| Smart Plug, PowerStream | `{"cmdFunc": 2, "cmdId": 1, "param": {"watts": 2640}}` | `2_1.watts` |
-| DELTA 2 / RIVER 2 | `{"typeCode": "pdStatus", "params": {"soc": 80}}` | `pd.soc` |
+| Family | MQTT push | Equivalent REST keys | Evidence |
+|--------|-----------|----------------------|----------|
+| STREAM, Smart Meter | flat: `{"powGetSysGrid": 695.0, ...}` | same keys | **recorded live 2026-09-27** |
+| Smart Plug | `{"addr": .., "cmdFunc": 2, "cmdId": 1, "param": {"watts": 2640}}` | `2_1.watts` | **recorded live 2026-09-27** |
+| PowerStream | `{"cmdFunc": .., "cmdId": .., "param": {...}}` | `<f>_<id>.*` | tolwi reference |
+| DELTA Pro 3 | `{"params": {...}}` | same keys | tolwi reference (unverified here) |
+| DELTA 2 / RIVER 2 | `{"typeCode": "pdStatus", "params": {"soc": 80}}` | `pd.soc` | tolwi reference |
+
+Before 2026-09-27 this table claimed STREAM/Smart Meter pushes were wrapped in
+`{"params": ...}`; the first live recording (`tests/recordings/live-20260927/`)
+showed they are flat. Flat pushes pass through the normaliser unchanged.
+
+STREAM pushes are partial and topic-specific: power flows arrive every few
+seconds, and each unit's battery pack arrives as its own flat push carrying
+`soc`, `vol` (mV), `cycles`, `designCap`, `fullCap`, `remainCap`, `packSn`
+(never `bmsBattSoc`/`vBat`). REST `/quota/all` for STREAM has only ~15 system
+keys (`cmsBattSoc`, `powGet*`, relays, limits) — cascade-slave AC Pros report
+`cmsBattSoc = 0`, so their real SOC is only visible via the pack push. The Smart
+Meter's REST `quota/all` data is **empty** even when online; it reports only
+over MQTT (`gridConnectionPowerL1..3`, `gridConnectionVolL1..3`, `powGetSysGrid`).
 
 `MqttTransport.dispatch_message()` runs `transport/payload.normalize_quota_payload()`
 so device parsers only ever see the REST layout. Before this, MQTT updates parsed
@@ -458,7 +475,7 @@ via the API. This is labeled "temporary" in the code.
 ## Running Tests
 
 ```bash
-# Unit tests only (fast, no real devices needed) — also replays captured vectors
+# Unit tests only (fast, no real devices needed) — includes tests/test_recordings.py
 uv run pytest -m "not integration and not write_integration" -q
 
 # Live tests NEVER run without an explicit --live tier (even with tests/.env).
@@ -466,7 +483,12 @@ uv run pytest -m "not integration and not write_integration" -q
 uv run pytest tests/e2e/test_live_rest.py --live=rest -v -s     # REST only, HA-safe
 uv run pytest tests/e2e -m integration --live=mqtt -v -s        # takes MQTT session
 
-# Capture redacted real payloads for offline replay (REST-only by default)
+# Replay the live REST/MQTT modules offline against tests/recordings/ (what CI runs)
+uv run pytest tests/e2e --live=replay -v
+
+# Record a redacted session for replay (REST-only by default; --mqtt-seconds N takes
+# the MQTT session). Owner reviews + approves before commit.
+uv run python scripts/capture_vectors.py --record live-YYYYMMDD
 uv run python scripts/capture_vectors.py --check-signature
 
 # Wave 3 write tests (EXPLICIT OPT-IN ONLY — touches real hardware)
@@ -589,7 +611,8 @@ alongside Home Assistant without taking the account's single session (Quirk 2).
 
 - All feature work on `feat/` branches
 - PRs only into `main`
-- CI runs: `ruff format --check`, `ruff check`, `pyright`, `pytest` (unit tests only)
+- CI runs: `ruff format --check`, `ruff check`, `pyright`, `pytest` (unit tests), then
+  `pytest tests/e2e --live=replay` (recorded sessions, offline — no secrets)
 - Live tests (read and write) are never run in CI — they would share the owner's MQTT
   session. Run them ad hoc: `docs/api/live-testing.md`
 

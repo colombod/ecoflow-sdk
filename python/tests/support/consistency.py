@@ -5,7 +5,7 @@ cycles, voltage, SOC). Power readings are skipped: they legitimately change
 between the MQTT push and the REST call.
 
 Used by the live MQTT tier (tests/e2e/test_live_mqtt.py) and by the offline
-captured-vector tests (tests/test_captured_vectors.py).
+recording tests (tests/test_recordings.py).
 """
 
 from __future__ import annotations
@@ -42,10 +42,10 @@ CHECKS: dict[type, tuple[Check, ...]] = {
         Check("voltage_l1", 0.05, relative=True),
         Check("total_active_energy_wh", 0.01, relative=True),
     ),
-    SmartPlugData: (
-        Check("voltage", 0.05, relative=True),
-        Check("brightness"),
-    ),
+    # No "brightness": real pushes never carry it (recorded 2026-09-27) and the
+    # MQTT parser defaults it to 100, which matched REST by accident and let an
+    # unparsed push pass as "compared".
+    SmartPlugData: (Check("voltage", 0.05, relative=True),),
     BatteryStatus: (Check("soc", 3),),
 }
 
