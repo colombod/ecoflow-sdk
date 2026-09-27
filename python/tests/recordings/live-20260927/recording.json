@@ -1,0 +1,2759 @@
+{
+  "meta": {
+    "captured_at": "2026-09-27T21:07:07Z",
+    "duration_s": 60,
+    "region": "EU",
+    "sdk_version": "0.3.0",
+    "source": "live: scripts/capture_vectors.py (redacted)"
+  },
+  "mqtt": [
+    {
+      "payload": {
+        "bmsChgDsgState": 2,
+        "cmsChgDsgState": 2,
+        "powGetBpCms": 29.68396,
+        "powGetSchuko2": 26.665087,
+        "powGetSysGrid": 1151.0,
+        "powGetSysLoad": 1121.316,
+        "powGetSysLoadFromBp": 0.0,
+        "powGetSysLoadFromGrid": 1121.316,
+        "sysGridConnectionPower": -40.683952
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 1.382
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822282,
+          "todayActiveL1": 12809309,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809309,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1192.6106,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1192.6106
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 1.693
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "dstTime": 3600,
+          "heartbeatFrequency": 2,
+          "timeZone": 0,
+          "utcTime": 1790543167
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 1.83
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1148.9548,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1148.9548
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 3.648
+    },
+    {
+      "payload": {
+        "gridConnectionPower": -37.530643,
+        "powGetBpCms": 25.78833,
+        "powGetSchuko2": 31.27523,
+        "powGetSysGrid": 1152.0,
+        "powGetSysLoad": 1126.2117,
+        "powGetSysLoadFromGrid": 1126.2117,
+        "sysGridConnectionPower": -42.78832
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 3.737
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "dstTime": 3600,
+          "runTime": 3793352,
+          "timeZone": 0,
+          "utcTime": 1790543169
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 4.097
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822283,
+          "todayActiveL1": 12809310.0,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809310.0,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1123.7869,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1123.7869
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 5.097
+    },
+    {
+      "payload": {
+        "powGetBpCms": 28.48059,
+        "powGetSysGrid": 1117.0,
+        "powGetSysLoad": 1088.5194,
+        "powGetSysLoadFromGrid": 1088.5194
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 5.378
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1060,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543171,
+          "watts": 990
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 6.081
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822284,
+          "todayActiveL1": 12809311,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809311,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1144.3712,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1144.3712
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 7.112
+    },
+    {
+      "payload": {
+        "powGetSchuko2": 27.045761
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 7.391
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1020,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543173,
+          "watts": 1020
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 9.041
+    },
+    {
+      "payload": {
+        "powGetBpCms": 32.634766,
+        "powGetSchuko2": 32.896877,
+        "powGetSysLoad": 1084.3652,
+        "powGetSysLoadFromGrid": 1084.3652
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 9.41
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1091.2876,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1091.2876
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 9.685
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -990,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543175,
+          "watts": 1000
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 10.941
+    },
+    {
+      "payload": {
+        "bmsDsgRemTime": 2623,
+        "cmsDsgRemTime": 2623
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 12.139
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822285,
+          "todayActiveL1": 12809312,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809312,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1092.0841,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1092.0841
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 12.463
+    },
+    {
+      "payload": {
+        "powGetBpCms": 31.611572,
+        "powGetSchuko2": 30.437397,
+        "powGetSysLoad": 1085.3884,
+        "powGetSysLoadFromGrid": 1085.3884
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 12.606
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1010,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543177
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 12.941
+    },
+    {
+      "payload": {
+        "bmsDsgRemTime": 2720,
+        "cmsDsgRemTime": 2720
+      },
+      "sn": "BK31XXXXXXXXXX04",
+      "t": 13.442
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822286,
+          "todayActiveL1": 12809313,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809313,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1149.752,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1149.752
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 14.138
+    },
+    {
+      "payload": {
+        "powGetSchuko2": 28.770546
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 14.477
+    },
+    {
+      "payload": {
+        "dciFilt": 14,
+        "iotLan1LastRecvDataTime": 1790543178,
+        "iotLan1PlugConsPwr": -1110,
+        "iotLan2LastRecvDataTime": 1790543178
+      },
+      "sn": "BK31XXXXXXXXXX05",
+      "t": 15.151
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1130,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543179,
+          "watts": 1050
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 15.184
+    },
+    {
+      "payload": {
+        "iotLan1FsmState": 2,
+        "iotLan2LastRecvDataTime": 1790543178,
+        "iotMemHeapSize": 72852,
+        "iotMemInternalFreeSize": 58252,
+        "seriesPower": 0
+      },
+      "sn": "BK31XXXXXXXXXX04",
+      "t": 15.382
+    },
+    {
+      "payload": {
+        "iotLan1LastRecvDataTime": 1790543179,
+        "iotLan1PlugConsPwr": -1130,
+        "iotLan2LastRecvDataTime": 1790543179,
+        "offgrid1ActivePower": 31,
+        "offgridVout1Rms": 2448,
+        "offgridVout2Rms": 2450,
+        "ongridInActivePower": -33,
+        "ongridVinRms": 2451,
+        "ongridVoutRms": 2452,
+        "pvIoutFilt": 12
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 15.602
+    },
+    {
+      "payload": {
+        "iDabLv": -77,
+        "iotLan2LastRecvDataTime": 1790543179,
+        "iotMemHeapSize": 68716,
+        "iotMemInternalFreeSize": 54116
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 15.622
+    },
+    {
+      "payload": {
+        "dciFilt": -11,
+        "iDabLv": -90,
+        "iotLan1LastRecvDataTime": 1790543180,
+        "iotLan1PlugConsPwr": -1050,
+        "iotLan2LastRecvDataTime": 1790543180,
+        "voltFreqfilter": 4989
+      },
+      "sn": "BK31XXXXXXXXXX06",
+      "t": 15.647
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1106.1255,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1106.1255
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 16.306
+    },
+    {
+      "payload": {
+        "powGetBpCms": 28.769653,
+        "powGetSysGrid": 1105.0,
+        "powGetSysLoad": 1076.2303,
+        "powGetSysLoadFromGrid": 1076.2303
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 16.388
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1030,
+          "dstTime": 3600,
+          "runTime": 3793364,
+          "timeZone": 0,
+          "utcTime": 1790543181,
+          "watts": 990
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 17.13
+    },
+    {
+      "payload": {
+        "moduleWifiRssi": -70.0
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 18.068
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822287,
+          "todayActiveL1": 12809314,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809314,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1120.6232,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1120.6232
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 18.34
+    },
+    {
+      "payload": {
+        "powGetBpCms": 29.986084,
+        "powGetSchuko2": 32.262783,
+        "powGetSysGrid": 1118.0,
+        "powGetSysLoad": 1088.0139,
+        "powGetSysLoadFromGrid": 1088.0139
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 18.43
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1177.8533,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1177.8533
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 20.162
+    },
+    {
+      "payload": {
+        "powGetBpCms": 33.582275,
+        "powGetSchuko2": 27.469296,
+        "powGetSysLoad": 1084.4177,
+        "powGetSysLoadFromGrid": 1084.4177
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 20.416
+    },
+    {
+      "payload": {
+        "accuChgCap": 29424274,
+        "accuChgEnergy": 596963,
+        "accuDsgCap": 28436917,
+        "accuDsgEnergy": 556627,
+        "actSoc": 13.0,
+        "afeSysStatus": 0,
+        "allBmsFault": 0,
+        "allErrCode": 0,
+        "amp": -94,
+        "balanceCmd": 0,
+        "balanceState": 0,
+        "bmsAlarmState1": 0,
+        "bmsAlarmState2": 0,
+        "bmsFault": 0,
+        "bmsFaultState": 0,
+        "bmsHeartbeatVer": 260,
+        "bmsProtectState1": 0,
+        "bmsProtectState2": 0,
+        "bmsSn": "REDACTED",
+        "bqSysStatReg": 0,
+        "bsmSysEvent": 5,
+        "calendarSoh": 88.0,
+        "cellId": 2,
+        "cellNtcNum": 2,
+        "cellSeriesNum": 6,
+        "cellTemp": [
+          25,
+          25
+        ],
+        "cellVol": [
+          3202,
+          3200,
+          3201,
+          3202,
+          3200,
+          3200
+        ],
+        "chgDsgState": 0,
+        "curSensorNtcNum": 0,
+        "curSensorTemp": [],
+        "cycleSoh": 99.6675,
+        "cycles": 294,
+        "designCap": 100000,
+        "diffSoc": 0.42372894,
+        "ecloudOcv": 65535,
+        "envNtcNum": 0,
+        "envTemp": [],
+        "errCode": 0,
+        "f32ShowSoc": 12.686535,
+        "fullCap": 100000,
+        "heatfilmNtcNum": 1,
+        "heatfilmTemp": [
+          25
+        ],
+        "hwVer": "V0.0.0",
+        "inputWatts": 0,
+        "maxCellTemp": 25,
+        "maxCellVol": 3202,
+        "maxCurSensorTemp": 0,
+        "maxEnvTemp": 0,
+        "maxHeatfilmTemp": 25,
+        "maxMosTemp": 25,
+        "maxVolDiff": 2,
+        "mcuPinInStatus": 0,
+        "mcuPinOutStatus": 0,
+        "minCellTemp": 25,
+        "minCellVol": 3200,
+        "minCurSensorTemp": 0,
+        "minEnvTemp": 0,
+        "minHeatfilmTemp": 25,
+        "minMosTemp": 25,
+        "mosNtcNum": 1,
+        "mosState": 3,
+        "mosTemp": [
+          25
+        ],
+        "num": 0,
+        "openBmsFlag": 1,
+        "outputWatts": 1,
+        "packSn": "REDACTED",
+        "powerportNtcNum": 8,
+        "powerportTemp": [
+          24,
+          25,
+          24,
+          25,
+          24,
+          24,
+          24,
+          24
+        ],
+        "productDetail": 5,
+        "productType": 58,
+        "pwr12v": 0,
+        "realSoh": 99.81362,
+        "remainBalanceTime": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "remainCap": 12686,
+        "remainTime": 2516,
+        "soc": 13,
+        "soh": 100,
+        "sysLoaderVer": 4294967295,
+        "sysPwrFlag": 1,
+        "sysState": 3,
+        "sysVer": 33620048,
+        "tagChgAmp": 50000,
+        "targetSoc": 13.57788,
+        "temp": 25,
+        "type": 1,
+        "vol": 19205,
+        "waterInFlag": 0
+      },
+      "sn": "BK31XXXXXXXXXX06",
+      "t": 20.633
+    },
+    {
+      "payload": {
+        "v1p0": {
+          "bmsIsConnt": [
+            3,
+            0,
+            1
+          ],
+          "bmsModel": 1,
+          "bmsWarningState": 0,
+          "chgAmp": 90000,
+          "chgCmd": 1,
+          "chgRemainTime": 5939,
+          "chgState": 0,
+          "chgVol": 21203,
+          "dsgCmd": 1,
+          "dsgRemainTime": 2516,
+          "emsIsNormalFlag": 1,
+          "f32LcdShowSoc": 12.686,
+          "fanLevel": 0,
+          "lcdShowSoc": 13,
+          "maxAvailableNum": 1,
+          "maxChargeSoc": 95,
+          "maxCloseOilEbSoc": 100,
+          "minDsgSoc": 10,
+          "minOpenOilEbSoc": 20,
+          "openBmsIdx": 1,
+          "openUpsFlag": 1,
+          "paraVolMax": 0,
+          "paraVolMin": 0
+        },
+        "v1p3": {
+          "chgDisableCond": 0,
+          "chgLinePlugInFlag": 0,
+          "dsgDisableCond": 0,
+          "emsHeartbeatVer": 259,
+          "sysChgDsgState": 0
+        }
+      },
+      "sn": "BK31XXXXXXXXXX06",
+      "t": 20.636
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -970,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543185,
+          "watts": 970
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 20.882
+    },
+    {
+      "payload": {
+        "accuChgCap": 3318529,
+        "accuChgEnergy": 67138,
+        "accuDsgCap": 3308607,
+        "accuDsgEnergy": 64127,
+        "actSoc": 14.0,
+        "afeSysStatus": 0,
+        "allBmsFault": 0,
+        "allErrCode": 0,
+        "amp": -98,
+        "balanceCmd": 0,
+        "balanceState": 0,
+        "bmsAlarmState1": 0,
+        "bmsAlarmState2": 0,
+        "bmsFault": 0,
+        "bmsFaultState": 0,
+        "bmsHeartbeatVer": 260,
+        "bmsProtectState1": 0,
+        "bmsProtectState2": 0,
+        "bmsSn": "REDACTED",
+        "bqSysStatReg": 0,
+        "bsmSysEvent": 5,
+        "calendarSoh": 88.0,
+        "cellId": 2,
+        "cellNtcNum": 2,
+        "cellSeriesNum": 6,
+        "cellTemp": [
+          24,
+          23
+        ],
+        "cellVol": [
+          3209,
+          3209,
+          3208,
+          3209,
+          3210,
+          3209
+        ],
+        "chgDsgState": 0,
+        "curSensorNtcNum": 0,
+        "curSensorTemp": [],
+        "cycleSoh": 99.9904,
+        "cycles": 33,
+        "designCap": 100000,
+        "diffSoc": 1.186441,
+        "ecloudOcv": 65535,
+        "envNtcNum": 0,
+        "envTemp": [],
+        "errCode": 0,
+        "f32ShowSoc": 13.443022,
+        "fullCap": 100000,
+        "heatfilmNtcNum": 1,
+        "heatfilmTemp": [
+          23
+        ],
+        "hwVer": "V0.0.0",
+        "inputWatts": 0,
+        "maxCellTemp": 24,
+        "maxCellVol": 3210,
+        "maxCurSensorTemp": 0,
+        "maxEnvTemp": 0,
+        "maxHeatfilmTemp": 23,
+        "maxMosTemp": 25,
+        "maxVolDiff": 2,
+        "mcuPinInStatus": 0,
+        "mcuPinOutStatus": 0,
+        "minCellTemp": 23,
+        "minCellVol": 3208,
+        "minCurSensorTemp": 0,
+        "minEnvTemp": 0,
+        "minHeatfilmTemp": 23,
+        "minMosTemp": 25,
+        "mosNtcNum": 1,
+        "mosState": 3,
+        "mosTemp": [
+          25
+        ],
+        "num": 0,
+        "openBmsFlag": 1,
+        "outputWatts": 1,
+        "packSn": "REDACTED",
+        "powerportNtcNum": 8,
+        "powerportTemp": [
+          24,
+          24,
+          23,
+          24,
+          23,
+          23,
+          23,
+          23
+        ],
+        "productDetail": 5,
+        "productType": 58,
+        "pwr12v": 0,
+        "realSoh": 99.99865,
+        "remainBalanceTime": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "remainCap": 13443,
+        "remainTime": 2720,
+        "soc": 13,
+        "soh": 100,
+        "sysLoaderVer": 4294967295,
+        "sysPwrFlag": 1,
+        "sysState": 3,
+        "sysVer": 33620048,
+        "tagChgAmp": 50000,
+        "targetSoc": 13.655317,
+        "temp": 23,
+        "type": 1,
+        "vol": 19254,
+        "waterInFlag": 0
+      },
+      "sn": "BK31XXXXXXXXXX04",
+      "t": 21.32
+    },
+    {
+      "payload": {
+        "v1p0": {
+          "bmsIsConnt": [
+            3,
+            0,
+            1
+          ],
+          "bmsModel": 1,
+          "bmsWarningState": 0,
+          "chgAmp": 90000,
+          "chgCmd": 1,
+          "chgRemainTime": 5939,
+          "chgState": 0,
+          "chgVol": 21253,
+          "dsgCmd": 1,
+          "dsgRemainTime": 2720,
+          "emsIsNormalFlag": 1,
+          "f32LcdShowSoc": 13.443,
+          "fanLevel": 0,
+          "lcdShowSoc": 13,
+          "maxAvailableNum": 1,
+          "maxChargeSoc": 95,
+          "maxCloseOilEbSoc": 100,
+          "minDsgSoc": 10,
+          "minOpenOilEbSoc": 20,
+          "openBmsIdx": 1,
+          "openUpsFlag": 1,
+          "paraVolMax": 0,
+          "paraVolMin": 0
+        },
+        "v1p3": {
+          "chgDisableCond": 0,
+          "chgLinePlugInFlag": 0,
+          "dsgDisableCond": 0,
+          "emsHeartbeatVer": 259,
+          "sysChgDsgState": 0
+        }
+      },
+      "sn": "BK31XXXXXXXXXX04",
+      "t": 21.678
+    },
+    {
+      "payload": {
+        "powGetBpCms": 29.048584,
+        "powGetSchuko2": 31.76035,
+        "powGetSysGrid": 1147.0,
+        "powGetSysLoad": 1117.9514,
+        "powGetSysLoadFromGrid": 1117.9514
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 22.563
+    },
+    {
+      "payload": {
+        "accuChgCap": 28600573,
+        "accuChgEnergy": 580485,
+        "accuDsgCap": 27841541,
+        "accuDsgEnergy": 547276,
+        "actSoc": 13.0,
+        "afeSysStatus": 0,
+        "allBmsFault": 0,
+        "allErrCode": 0,
+        "amp": -145,
+        "balanceCmd": 0,
+        "balanceState": 0,
+        "bmsAlarmState1": 0,
+        "bmsAlarmState2": 0,
+        "bmsFault": 0,
+        "bmsFaultState": 0,
+        "bmsHeartbeatVer": 260,
+        "bmsProtectState1": 0,
+        "bmsProtectState2": 0,
+        "bmsSn": "REDACTED",
+        "bqSysStatReg": 0,
+        "bsmSysEvent": 5,
+        "calendarSoh": 88.0,
+        "cellId": 2,
+        "cellNtcNum": 2,
+        "cellSeriesNum": 6,
+        "cellTemp": [
+          23,
+          22
+        ],
+        "cellVol": [
+          3208,
+          3206,
+          3206,
+          3207,
+          3207,
+          3208
+        ],
+        "chgDsgState": 0,
+        "curSensorNtcNum": 0,
+        "curSensorTemp": [],
+        "cycleSoh": 99.6875,
+        "cycles": 286,
+        "designCap": 100000,
+        "diffSoc": 0.5999985,
+        "ecloudOcv": 65535,
+        "envNtcNum": 0,
+        "envTemp": [],
+        "errCode": 0,
+        "f32ShowSoc": 13.14787,
+        "fullCap": 100000,
+        "heatfilmNtcNum": 1,
+        "heatfilmTemp": [
+          23
+        ],
+        "hwVer": "V0.0.0",
+        "inputWatts": 0,
+        "maxCellTemp": 23,
+        "maxCellVol": 3208,
+        "maxCurSensorTemp": 0,
+        "maxEnvTemp": 0,
+        "maxHeatfilmTemp": 23,
+        "maxMosTemp": 24,
+        "maxVolDiff": 2,
+        "mcuPinInStatus": 0,
+        "mcuPinOutStatus": 0,
+        "minCellTemp": 22,
+        "minCellVol": 3206,
+        "minCurSensorTemp": 0,
+        "minEnvTemp": 0,
+        "minHeatfilmTemp": 23,
+        "minMosTemp": 24,
+        "mosNtcNum": 1,
+        "mosState": 3,
+        "mosTemp": [
+          24
+        ],
+        "num": 0,
+        "openBmsFlag": 1,
+        "outputWatts": 2,
+        "packSn": "REDACTED",
+        "powerportNtcNum": 8,
+        "powerportTemp": [
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23
+        ],
+        "productDetail": 5,
+        "productType": 58,
+        "pwr12v": 0,
+        "realSoh": 99.82124,
+        "remainBalanceTime": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "remainCap": 13147,
+        "remainTime": 2623,
+        "soc": 13,
+        "soh": 100,
+        "sysLoaderVer": 4294967295,
+        "sysPwrFlag": 1,
+        "sysState": 3,
+        "sysVer": 33620048,
+        "tagChgAmp": 50000,
+        "targetSoc": 12.946989,
+        "temp": 22,
+        "type": 1,
+        "vol": 19242,
+        "waterInFlag": 0
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 22.708
+    },
+    {
+      "payload": {
+        "v1p0": {
+          "bmsIsConnt": [
+            3,
+            0,
+            1
+          ],
+          "bmsModel": 1,
+          "bmsWarningState": 0,
+          "chgAmp": 90000,
+          "chgCmd": 1,
+          "chgRemainTime": 5939,
+          "chgState": 0,
+          "chgVol": 21239,
+          "dsgCmd": 1,
+          "dsgRemainTime": 2623,
+          "emsIsNormalFlag": 1,
+          "f32LcdShowSoc": 13.147,
+          "fanLevel": 0,
+          "lcdShowSoc": 13,
+          "maxAvailableNum": 1,
+          "maxChargeSoc": 95,
+          "maxCloseOilEbSoc": 100,
+          "minDsgSoc": 10,
+          "minOpenOilEbSoc": 20,
+          "openBmsIdx": 1,
+          "openUpsFlag": 1,
+          "paraVolMax": 0,
+          "paraVolMin": 0
+        },
+        "v1p3": {
+          "chgDisableCond": 0,
+          "chgLinePlugInFlag": 0,
+          "dsgDisableCond": 0,
+          "emsHeartbeatVer": 259,
+          "sysChgDsgState": 0
+        }
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 22.708
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822288,
+          "todayActiveL1": 12809315,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809315,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1151.1155,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1151.1155
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 22.796
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1370,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543187,
+          "watts": 1510
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 22.875
+    },
+    {
+      "payload": {
+        "accuChgCap": 28111861,
+        "accuChgEnergy": 571018,
+        "accuDsgCap": 27358110,
+        "accuDsgEnergy": 537518,
+        "actSoc": 13.0,
+        "afeSysStatus": 0,
+        "allBmsFault": 0,
+        "allErrCode": 0,
+        "amp": -135,
+        "balanceCmd": 0,
+        "balanceState": 0,
+        "bmsAlarmState1": 0,
+        "bmsAlarmState2": 0,
+        "bmsFault": 0,
+        "bmsFaultState": 0,
+        "bmsHeartbeatVer": 260,
+        "bmsProtectState1": 0,
+        "bmsProtectState2": 0,
+        "bmsSn": "REDACTED",
+        "bqSysStatReg": 0,
+        "bsmSysEvent": 5,
+        "calendarSoh": 88.0,
+        "cellId": 2,
+        "cellNtcNum": 2,
+        "cellSeriesNum": 6,
+        "cellTemp": [
+          24,
+          23
+        ],
+        "cellVol": [
+          3203,
+          3201,
+          3204,
+          3204,
+          3205,
+          3204
+        ],
+        "chgDsgState": 0,
+        "curSensorNtcNum": 0,
+        "curSensorTemp": [],
+        "cycleSoh": 99.700005,
+        "cycles": 281,
+        "designCap": 100000,
+        "diffSoc": 2.6000004,
+        "ecloudOcv": 65535,
+        "envNtcNum": 0,
+        "envTemp": [],
+        "errCode": 0,
+        "f32ShowSoc": 13.1960535,
+        "fullCap": 100000,
+        "heatfilmNtcNum": 1,
+        "heatfilmTemp": [
+          23
+        ],
+        "hwVer": "V0.0.0",
+        "inputWatts": 0,
+        "maxCellTemp": 24,
+        "maxCellVol": 3205,
+        "maxCurSensorTemp": 0,
+        "maxEnvTemp": 0,
+        "maxHeatfilmTemp": 23,
+        "maxMosTemp": 24,
+        "maxVolDiff": 4,
+        "mcuPinInStatus": 0,
+        "mcuPinOutStatus": 0,
+        "minCellTemp": 23,
+        "minCellVol": 3201,
+        "minCurSensorTemp": 0,
+        "minEnvTemp": 0,
+        "minHeatfilmTemp": 23,
+        "minMosTemp": 24,
+        "mosNtcNum": 1,
+        "mosState": 3,
+        "mosTemp": [
+          24
+        ],
+        "num": 0,
+        "openBmsFlag": 1,
+        "outputWatts": 2,
+        "packSn": "REDACTED",
+        "powerportNtcNum": 8,
+        "powerportTemp": [
+          23,
+          24,
+          23,
+          24,
+          23,
+          23,
+          23,
+          23
+        ],
+        "productDetail": 5,
+        "productType": 58,
+        "pwr12v": 0,
+        "realSoh": 99.82919,
+        "remainBalanceTime": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "remainCap": 13196,
+        "remainTime": 2638,
+        "soc": 13,
+        "soh": 100,
+        "sysLoaderVer": 4294967295,
+        "sysPwrFlag": 1,
+        "sysState": 3,
+        "sysVer": 33620048,
+        "tagChgAmp": 50000,
+        "targetSoc": 13.119602,
+        "temp": 23,
+        "type": 1,
+        "vol": 19221,
+        "waterInFlag": 0
+      },
+      "sn": "BK31XXXXXXXXXX05",
+      "t": 23.745
+    },
+    {
+      "payload": {
+        "v1p0": {
+          "bmsIsConnt": [
+            3,
+            0,
+            1
+          ],
+          "bmsModel": 1,
+          "bmsWarningState": 0,
+          "chgAmp": 90000,
+          "chgCmd": 1,
+          "chgRemainTime": 5939,
+          "chgState": 0,
+          "chgVol": 21221,
+          "dsgCmd": 1,
+          "dsgRemainTime": 2638,
+          "emsIsNormalFlag": 1,
+          "f32LcdShowSoc": 13.196,
+          "fanLevel": 0,
+          "lcdShowSoc": 13,
+          "maxAvailableNum": 1,
+          "maxChargeSoc": 95,
+          "maxCloseOilEbSoc": 100,
+          "minDsgSoc": 10,
+          "minOpenOilEbSoc": 20,
+          "openBmsIdx": 1,
+          "openUpsFlag": 1,
+          "paraVolMax": 0,
+          "paraVolMin": 0
+        },
+        "v1p3": {
+          "chgDisableCond": 0,
+          "chgLinePlugInFlag": 0,
+          "dsgDisableCond": 0,
+          "emsHeartbeatVer": 259,
+          "sysChgDsgState": 0
+        }
+      },
+      "sn": "BK31XXXXXXXXXX05",
+      "t": 23.746
+    },
+    {
+      "payload": {
+        "accuChgCap": 30819100,
+        "accuChgEnergy": 625564,
+        "accuDsgCap": 30004910,
+        "accuDsgEnergy": 591527,
+        "actSoc": 13.0,
+        "afeSysStatus": 0,
+        "allBmsFault": 0,
+        "allErrCode": 0,
+        "amp": -154,
+        "balanceCmd": 0,
+        "balanceState": 0,
+        "bmsAlarmState1": 0,
+        "bmsAlarmState2": 0,
+        "bmsFault": 0,
+        "bmsFaultState": 0,
+        "bmsHeartbeatVer": 260,
+        "bmsProtectState1": 0,
+        "bmsProtectState2": 0,
+        "bmsSn": "REDACTED",
+        "bqSysStatReg": 0,
+        "bsmSysEvent": 5,
+        "calendarSoh": 88.0,
+        "cellId": 2,
+        "cellNtcNum": 2,
+        "cellSeriesNum": 6,
+        "cellTemp": [
+          25,
+          24
+        ],
+        "cellVol": [
+          3208,
+          3209,
+          3210,
+          3208,
+          3207,
+          3209
+        ],
+        "chgDsgState": 0,
+        "curSensorNtcNum": 0,
+        "curSensorTemp": [],
+        "cycleSoh": 99.6241,
+        "cycles": 308,
+        "designCap": 100000,
+        "diffSoc": 0.20000076,
+        "ecloudOcv": 65535,
+        "envNtcNum": 0,
+        "envTemp": [],
+        "errCode": 0,
+        "f32ShowSoc": 12.770642,
+        "fullCap": 100000,
+        "heatfilmNtcNum": 1,
+        "heatfilmTemp": [
+          25
+        ],
+        "hwVer": "V0.0.0",
+        "inputWatts": 0,
+        "maxCellTemp": 25,
+        "maxCellVol": 3210,
+        "maxCurSensorTemp": 0,
+        "maxEnvTemp": 0,
+        "maxHeatfilmTemp": 25,
+        "maxMosTemp": 26,
+        "maxVolDiff": 3,
+        "mcuPinInStatus": 0,
+        "mcuPinOutStatus": 0,
+        "minCellTemp": 24,
+        "minCellVol": 3207,
+        "minCurSensorTemp": 0,
+        "minEnvTemp": 0,
+        "minHeatfilmTemp": 25,
+        "minMosTemp": 26,
+        "mosNtcNum": 1,
+        "mosState": 3,
+        "mosTemp": [
+          26
+        ],
+        "num": 0,
+        "openBmsFlag": 1,
+        "outputWatts": 2,
+        "packSn": "REDACTED",
+        "powerportNtcNum": 8,
+        "powerportTemp": [
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ],
+        "productDetail": 5,
+        "productType": 58,
+        "pwr12v": 0,
+        "realSoh": 99.72002,
+        "remainBalanceTime": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "remainCap": 12770,
+        "remainTime": 2242,
+        "soc": 13,
+        "soh": 100,
+        "sysLoaderVer": 4294967295,
+        "sysPwrFlag": 1,
+        "sysState": 3,
+        "sysVer": 33620048,
+        "tagChgAmp": 50000,
+        "targetSoc": 13.5447855,
+        "temp": 25,
+        "type": 1,
+        "vol": 19251,
+        "waterInFlag": 0
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 24.583
+    },
+    {
+      "payload": {
+        "v1p0": {
+          "bmsIsConnt": [
+            3,
+            0,
+            1
+          ],
+          "bmsModel": 1,
+          "bmsWarningState": 0,
+          "chgAmp": 90000,
+          "chgCmd": 1,
+          "chgRemainTime": 5939,
+          "chgState": 0,
+          "chgVol": 21251,
+          "dsgCmd": 1,
+          "dsgRemainTime": 2242,
+          "emsIsNormalFlag": 1,
+          "f32LcdShowSoc": 12.77,
+          "fanLevel": 0,
+          "lcdShowSoc": 13,
+          "maxAvailableNum": 1,
+          "maxChargeSoc": 95,
+          "maxCloseOilEbSoc": 100,
+          "minDsgSoc": 10,
+          "minOpenOilEbSoc": 20,
+          "openBmsIdx": 1,
+          "openUpsFlag": 1,
+          "paraVolMax": 0,
+          "paraVolMin": 0
+        },
+        "v1p3": {
+          "chgDisableCond": 0,
+          "chgLinePlugInFlag": 0,
+          "dsgDisableCond": 0,
+          "emsHeartbeatVer": 259,
+          "sysChgDsgState": 0
+        }
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 24.584
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822289,
+          "todayActiveL1": 12809316,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809316,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1169.4777,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1169.4777
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 24.911
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1540,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543189,
+          "watts": 1540
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 24.951
+    },
+    {
+      "payload": {
+        "gridConnectionPower": -30.811277,
+        "powGetSchuko2": 26.127869,
+        "powGetSysGrid": 1148.0,
+        "powGetSysLoad": 1119.208,
+        "powGetSysLoadFromGrid": 1119.208,
+        "sysGridConnectionPower": -38.792053
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 25.612
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822290.0,
+          "todayActiveL1": 12809317,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809317,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1185.9064,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1185.9064
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 26.742
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1580,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543191,
+          "volt": 0,
+          "watts": 1350
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 26.787
+    },
+    {
+      "payload": {
+        "powGetBpCms": 35.689697,
+        "powGetSchuko2": 0.0,
+        "powGetSysLoad": 1112.3103,
+        "powGetSysLoadFromGrid": 1112.3103,
+        "sysGridConnectionPower": -40.689697
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 27.47
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1145.1835,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1145.1835
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 28.467
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1320,
+          "dstTime": 3600,
+          "runTime": 3793376,
+          "timeZone": 0,
+          "utcTime": 1790543193,
+          "volt": 247,
+          "watts": 1320
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 28.942
+    },
+    {
+      "payload": {
+        "powGetBpCms": 33.58203,
+        "powGetSysLoad": 1114.418,
+        "powGetSysLoadFromGrid": 1114.418
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 29.587
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822291,
+          "todayActiveL1": 12809318,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809318,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1127.9398,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1127.9398
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 30.504
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543195,
+          "watts": 1280
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 30.887
+    },
+    {
+      "payload": {
+        "powGetBpCms": 39.996582,
+        "powGetSysLoad": 1108.0034,
+        "powGetSysLoadFromGrid": 1108.0034
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 31.651
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822292,
+          "todayActiveL1": 12809319,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809319,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1162.728,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1162.728
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 32.176
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1300,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543198,
+          "watts": 1380
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 32.954
+    },
+    {
+      "payload": {
+        "powGetBpCms": 23.655396,
+        "powGetSysLoad": 1124.3446,
+        "powGetSysLoadFromGrid": 1124.3446,
+        "sysGridConnectionPower": -36.65535
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 33.529
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1141.6486,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1141.6486
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 34.726
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1200,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543200,
+          "watts": 1140
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 35.038
+    },
+    {
+      "payload": {
+        "bmsChgDsgState": 0,
+        "cmsChgDsgState": 0,
+        "powGetBpCms": 0.0,
+        "powGetSysGrid": 1109.2019,
+        "powGetSysLoad": 1109.2019,
+        "powGetSysLoadFromBp": -21.798126,
+        "powGetSysLoadFromGrid": 1109.2019,
+        "useLanMeter": false
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 35.5
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822293,
+          "todayActiveL1": 12809320.0,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809320.0,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1127.8641,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1127.8641
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 36.62
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1106.1196,
+        "powGetSysLoad": 1106.1196,
+        "powGetSysLoadFromBp": -22.880379,
+        "powGetSysLoadFromGrid": 1106.1196,
+        "useLanMeter": true
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 36.703
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1100,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543202,
+          "watts": 1100
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 37.15
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1130,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543204,
+          "watts": 1040
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 38.958
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822294,
+          "todayActiveL1": 12809321,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809321,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1143.1603,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1143.1603
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 39.238
+    },
+    {
+      "payload": {
+        "bmsDsgRemTime": 2637,
+        "cmsDsgRemTime": 2637
+      },
+      "sn": "BK31XXXXXXXXXX05",
+      "t": 39.698
+    },
+    {
+      "payload": {
+        "moduleWifiRssi": -75.0
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 39.733
+    },
+    {
+      "payload": {
+        "bmsChgDsgState": 2,
+        "bmsDsgRemTime": 2241,
+        "cloudMetter": {
+          "hasMeter": true,
+          "model": "CT_EF_01",
+          "phaseAPower": 1128,
+          "phaseBPower": 0,
+          "phaseCPower": 0,
+          "sn": "BK21XXXXXXXXXX03"
+        },
+        "cmsChgDsgState": 2,
+        "cmsDsgRemTime": 2241,
+        "powGetBpCms": 22.291626,
+        "powGetSchuko2": 25.008131,
+        "powGetSysGrid": 1126.0,
+        "powGetSysLoad": 1103.7084,
+        "powGetSysLoadFromBp": 0.0,
+        "powGetSysLoadFromGrid": 1103.7084
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 40.476
+    },
+    {
+      "payload": {
+        "bmsChgDsgState": 0,
+        "cmsChgDsgState": 0,
+        "gridConnectionPower": 0.0,
+        "powGetBpCms": 0.0,
+        "powGetSchuko2": 0.0,
+        "powGetSysGrid": 1177.7501,
+        "powGetSysLoad": 1177.7501,
+        "powGetSysLoadFromBp": -18.249905,
+        "powGetSysLoadFromGrid": 1177.7501,
+        "sysGridConnectionPower": -33.249905
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 40.533
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1060,
+          "dstTime": 3600,
+          "runTime": 3793388,
+          "timeZone": 0,
+          "utcTime": 1790543206,
+          "watts": 1060
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 40.953
+    },
+    {
+      "payload": {
+        "bmsMaxMosTemp": 23,
+        "bmsMinMosTemp": 23
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 41.08
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1157.9464,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1157.9464
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 41.491
+    },
+    {
+      "payload": {
+        "bmsMaxMosTemp": 24,
+        "bmsMinMosTemp": 24
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 42.771
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1130,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543208,
+          "watts": 1090
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 42.811
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822295,
+          "todayActiveL1": 12809322,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809322,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1128.5283,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "gridConnectionVolL1": 244.05536,
+        "gridConnectionVolL2": 121.75075,
+        "gridConnectionVolL3": 121.77269,
+        "powGetSysGrid": 1128.5283
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 43.325
+    },
+    {
+      "payload": {
+        "gridConnectionPower": -28.547283,
+        "gridConnectionVol": 243.74815,
+        "powGetSysGrid": 1090.3093,
+        "powGetSysLoad": 1090.3093,
+        "powGetSysLoadFromGrid": 1090.3093,
+        "sysGridConnectionPower": -31.690666
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 43.677
+    },
+    {
+      "payload": {
+        "gridConnectionVol": 244.0653
+      },
+      "sn": "BK31XXXXXXXXXX06",
+      "t": 43.923
+    },
+    {
+      "payload": {
+        "gridConnectionVol": 244.06033
+      },
+      "sn": "BK31XXXXXXXXXX04",
+      "t": 44.36
+    },
+    {
+      "payload": {
+        "gridConnectionVol": 243.91718
+      },
+      "sn": "BK31XXXXXXXXXX07",
+      "t": 44.657
+    },
+    {
+      "payload": {
+        "gridConnectionVol": 243.67384
+      },
+      "sn": "BK31XXXXXXXXXX05",
+      "t": 44.815
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1060,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543210,
+          "watts": 1040
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 45.077
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1080.9426,
+        "powGetSysLoad": 1080.9426,
+        "powGetSysLoadFromBp": -22.057327,
+        "powGetSysLoadFromGrid": 1080.9426,
+        "sysGridConnectionPower": -33.057327
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 45.683
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1145.3645,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "gridConnectionVolL1": 244.07025,
+        "gridConnectionVolL3": 121.784966,
+        "powGetSysGrid": 1145.3645
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 45.812
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1150,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543212,
+          "watts": 1060
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 47.042
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822296,
+          "todayActiveL1": 12809323,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809323,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1135.0101,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "gridConnectionVolL1": 244.09766,
+        "gridConnectionVolL2": 121.770386,
+        "powGetSysGrid": 1135.0101
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 47.469
+    },
+    {
+      "payload": {
+        "gridConnectionPower": 0.0,
+        "powGetSysGrid": 1129.7224,
+        "powGetSysLoad": 1129.7224,
+        "powGetSysLoadFromBp": -12.277605,
+        "powGetSysLoadFromGrid": 1129.7224,
+        "sysGridConnectionPower": -23.277605
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 47.752
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822297,
+          "todayActiveL1": 12809324,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809324,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1113.0612,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1113.0612
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 49.197
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1117.0157,
+        "powGetSysLoad": 1117.0157,
+        "powGetSysLoadFromBp": 0.0,
+        "powGetSysLoadFromGrid": 1117.0157,
+        "sysGridConnectionPower": -7.984218
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 49.501
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1250,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543214,
+          "watts": 1250
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 50.026
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822298,
+          "todayActiveL1": 12809325,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809325,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1110.7789,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1110.7789
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 51.542
+    },
+    {
+      "payload": {
+        "sysGridConnectionPower": -2.7385867
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 51.806
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1310,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543216,
+          "watts": 1020
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 51.92
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1141.0607,
+        "powGetSysLoad": 1141.0607,
+        "powGetSysLoadFromGrid": 1141.0607,
+        "sysGridConnectionPower": -0.9393352
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 53.558
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1160.8715,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1160.8715
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 53.799
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1280,
+          "dstTime": 3600,
+          "runTime": 3793401,
+          "timeZone": 0,
+          "utcTime": 1790543218,
+          "watts": 1280
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 53.996
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822299,
+          "todayActiveL1": 12809326,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809326,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1120.0402,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1120.0402
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 55.364
+    },
+    {
+      "payload": {
+        "bmsDsgRemTime": 2515,
+        "cmsDsgRemTime": 2515
+      },
+      "sn": "BK31XXXXXXXXXX06",
+      "t": 55.723
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1110,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543220,
+          "watts": 1160
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 55.982
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1138.6779,
+        "powGetSysLoad": 1138.6779,
+        "powGetSysLoadFromGrid": 1138.6779
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 56.748
+    },
+    {
+      "payload": {
+        "gridConnectionDataRecord": {
+          "todayActive": 12822300.0,
+          "todayActiveL1": 12809327,
+          "todayActiveL2": 0.0,
+          "todayActiveL3": 0.0,
+          "todayReactive": 0.0,
+          "totalActiveEnergy": 12809327,
+          "totalReactiveEnergy": 12973.0
+        },
+        "gridConnectionPowerL1": 1127.6476,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1127.6476
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 57.659
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1300,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543222,
+          "watts": 1300
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 57.979
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1128.8895,
+        "powGetSysLoad": 1128.8895,
+        "powGetSysLoadFromGrid": 1128.8895
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 58.577
+    },
+    {
+      "payload": {
+        "addr": "REDACTED",
+        "cmdFunc": 2,
+        "cmdId": 1,
+        "params": {
+          "consWatt": -1060,
+          "dstTime": 3600,
+          "timeZone": 0,
+          "utcTime": 1790543224,
+          "watts": 1060
+        }
+      },
+      "sn": "HW52XXXXXXXXXX08",
+      "t": 60.115
+    },
+    {
+      "payload": {
+        "gridConnectionPowerL1": 1148.4448,
+        "gridConnectionPowerL2": 0.0,
+        "gridConnectionPowerL3": 0.0,
+        "powGetSysGrid": 1148.4448
+      },
+      "sn": "BK21XXXXXXXXXX03",
+      "t": 60.793
+    },
+    {
+      "payload": {
+        "powGetSysGrid": 1144.962,
+        "powGetSysLoad": 1144.962,
+        "powGetSysLoadFromGrid": 1144.962
+      },
+      "sn": "BK11XXXXXXXXXX02",
+      "t": 60.808
+    }
+  ],
+  "rest": {
+    "device_list": [
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "AC71XXXXXXXXXX01"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK11XXXXXXXXXX02"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK21XXXXXXXXXX03"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK31XXXXXXXXXX04"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK31XXXXXXXXXX05"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK31XXXXXXXXXX06"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "sn": "BK31XXXXXXXXXX07"
+      },
+      {
+        "deviceName": "REDACTED",
+        "online": 1,
+        "productName": "Smart Plug",
+        "sn": "HW52XXXXXXXXXX08"
+      }
+    ],
+    "quota": {
+      "AC71XXXXXXXXXX01": {
+        "code": "1006",
+        "eagleEyeTraceId": "",
+        "message": "current device is not allowed to get device info",
+        "tid": ""
+      },
+      "BK11XXXXXXXXXX02": {
+        "code": "0",
+        "data": {
+          "backupReverseSoc": 13,
+          "cmsBattSoc": 13.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": true,
+          "energyStrategyOperateMode.operateSelfPoweredOpen": false,
+          "feedGridMode": 2,
+          "gridConnectionPower": -31.836773,
+          "powGetBpCms": 0.0,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 1137.515,
+          "powGetSysLoad": 1137.515,
+          "quota_cloud_ts": "2026-09-28 05:05:56",
+          "relay2Onoff": true,
+          "relay3Onoff": true
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "BK21XXXXXXXXXX03": {
+        "code": "0",
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "BK31XXXXXXXXXX04": {
+        "code": "0",
+        "data": {
+          "backupReverseSoc": 13,
+          "cmsBattSoc": 0.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": true,
+          "energyStrategyOperateMode.operateSelfPoweredOpen": false,
+          "feedGridMode": 2,
+          "gridConnectionPower": 0.0,
+          "powGetBpCms": 0.0,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 0.0,
+          "powGetSysLoad": 0.0,
+          "quota_cloud_ts": "2026-09-28 05:05:29",
+          "relay2Onoff": false,
+          "relay3Onoff": false
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "BK31XXXXXXXXXX05": {
+        "code": "0",
+        "data": {
+          "backupReverseSoc": 13,
+          "cmsBattSoc": 0.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": true,
+          "energyStrategyOperateMode.operateSelfPoweredOpen": false,
+          "feedGridMode": 2,
+          "gridConnectionPower": 0.0,
+          "powGetBpCms": 0.0,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 0.0,
+          "powGetSysLoad": 0.0,
+          "quota_cloud_ts": "2026-09-28 05:05:50",
+          "relay2Onoff": false,
+          "relay3Onoff": false
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "BK31XXXXXXXXXX06": {
+        "code": "0",
+        "data": {
+          "backupReverseSoc": 13,
+          "cmsBattSoc": 0.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": true,
+          "energyStrategyOperateMode.operateSelfPoweredOpen": false,
+          "feedGridMode": 2,
+          "gridConnectionPower": 0.0,
+          "powGetBpCms": 0.0,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 0.0,
+          "powGetSysLoad": 0.0,
+          "quota_cloud_ts": "2026-09-28 05:05:51",
+          "relay2Onoff": false,
+          "relay3Onoff": false
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "BK31XXXXXXXXXX07": {
+        "code": "0",
+        "data": {
+          "backupReverseSoc": 13,
+          "cmsBattSoc": 0.0,
+          "cmsMaxChgSoc": 95,
+          "cmsMinDsgSoc": 10,
+          "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": true,
+          "energyStrategyOperateMode.operateSelfPoweredOpen": false,
+          "feedGridMode": 2,
+          "gridConnectionPower": 0.0,
+          "powGetBpCms": 0.0,
+          "powGetPvSum": 0.0,
+          "powGetSysGrid": 0.0,
+          "powGetSysLoad": 0.0,
+          "quota_cloud_ts": "2026-09-28 05:05:56",
+          "relay2Onoff": false,
+          "relay3Onoff": false
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      },
+      "HW52XXXXXXXXXX08": {
+        "code": "0",
+        "data": {
+          "2_1.brightness": 1023,
+          "2_1.consNum": 1,
+          "2_1.consWatt": -1030,
+          "2_1.country": 18242,
+          "2_1.current": 1268,
+          "2_1.dstTime": 3600,
+          "2_1.errCode": 0,
+          "2_1.freq": 50,
+          "2_1.geneNum": 0,
+          "2_1.geneWatt": 0,
+          "2_1.heartbeatFrequency": 900,
+          "2_1.insightsSwitch": 0,
+          "2_1.lanState": 3,
+          "2_1.matterFabric": 0,
+          "2_1.maxCur": 0,
+          "2_1.maxWatts": 3250,
+          "2_1.meshEnable": 1,
+          "2_1.meshId": 4234616834,
+          "2_1.meshLayel": 1,
+          "2_1.mqttErr": 6,
+          "2_1.mqttErrTime": 1789913649,
+          "2_1.otaDlErr": 0,
+          "2_1.otaDlTlsErr": 0,
+          "2_1.parentMac": 0,
+          "2_1.parentWifiRssi": -67,
+          "2_1.resetCount": 10,
+          "2_1.resetReason": 3,
+          "2_1.rtcResetReason": 3,
+          "2_1.runTime": 3793339,
+          "2_1.selfEmsSwitch": 1,
+          "2_1.selfMac": 0,
+          "2_1.staIpAddr": 0,
+          "2_1.stackFree": 64,
+          "2_1.stackMinFree": 19,
+          "2_1.switchSta": true,
+          "2_1.temp": 35,
+          "2_1.timeZone": 0,
+          "2_1.town": 0,
+          "2_1.updateTime": "2026-09-28 05:05:57",
+          "2_1.utcTime": 1790543157,
+          "2_1.volt": 243,
+          "2_1.warnCode": 0,
+          "2_1.watts": 1030,
+          "2_1.wifiErr": 0,
+          "2_1.wifiErrTime": 0,
+          "2_2.task1": {
+            "taskIndex": 0,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task10": {
+            "taskIndex": 9,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task11": {
+            "taskIndex": 10,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task2": {
+            "taskIndex": 1,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task3": {
+            "taskIndex": 2,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task4": {
+            "taskIndex": 3,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task5": {
+            "taskIndex": 4,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task6": {
+            "taskIndex": 5,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task7": {
+            "taskIndex": 6,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task8": {
+            "taskIndex": 7,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.task9": {
+            "taskIndex": 8,
+            "timeRange": {
+              "isConfig": false,
+              "isEnable": false,
+              "startTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "stopTime": {
+                "day": 0,
+                "hour": 0,
+                "min": 0,
+                "month": 0,
+                "sec": 0,
+                "week": 0,
+                "year": 0
+              },
+              "timeData": 0,
+              "timeMode": 0
+            },
+            "type": 0
+          },
+          "2_2.updateTime": "2026-09-20 22:14:31"
+        },
+        "eagleEyeTraceId": "",
+        "message": "Success",
+        "tid": ""
+      }
+    }
+  }
+}
