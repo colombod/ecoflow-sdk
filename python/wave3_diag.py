@@ -1,5 +1,9 @@
 """Raw MQTT diagnostic — uses the EXACT same auth and topic as Wave3Connection.
 Prints every byte that arrives on the subscription topic.
+
+WARNING: investigation record, kept for history. This script uses a random
+uuid4() MQTT client ID — every run burns one of the ~10 unique client IDs
+the broker allows per account per day (AGENTS.md Quirk 1).
 """
 
 import asyncio
@@ -24,7 +28,7 @@ async def main() -> None:
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71XXXXXXXXXXXX")
+    sn = os.environ["ECOFLOW_WAVE3_SN"]
 
     print(f"=== RAW MQTT DIAGNOSTIC for {sn} ===")
     print("Step 1: Authenticating...")

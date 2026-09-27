@@ -15,7 +15,7 @@ async def main() -> None:
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71XXXXXXXXXXXX")
+    sn = os.environ["ECOFLOW_WAVE3_SN"]
 
     print(f"Connecting to Wave 3: {sn} via private API")
 

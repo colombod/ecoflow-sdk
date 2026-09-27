@@ -347,6 +347,22 @@ async def stream_battery_events() -> None:
 asyncio.run(stream_battery_events())
 ```
 
+To wait for just the next update, bound it with a timeout:
+
+```python
+async with asyncio.timeout(60):
+    status = await battery.wait_for_update()
+```
+
+`client.events()` merges every device into one stream of
+`{"sn": ..., "product_name": ..., "data": <status>}` dicts.
+
+### REST-only mode
+
+`EcoFlowClient(..., enable_mqtt=False)` discovers devices and serves `refresh()`
+over REST without opening MQTT. EcoFlow allows one MQTT session per account, so
+use this when another integration (e.g. Home Assistant) already holds it.
+
 ### Using `on_update` callbacks
 
 For synchronous callbacks (e.g. in frameworks that manage their own event loop):

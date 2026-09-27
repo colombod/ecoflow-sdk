@@ -15,7 +15,7 @@ class TestPackageInit:
     def test_version_value(self) -> None:
         import ecoflow
 
-        assert ecoflow.__version__ == "0.2.0"
+        assert ecoflow.__version__ == _pyproject_version()
 
 
 class TestTransportInit:
@@ -71,3 +71,11 @@ class TestTransportInit:
         from ecoflow.transport.mqtt import MqttCredentials as OrigMqttCredentials
 
         assert MqttCredentials is OrigMqttCredentials
+
+
+def _pyproject_version() -> str:
+    import tomllib
+    from pathlib import Path
+
+    data = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())
+    return str(data["project"]["version"])

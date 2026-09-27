@@ -44,3 +44,33 @@ def test_each_call_produces_different_nonce() -> None:
     h2 = build_auth_headers(creds)
     # nonces should differ across calls (probabilistically)
     assert h1["nonce"] != h2["nonce"] or h1["timestamp"] != h2["timestamp"]
+
+
+def _expected_sign(secret: str, message: str) -> str:
+    return hmac.new(secret.encode(), message.encode(), hashlib.sha256).hexdigest()
+
+
+def test_canonical_params_flattens_and_sorts() -> None:
+    from ecoflow.auth import canonical_params
+
+    body = {
+        "sn": "SN1",
+        "params": {"cmdSet": 11, "id": 24, "enabled": True, "list": [1, 2]},
+    }
+    assert canonical_params(body) == (
+        "params.cmdSet=11&params.enabled=true&params.id=24"
+        "&params.list[0]=1&params.list[1]=2&sn=SN1"
+    )
+    assert canonical_params(None) == ""
+    assert canonical_params({}) == ""
+
+
+def test_build_auth_headers_signs_params_before_access_key() -> None:
+    """Request params are part of the signed string (EcoFlow spec)."""
+    creds = EcoFlowCredentials(access_key="mykey", secret_key="mysecret")
+    headers = build_auth_headers(creds, {"sn": "SN1"})
+    canonical = (
+        f"sn=SN1&accessKey=mykey&nonce={headers['nonce']}"
+        f"&timestamp={headers['timestamp']}"
+    )
+    assert headers["sign"] == _expected_sign("mysecret", canonical)
