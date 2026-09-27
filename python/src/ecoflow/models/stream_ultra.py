@@ -45,7 +45,10 @@ class StreamUltraStatus:
     pv_power_watts: float = 0.0
     """Solar PV input power in Watts."""
     battery_power_watts: float = 0.0
-    """Battery charge/discharge power in Watts."""
+    """Battery power in Watts, from powGetBpCms.
+    POSITIVE = charging, NEGATIVE = discharging (verified live 2026-09-27/28:
+    +5258 W during a grid charge, -608 W while covering house load). A few tens
+    of watts either way is noise while idle."""
 
     # Load source breakdown
     load_from_battery_watts: float = 0.0
@@ -80,7 +83,11 @@ class StreamUltraStatus:
 
     # Battery detail fields (from MQTT quota payload)
     charge_discharge_state: int = 0
-    """Charge/discharge state (1=charging, 2=discharging). From chgDsgState."""
+    """Raw chgDsgState. Observed live 2026-09-27/28: 0 = idle, 2 = CHARGING
+    (throughout a 5.2 kW grid charge). Earlier docs said 1=charging /
+    2=discharging — that was wrong. The discharge code has not been observed
+    yet; use ``battery_power_watts < 0`` for discharging. Arrives over MQTT only
+    (not in REST quota/all)."""
     input_watts: float = 0.0
     """Power going into battery in Watts. From inputWatts."""
     output_watts: float = 0.0
@@ -121,6 +128,11 @@ class StreamUltraStatus:
     """Discharge time remaining in minutes. From bmsDsgRemTime."""
 
     updated_at: datetime | None = None
+
+    @property
+    def is_charging(self) -> bool:
+        """True while the battery charges (chgDsgState == 2, observed live)."""
+        return self.charge_discharge_state == 2
 
     @classmethod
     def from_quota_payload(cls, sn: str, data: dict[str, Any]) -> StreamUltraStatus:

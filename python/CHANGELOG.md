@@ -10,6 +10,12 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- STREAM `charge_discharge_state` docs: `2` means **charging**, not discharging
+  (0 = idle; verified live during a 5.2 kW grid charge). `battery_power_watts` is
+  positive while charging, negative while discharging. New `StreamUltraStatus.is_charging`.
+- STREAM status reads each unit's battery-pack MQTT push (`soc`, `vol`), and
+  `refresh()` merges REST into the MQTT state — cascade-slave AC Pros no longer
+  report 0 % SOC.
 - `device.events()` now yields every update (it previously never yielded), and
   `EcoFlowClient.events()` merges all devices (was a stub).
 - Messages sharing a timestamp are no longer discarded as stale (only strictly
