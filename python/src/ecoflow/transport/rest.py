@@ -44,17 +44,13 @@ class RestTransport:
         self._timeout = timeout
         self._client = httpx.AsyncClient(base_url=host)
 
-    async def _headers(self, params: dict[str, Any] | None = None) -> dict[str, str]:
-        return {
-            **build_auth_headers(self._creds, params),
-            "Content-Type": "application/json",
-        }
-
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:  # noqa: ANN401
+        # No Content-Type on GET: with "application/json" the API verifies the
+        # signature without the query params and rejects ours with 8521.
         try:
             resp = await self._client.get(
                 path,
-                headers=await self._headers(params),
+                headers=build_auth_headers(self._creds, params),
                 params=params,
                 timeout=self._timeout,
             )
@@ -66,7 +62,10 @@ class RestTransport:
         try:
             resp = await self._client.put(
                 path,
-                headers=await self._headers(payload),
+                headers={
+                    **build_auth_headers(self._creds, payload),
+                    "Content-Type": "application/json",
+                },
                 json=payload,
                 timeout=self._timeout,
             )
