@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import itertools
 import logging
 from collections.abc import AsyncGenerator, Callable
@@ -17,6 +18,16 @@ _log = logging.getLogger(__name__)
 
 # Monotonic per-process sequence for the command envelope ``id`` field.
 _command_seq = itertools.count(1)
+
+# Per-subscriber buffer for events(); oldest updates are dropped beyond this.
+_EVENT_BUFFER = 100
+
+
+def put_dropping_oldest(queue: asyncio.Queue[Any], item: Any) -> None:  # noqa: ANN401
+    """Put *item* on *queue*, dropping the oldest entry if it is full."""
+    if queue.full():
+        queue.get_nowait()
+    queue.put_nowait(item)
 
 
 class BaseDevice:
@@ -37,7 +48,8 @@ class BaseDevice:
         self._rest = rest
         self._mqtt = mqtt
         self._callbacks: list[Callable[[Any], None]] = []
-        self._last_event: Any = None
+        # Internal sinks feeding events() / wait_for_update() queues.
+        self._sinks: list[Callable[[Any], None]] = []
         self._last_updated: datetime | None = None
 
     async def _publish(self, payload: dict[str, Any]) -> None:
@@ -71,22 +83,49 @@ class BaseDevice:
     async def events(self) -> AsyncGenerator[Any, None]:
         """Async generator yielding status updates for this device.
 
-        Yields the typed status dataclass on each MQTT update.
+        Yields the typed status dataclass on each MQTT update, in order.
+        Each ``events()`` iterator gets its own buffer; if a consumer falls
+        more than ``_EVENT_BUFFER`` updates behind, the oldest are dropped.
 
         Usage::
             async for event in device.events():
                 print(event)
         """
-        while True:
-            await asyncio.sleep(0.1)
-            if self._last_event is not None:
-                yield self._last_event
-                self._last_event = None
+        queue: asyncio.Queue[Any] = asyncio.Queue(maxsize=_EVENT_BUFFER)
+        remove = self._add_sink(functools.partial(put_dropping_oldest, queue))
+        try:
+            while True:
+                yield await queue.get()
+        finally:
+            remove()
+
+    def _add_sink(self, sink: Callable[[Any], None]) -> Callable[[], None]:
+        """Register an internal update sink; returns a function removing it."""
+        self._sinks.append(sink)
+        return lambda: self._sinks.remove(sink)
+
+    async def wait_for_update(self) -> Any:  # noqa: ANN401
+        """Wait for the next MQTT update and return the new status.
+
+        Bound the wait with ``asyncio.timeout``::
+
+            async with asyncio.timeout(60):
+                status = await device.wait_for_update()
+        """
+        updates = self.events()
+        try:
+            return await anext(updates)
+        finally:
+            await updates.aclose()
 
     def _handle_message(self, sn: str, data: dict[str, Any]) -> None:
-        """Route incoming MQTT payload — discard if older than cached state."""
+        """Route incoming MQTT payload — discard if older than cached state.
+
+        Only strictly older messages are dropped: chunks of one state dump can
+        share a timestamp on platforms with a coarse clock.
+        """
         now = datetime.now(tz=UTC)
-        if self._last_updated is not None and self._last_updated >= now:
+        if self._last_updated is not None and self._last_updated > now:
             _log.debug("Discarding stale message for %s", sn)
             return
         self._last_updated = now
@@ -100,12 +139,14 @@ class BaseDevice:
         self._callbacks.append(callback)
 
     def _notify_callbacks(self, status: Any) -> None:  # noqa: ANN401
-        """Invoke all registered callbacks with the current device status."""
+        """Deliver the current status to on_update callbacks and event streams."""
         for cb in self._callbacks:
             try:
                 cb(status)
             except Exception:
                 _log.exception("Error in on_update callback for %s", self.sn)
+        for sink in list(self._sinks):
+            sink(status)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} sn={self.sn!r} product={self.product_name!r}>"

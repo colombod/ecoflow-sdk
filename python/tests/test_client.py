@@ -309,3 +309,25 @@ async def test_discover_matches_product_name_case_insensitively() -> None:
     assert [b.sn for b in client.batteries] == ["MR51TEST"]
     assert [p.sn for p in client.plugs] == ["HW52TEST"]
     assert client.unknown_devices == []
+
+
+@respx.mock
+async def test_rest_only_mode_never_requests_mqtt_credentials() -> None:
+    """enable_mqtt=False must not fetch certification or open MQTT."""
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/device/list").mock(
+        return_value=Response(
+            200,
+            json={"code": 0, "data": [{"sn": "HW52TEST", "productName": "Smart Plug"}]},
+        )
+    )
+    cert = respx.get("https://api-e.ecoflow.com/iot-open/sign/certification").mock(
+        return_value=Response(200, json={"code": 0, "data": {}})
+    )
+    with patch("ecoflow.client.MqttTransport") as mqtt_cls:
+        async with EcoFlowClient(
+            access_key="k", secret_key="s", enable_mqtt=False
+        ) as c:
+            assert [p.sn for p in c.plugs] == ["HW52TEST"]
+            assert c.mqtt_connected is False
+    assert not cert.called
+    mqtt_cls.assert_not_called()

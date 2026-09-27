@@ -1,5 +1,8 @@
 """EcoFlow Python SDK."""
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
+
 from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
 from ecoflow.devices import (
@@ -36,7 +39,11 @@ try:
 except ImportError:
     pass  # protobuf not installed — Wave3Connection silently unavailable
 
-__version__ = "0.2.0"
+try:
+    # Single source of truth: pyproject.toml [project].version.
+    __version__ = _dist_version("ecoflow-python")
+except PackageNotFoundError:  # running from a source tree without installing
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "EcoFlowClient",
