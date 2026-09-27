@@ -49,7 +49,7 @@ async def test_mqtt_session_is_live(mqtt_client: EcoFlowClient) -> None:
 
 
 async def test_mqtt_status_agrees_with_rest(
-    mqtt_client: EcoFlowClient, mqtt_timing: MqttTiming
+    mqtt_client: EcoFlowClient, rest_client: EcoFlowClient, mqtt_timing: MqttTiming
 ) -> None:
     targets = (
         mqtt_client.stream_units
@@ -57,6 +57,13 @@ async def test_mqtt_status_agrees_with_rest(
         + mqtt_client.plugs
         + mqtt_client.batteries
     )
+    rest_devices: dict[str, Any] = {
+        d.sn: d
+        for d in rest_client.stream_units
+        + rest_client.meters
+        + rest_client.plugs
+        + rest_client.batteries
+    }
     if not targets:
         pytest.skip("no STREAM / meter / plug / battery devices on this account")
 
@@ -70,7 +77,9 @@ async def test_mqtt_status_agrees_with_rest(
                 f"{label}: no MQTT push within {mqtt_timing.first_push_timeout_s}s"
             )
             continue
-        rest_status = await device.refresh()  # replaces device.status; snapshot kept
+        # From the REST-only client: this device's own refresh() would merge
+        # REST into its MQTT state (STREAM) and compare the pushes with themselves.
+        rest_status = await rest_devices[device.sn].refresh()
         if not compare(mqtt_status, mqtt_status).compared:
             failures.append(f"{label}: MQTT status has no populated stable fields")
             continue
