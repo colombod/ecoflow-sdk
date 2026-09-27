@@ -10,6 +10,18 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- `Wave3Connection.connect()` fails fast with a clear `EcoFlowConnectionError`
+  on MQTT 135 at first connect, instead of retrying into a generic timeout.
+- Wave 3 private-API MQTT connects again: the client ID is back to the
+  `ANDROID_<32 hex>_<userId>` shape the broker requires (every other shape gets
+  135), now derived from the user ID so it stays stable (`private_client_id`).
+  Since 0.3.0 every Wave 3 connection was refused. Verified live.
+- STREAM `charge_discharge_state` docs: `2` means **charging**, not discharging
+  (0 = idle; verified live during a 5.2 kW grid charge). `battery_power_watts` is
+  positive while charging, negative while discharging. New `StreamUltraStatus.is_charging`.
+- STREAM status reads each unit's battery-pack MQTT push (`soc`, `vol`), and
+  `refresh()` merges REST into the MQTT state — cascade-slave AC Pros no longer
+  report 0 % SOC.
 - `device.events()` now yields every update (it previously never yielded), and
   `EcoFlowClient.events()` merges all devices (was a stub).
 - Messages sharing a timestamp are no longer discarded as stale (only strictly
@@ -17,6 +29,9 @@ This project uses [semantic versioning](https://semver.org/).
 - REST signature now covers the request parameters (sorted query params, or the
   flattened JSON body for `PUT`), as the EcoFlow Developer API spec requires.
   Previously only `accessKey`/`nonce`/`timestamp` were signed.
+- `GET` requests no longer send `Content-Type: application/json`. With that header
+  the API verifies the signature without the query params, so every signed
+  `quota/all` read failed with 8521 "signature is wrong" (verified live).
 - Public MQTT pushes are unwrapped from their `params`/`param`/`typeCode` envelope
   into the REST `quota/all` key layout before parsing. Previously live MQTT updates
   produced all-zero STREAM, Smart Meter, Smart Plug and battery statuses.
@@ -29,13 +44,24 @@ This project uses [semantic versioning](https://semver.org/).
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
 ### Added
+- STREAM status: `self_powered_mode`, `ai_schedule_mode`, `grid_voltage`,
+  `real_health`, min/max cell temperature and voltage, and lifetime
+  charge/discharge energy (Wh). Smart Plug: `frequency_hz`, `max_watts`. Each
+  confirmed against the reference integration and the live recording.
 - `EcoFlowClient(..., enable_mqtt=False)` REST-only mode — never opens MQTT, so it
   can run alongside another integration using the same keys.
 - `device.wait_for_update()` — await the next MQTT update (bound it with
   `asyncio.timeout`).
 - Tiered live tests behind an explicit `--live=rest|mqtt` flag, an MQTT-vs-REST
-  consistency check, `scripts/capture_vectors.py` (redacted payload capture) and
-  offline replay of captured vectors. Runbook: `docs/api/live-testing.md`.
+  consistency check and `scripts/capture_vectors.py`. Runbook:
+  `docs/api/live-testing.md`.
+- Record/replay simulation for CI: `capture_vectors.py --record NAME` writes a
+  redacted `tests/recordings/NAME/recording.json` (full REST bodies + raw MQTT
+  timeline); `pytest tests/e2e --live=replay` runs the live REST/MQTT test modules
+  offline against every recording through the real SDK code, with a
+  signature-verifying fake REST server and a fake MQTT broker
+  (`tests/support/replay.py`). CI runs it on every push. `tests/test_recordings.py`
+  adds per-recording MQTT-vs-REST agreement and a PII guard.
 
 ### Changed
 - Live integration tests are no longer part of CI.

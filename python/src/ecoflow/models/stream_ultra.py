@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass
@@ -45,7 +45,10 @@ class StreamUltraStatus:
     pv_power_watts: float = 0.0
     """Solar PV input power in Watts."""
     battery_power_watts: float = 0.0
-    """Battery charge/discharge power in Watts."""
+    """Battery power in Watts, from powGetBpCms.
+    POSITIVE = charging, NEGATIVE = discharging (verified live 2026-09-27/28:
+    +5258 W during a grid charge, -608 W while covering house load). A few tens
+    of watts either way is noise while idle."""
 
     # Load source breakdown
     load_from_battery_watts: float = 0.0
@@ -80,7 +83,11 @@ class StreamUltraStatus:
 
     # Battery detail fields (from MQTT quota payload)
     charge_discharge_state: int = 0
-    """Charge/discharge state (1=charging, 2=discharging). From chgDsgState."""
+    """Raw chgDsgState. Observed live 2026-09-27/28: 0 = idle, 2 = CHARGING
+    (throughout a 5.2 kW grid charge). Earlier docs said 1=charging /
+    2=discharging — that was wrong. The discharge code has not been observed
+    yet; use ``battery_power_watts < 0`` for discharging. Arrives over MQTT only
+    (not in REST quota/all)."""
     input_watts: float = 0.0
     """Power going into battery in Watts. From inputWatts."""
     output_watts: float = 0.0
@@ -120,7 +127,38 @@ class StreamUltraStatus:
     discharge_time_remaining_min: int = 0
     """Discharge time remaining in minutes. From bmsDsgRemTime."""
 
+    # Fields below: confirmed against the tolwi reference AND the live recording
+    # tests/recordings/live-20260927 (names, units and plausible values).
+    self_powered_mode: bool = False
+    """Self-powered operating mode on.
+    energyStrategyOperateMode.operateSelfPoweredOpen."""
+    ai_schedule_mode: bool = False
+    """AI (intelligent schedule) mode on.
+    energyStrategyOperateMode.operateIntelligentScheduleModeOpen."""
+    grid_voltage: float = 0.0
+    """Grid voltage at the unit (V). From gridConnectionVol."""
+    real_health: float = 0.0
+    """Measured battery state of health (%). From realSoh (soh is the rounded %)."""
+    min_cell_temp: int = 0
+    """Coolest battery cell (°C). From minCellTemp."""
+    max_cell_temp: int = 0
+    """Hottest battery cell (°C). From maxCellTemp."""
+    min_cell_voltage: float = 0.0
+    """Lowest cell voltage (V, from minCellVol mV)."""
+    max_cell_voltage: float = 0.0
+    """Highest cell voltage (V, from maxCellVol mV)."""
+    lifetime_charge_energy_wh: int = 0
+    """Energy charged into this unit's battery over its life (Wh). accuChgEnergy.
+    Live check: 625 564 Wh over 308 cycles of a ~1.92 kWh pack."""
+    lifetime_discharge_energy_wh: int = 0
+    """Energy discharged from this unit's battery over its life (Wh). accuDsgEnergy."""
+
     updated_at: datetime | None = None
+
+    @property
+    def is_charging(self) -> bool:
+        """True while the battery charges (chgDsgState == 2, observed live)."""
+        return self.charge_discharge_state == 2
 
     @classmethod
     def from_quota_payload(cls, sn: str, data: dict[str, Any]) -> StreamUltraStatus:
@@ -135,14 +173,31 @@ class StreamUltraStatus:
         CAPACITY QUIRK: remainCap/fullCap/designCap are in mAh. vBat is in mV.
         Wh = (mAh × mV) / 1_000_000. Requires vBat > 0.
         Source: tolwi/hassio-ecoflow-cloud research 2026-05-29.
+
+        PACK QUIRK (recorded live 2026-09-27): public-API MQTT pushes for STREAM
+        units are flat and carry no bmsBattSoc/vBat. The unit's battery pack
+        reports as its own push with ``soc`` and ``vol`` (mV) next to
+        cycles/designCap/fullCap/remainCap. REST ``quota/all`` has only the CMS
+        aggregate ``cmsBattSoc``, which is 0 on cascade slaves — so a slave's
+        real SOC is only visible through the pack push.
         """
         bms_soc = float(data.get("bmsBattSoc", 0))
+        pack_soc = float(data.get("soc", 0))
         cms_soc = float(data.get("cmsBattSoc", 0))
-        batt_soc = bms_soc if bms_soc > 0 else cms_soc
+        batt_soc = bms_soc or pack_soc or cms_soc
+
+        # REST flattens this object ("energyStrategyOperateMode.operateX");
+        # accept the nested form too in case a push carries it unflattened.
+        nested = data.get("energyStrategyOperateMode")
+        modes = cast(dict[str, Any], nested) if isinstance(nested, dict) else {}
+
+        def _mode(name: str) -> bool:
+            flat = data.get(f"energyStrategyOperateMode.{name}")
+            return bool(modes.get(name, False) if flat is None else flat)
 
         remain_mah = int(data.get("remainCap", 0))
         full_mah = int(data.get("fullCap", 0))
-        vbat_mv = int(data.get("vBat", 0))
+        vbat_mv = int(data.get("vBat", 0)) or int(data.get("vol", 0))
 
         remaining_cap_wh = (remain_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
         full_cap_wh = (full_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
@@ -174,7 +229,7 @@ class StreamUltraStatus:
             input_watts=float(data.get("inputWatts", 0)),
             output_watts=float(data.get("outputWatts", 0)),
             temp=float(data.get("temp", 0)),
-            battery_voltage=data.get("vBat", 0) / 1000.0,  # mV → V
+            battery_voltage=vbat_mv / 1000.0,  # mV → V (vBat, else pack vol)
             cycles=int(data.get("cycles", 0)),
             remaining_cap_mah=remain_mah,
             full_cap_mah=full_mah,
@@ -185,5 +240,15 @@ class StreamUltraStatus:
             remaining_time_min=int(data.get("remainTime", 0)),
             charge_time_remaining_min=int(data.get("bmsChgRemTime", 0)),
             discharge_time_remaining_min=int(data.get("bmsDsgRemTime", 0)),
+            self_powered_mode=_mode("operateSelfPoweredOpen"),
+            ai_schedule_mode=_mode("operateIntelligentScheduleModeOpen"),
+            grid_voltage=float(data.get("gridConnectionVol", 0)),
+            real_health=float(data.get("realSoh", 0)),
+            min_cell_temp=int(data.get("minCellTemp", 0)),
+            max_cell_temp=int(data.get("maxCellTemp", 0)),
+            min_cell_voltage=int(data.get("minCellVol", 0)) / 1000.0,
+            max_cell_voltage=int(data.get("maxCellVol", 0)) / 1000.0,
+            lifetime_charge_energy_wh=int(data.get("accuChgEnergy", 0)),
+            lifetime_discharge_energy_wh=int(data.get("accuDsgEnergy", 0)),
             updated_at=datetime.now(tz=UTC),
         )

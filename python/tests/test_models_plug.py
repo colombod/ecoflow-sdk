@@ -107,3 +107,14 @@ def test_smart_plug_quota_current_milliamps_to_amps() -> None:
     payload: dict[str, Any] = {"2_1.current": 1598}
     plug = SmartPlugData.from_quota_payload("SP00002", payload)
     assert plug.current == pytest.approx(1.598)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_smart_plug_quota_reads_frequency_and_max_watts() -> None:
+    """Live recording 2026-09-27 + tolwi reference: freq in Hz, maxWatts in W."""
+    from ecoflow.models.plug import SmartPlugData
+
+    data = SmartPlugData.from_quota_payload(
+        "X", {"2_1.freq": 50, "2_1.maxWatts": 3250, "2_1.watts": 1030}
+    )
+    assert data.frequency_hz == 50
+    assert data.max_watts == 3250

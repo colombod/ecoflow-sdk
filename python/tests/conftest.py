@@ -8,8 +8,11 @@ QUIRK NOTE (smart_plug):
   Test vector: tests/vectors/smart_plug/payload_power.json
 """
 
+import asyncio
 import json
 import os
+import sys
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +21,13 @@ from dotenv import load_dotenv
 
 # Load test credentials from tests/.env if present (gitignored)
 load_dotenv(Path(__file__).parent / ".env")
+
+if sys.platform == "win32":
+    # aiomqtt needs a SelectorEventLoop; Windows defaults to Proactor, which
+    # MqttTransport.connect() refuses. pytest-asyncio uses the global policy.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)  # policies: 3.14+
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 VECTORS_DIR = Path(__file__).parent / "vectors"
 
@@ -30,7 +40,7 @@ def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]
     return payload, expected
 
 
-LIVE_TIERS = ("off", "rest", "mqtt")
+LIVE_TIERS = ("off", "rest", "mqtt", "replay")
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -41,7 +51,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help=(
             "Run live read-only tests against the EcoFlow cloud. "
             "'rest': REST only (safe alongside Home Assistant). "
-            "'mqtt': also opens the account's single MQTT session. Default: off."
+            "'mqtt': also opens the account's single MQTT session. "
+            "'replay': run the 'replayable' live tests offline against every "
+            "tests/recordings/*/recording.json (no network, no secrets — CI). "
+            "Default: off."
         ),
     )
     parser.addoption(
@@ -62,11 +75,19 @@ def pytest_collection_modifyitems(
       * ``live_rest`` tests need ``--live=rest`` or ``--live=mqtt``.
       * other ``integration`` tests open MQTT and need ``--live=mqtt``
         (the broker allows ONE session per account — AGENTS.md Quirk 2).
+      * ``--live=replay`` runs only ``replayable`` tests, against recordings
+        (tests/support/replay.py); every other live test is skipped.
     ``write_integration`` tests additionally keep their own double opt-in.
     """
     tier = config.getoption("--live", default="off")
     for item in items:
-        if item.get_closest_marker("live_rest"):
+        is_live = item.get_closest_marker("live_rest") or item.get_closest_marker(
+            "integration"
+        )
+        if tier == "replay":
+            if is_live and not item.get_closest_marker("replayable"):
+                item.add_marker(pytest.mark.skip(reason="not replayable offline"))
+        elif item.get_closest_marker("live_rest"):
             if tier == "off":
                 item.add_marker(pytest.mark.skip(reason="live test — pass --live=rest"))
         elif item.get_closest_marker("integration") and tier != "mqtt":

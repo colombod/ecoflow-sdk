@@ -151,6 +151,51 @@ def test_stream_ultra_slave_unit_batt_soc() -> None:
     assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
 
 
+# Battery-pack MQTT push, as recorded live 2026-09-27 (BK11 and BK31 alike):
+# flat, no bmsBattSoc / vBat — the pack reports "soc" and "vol" (mV).
+PACK_PUSH: dict[str, Any] = {
+    "num": 0,
+    "soc": 13,
+    "f32ShowSoc": 12.770642,
+    "vol": 19251,
+    "cycles": 308,
+    "designCap": 100000,
+    "fullCap": 100000,
+    "remainCap": 12770,
+    "soh": 100,
+    "temp": 25,
+}
+
+
+def test_stream_pack_push_populates_soc_and_voltage() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload("X", PACK_PUSH)
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_voltage == pytest.approx(19.251)  # pyright: ignore[reportUnknownMemberType]
+    assert status.remaining_cap_wh == pytest.approx(12770 * 19251 / 1_000_000)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_slave_pack_soc_beats_zero_cms_soc() -> None:
+    """Cascade slave: REST cmsBattSoc=0 merged with its pack push → real SOC."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "BK31SLAVE", {"cmsBattSoc": 0.0, **PACK_PUSH}
+    )
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_bms_batt_soc_still_primary_over_pack_soc() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "X", {"bmsBattSoc": 47.0, "vBat": 20135, **PACK_PUSH}
+    )
+    assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_voltage == pytest.approx(20.135)  # pyright: ignore[reportUnknownMemberType]
+
+
 def test_stream_ultra_cascade_soc() -> None:
     """cascadeSysSoc maps to cascade_soc as int."""
     from ecoflow.models.stream_ultra import StreamUltraStatus
@@ -161,12 +206,33 @@ def test_stream_ultra_cascade_soc() -> None:
 
 
 def test_stream_ultra_charge_discharge_state() -> None:
-    """chgDsgState maps to charge_discharge_state (1=charging, 2=discharging)."""
+    """chgDsgState maps to charge_discharge_state unchanged."""
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     payload = {"chgDsgState": 2}
     status = StreamUltraStatus.from_quota_payload("X", payload)
     assert status.charge_discharge_state == 2
+
+
+# Observed live 2026-09-27/28 on a STREAM Ultra + 4 AC Pro cascade:
+#   idle at reserve:  chgDsgState=0, powGetBpCms ≈ +30 W (noise)
+#   grid charging:    chgDsgState=2, powGetBpCms ≈ +5258 W, SOC rising
+#   covering load:    powGetBpCms = -608 W (grid 695 W + battery 608 W = load 1303 W)
+@pytest.mark.parametrize(
+    ("payload", "charging"),
+    [
+        ({"chgDsgState": 2, "powGetBpCms": 5258.0}, True),
+        ({"chgDsgState": 0, "powGetBpCms": 36.0}, False),
+        ({"powGetBpCms": -608.4}, False),
+    ],
+)
+def test_stream_is_charging_follows_recorded_states(
+    payload: dict[str, Any], charging: bool
+) -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.is_charging is charging
 
 
 def test_stream_ultra_input_output_watts() -> None:
@@ -574,3 +640,53 @@ class TestStreamUltraRealRelaySnapshots:
         assert s_off.max_charge_soc == s_on.max_charge_soc
         assert s_off.min_discharge_soc == s_on.min_discharge_soc
         assert s_off.backup_reserve_soc == s_on.backup_reserve_soc
+
+
+# Fields confirmed against the tolwi reference AND the live recording
+# (tests/recordings/live-20260927, STREAM Ultra values below).
+def test_stream_reads_operating_modes_flat_and_nested() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    flat = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "energyStrategyOperateMode.operateSelfPoweredOpen": False,
+            "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": True,
+        },
+    )
+    nested = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "energyStrategyOperateMode": {
+                "operateSelfPoweredOpen": True,
+                "operateIntelligentScheduleModeOpen": False,
+            }
+        },
+    )
+    assert (flat.self_powered_mode, flat.ai_schedule_mode) == (False, True)
+    assert (nested.self_powered_mode, nested.ai_schedule_mode) == (True, False)
+
+
+def test_stream_reads_grid_voltage_health_cells_and_lifetime_energy() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "gridConnectionVol": 243.74815,
+            "realSoh": 99.72002,
+            "maxCellTemp": 25,
+            "minCellTemp": 24,
+            "maxCellVol": 3210,
+            "minCellVol": 3207,
+            "accuChgEnergy": 625564,
+            "accuDsgEnergy": 591527,
+        },
+    )
+    assert status.grid_voltage == pytest.approx(243.74815)  # pyright: ignore[reportUnknownMemberType]
+    assert status.real_health == pytest.approx(99.72002)  # pyright: ignore[reportUnknownMemberType]
+    assert (status.min_cell_temp, status.max_cell_temp) == (24, 25)
+    assert status.min_cell_voltage == pytest.approx(3.207)  # pyright: ignore[reportUnknownMemberType]
+    assert status.max_cell_voltage == pytest.approx(3.210)  # pyright: ignore[reportUnknownMemberType]
+    assert status.lifetime_charge_energy_wh == 625564
+    assert status.lifetime_discharge_energy_wh == 591527
