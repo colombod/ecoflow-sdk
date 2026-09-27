@@ -1,6 +1,0 @@
-{
-  "device_class": "StreamUltraDevice",
-  "product_name": "STREAM Ultra",
-  "sn": "BK11XXXXXXXXXXXX",
-  "source": "synthetic: REST side is tests/vectors/stream_ultra/payload_status.json; MQTT side wraps the same keys in the {\"params\": ...} envelope from docs/api/mqtt-guide.md, split into two chunks. Replace with a live capture (scripts/capture_vectors.py)."
-}

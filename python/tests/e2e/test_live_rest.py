@@ -14,11 +14,15 @@ from typing import Any
 
 import pytest
 
+from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
+from ecoflow.transport.rest import RestTransport
+from tests.e2e.conftest import PublicCreds
 
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.live_rest,
+    pytest.mark.replayable,
     pytest.mark.asyncio(loop_scope="module"),
 ]
 
@@ -51,8 +55,15 @@ async def test_device_list_is_signed_and_returns_devices(
         print(f"\n[unknown device] {d.product_name!r} sn-prefix={d.sn[:4]}")
 
 
-async def test_quota_all_is_signed_and_parses(rest_client: EcoFlowClient) -> None:
-    """quota/all?sn=… succeeds (signature incl. params) and parses non-zero."""
+async def test_quota_all_is_signed_and_parses(
+    rest_client: EcoFlowClient, public_creds: PublicCreds
+) -> None:
+    """quota/all?sn=… succeeds (signature incl. params) and parses non-zero.
+
+    A device whose quota/all ``data`` is genuinely empty is reported, not
+    failed — seen live for the (online) Smart Meter, which only reports over
+    MQTT. Any device that does return data must parse to non-zero values.
+    """
     targets = (
         rest_client.stream_units
         + rest_client.meters
@@ -61,8 +72,17 @@ async def test_quota_all_is_signed_and_parses(rest_client: EcoFlowClient) -> Non
     )
     if not targets:
         pytest.skip("no STREAM / meter / plug / battery devices on this account")
-    for device in targets:
-        status = await device.refresh()
-        populated = _populated(status)
-        print(f"\n[{type(device).__name__} {device.sn[:4]}…] non-zero: {populated}")
-        assert populated, f"{device.sn[:4]}…: REST parsed to all-zero {status!r}"
+    creds = EcoFlowCredentials(public_creds.access_key, public_creds.secret_key)
+    parsed = 0
+    async with RestTransport(creds, region=public_creds.region) as rest:
+        for device in targets:
+            label = f"{type(device).__name__} {device.sn[:4]}…"
+            if not await rest.get_quota(device.sn):
+                print(f"\n[{label}] quota/all returned no data")
+                continue
+            status = await device.refresh()
+            populated = _populated(status)
+            print(f"\n[{label}] non-zero: {populated}")
+            assert populated, f"{label}: REST parsed to all-zero {status!r}"
+            parsed += 1
+    assert parsed, "no device returned quota data"

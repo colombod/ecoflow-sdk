@@ -66,6 +66,7 @@ asyncio_mode = "auto"
 markers = [
     "integration: read-only E2E tests against real EcoFlow accounts (need --live)",
     "live_rest: live test that only uses REST — never opens MQTT (runs with --live=rest)",
+    "replayable: live read test that also runs offline against recordings (--live=replay)",
     "write_integration: write E2E tests that alter real device state (requires double opt-in)",
     "slow: slow tests",
 ]

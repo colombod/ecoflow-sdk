@@ -18,27 +18,26 @@ from typing import Any
 import pytest
 
 from ecoflow.client import EcoFlowClient
+from tests.e2e.conftest import MqttTiming
 from tests.support.consistency import compare
 
 pytestmark = [
     pytest.mark.integration,
+    pytest.mark.replayable,
     pytest.mark.asyncio(loop_scope="module"),
     pytest.mark.timeout(300),
 ]
-
-FIRST_PUSH_TIMEOUT_S = 90  # devices push every few seconds when online
-SETTLE_S = 5  # let the remaining chunks of the state dump arrive
 
 
 def _current(device: Any) -> Any:  # noqa: ANN401
     return getattr(device, "status", None) or getattr(device, "data", None)
 
 
-async def _mqtt_snapshot(device: Any) -> Any:  # noqa: ANN401
+async def _mqtt_snapshot(device: Any, timing: MqttTiming) -> Any:  # noqa: ANN401
     if _current(device) is None:
-        async with asyncio.timeout(FIRST_PUSH_TIMEOUT_S):
+        async with asyncio.timeout(timing.first_push_timeout_s):
             await device.wait_for_update()
-    await asyncio.sleep(SETTLE_S)
+    await asyncio.sleep(timing.settle_s)  # remaining chunks of the state dump
     return _current(device)
 
 
@@ -49,7 +48,9 @@ async def test_mqtt_session_is_live(mqtt_client: EcoFlowClient) -> None:
         assert device.sn in mqtt_client.mqtt_subscriptions
 
 
-async def test_mqtt_status_agrees_with_rest(mqtt_client: EcoFlowClient) -> None:
+async def test_mqtt_status_agrees_with_rest(
+    mqtt_client: EcoFlowClient, mqtt_timing: MqttTiming
+) -> None:
     targets = (
         mqtt_client.stream_units
         + mqtt_client.meters
@@ -63,24 +64,36 @@ async def test_mqtt_status_agrees_with_rest(mqtt_client: EcoFlowClient) -> None:
     for device in targets:
         label = f"{type(device).__name__} {device.sn[:4]}…"
         try:
-            mqtt_status = await _mqtt_snapshot(device)
+            mqtt_status = await _mqtt_snapshot(device, mqtt_timing)
         except TimeoutError:
-            failures.append(f"{label}: no MQTT push within {FIRST_PUSH_TIMEOUT_S}s")
+            failures.append(
+                f"{label}: no MQTT push within {mqtt_timing.first_push_timeout_s}s"
+            )
             continue
         rest_status = await device.refresh()  # replaces device.status; snapshot kept
+        if not compare(mqtt_status, mqtt_status).compared:
+            failures.append(f"{label}: MQTT status has no populated stable fields")
+            continue
+        if not compare(rest_status, rest_status).compared:
+            # Seen live: the Smart Meter's quota/all is empty and cascade-slave
+            # STREAM units report cmsBattSoc=0 — REST has nothing to compare.
+            print(f"\n[{label}] MQTT parsed; REST has no stable fields to compare")
+            continue
         result = compare(mqtt_status, rest_status)
         print(f"\n[{label}] compared={result.compared} mismatches={result.mismatches}")
         if not result.compared:
-            failures.append(f"{label}: MQTT status has no populated stable fields")
+            failures.append(f"{label}: MQTT and REST share no populated stable field")
         failures += [f"{label}: {m}" for m in result.mismatches]
     assert not failures, "\n".join(failures)
 
 
-async def test_client_events_stream_delivers(mqtt_client: EcoFlowClient) -> None:
+async def test_client_events_stream_delivers(
+    mqtt_client: EcoFlowClient, mqtt_timing: MqttTiming
+) -> None:
     """EcoFlowClient.events() yields real updates from the live session."""
     stream = mqtt_client.events()
     try:
-        async with asyncio.timeout(FIRST_PUSH_TIMEOUT_S):
+        async with asyncio.timeout(mqtt_timing.first_push_timeout_s):
             event = await anext(stream)
     finally:
         await stream.aclose()

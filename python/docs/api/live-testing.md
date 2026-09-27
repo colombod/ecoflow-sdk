@@ -52,22 +52,74 @@ ECOFLOW_ENABLE_WRITE_TESTS=true uv run pytest \
   --enable-write-tests -v -s --timeout=180
 ```
 
-## Capture once, test offline forever
+## Record once, replay in CI forever
 
-`scripts/capture_vectors.py` records real payloads, redacts them, and writes
-them to `tests/vectors/captured/<DeviceClass>/`. `tests/test_captured_vectors.py`
-replays every capture in CI — no live access, no secrets.
+Tiers 1 and 2 also run **offline**, against a recorded session:
 
 ```bash
-# REST only (safe alongside Home Assistant) + settle which signing the API accepts:
-uv run python scripts/capture_vectors.py --check-signature
-
-# Include 60 s of MQTT pushes (takes the MQTT session — stop HA first):
-uv run python scripts/capture_vectors.py --mqtt-seconds 60
+uv run pytest tests/e2e --live=replay -v      # what CI runs — no network, no secrets
 ```
 
-Redaction replaces serials (keeping the 4-char model prefix used for routing)
-and masks identifying keys (`sn`, `mac`, `ssid`/`wifi*`, `ip`, lat/lon,
-`deviceName`, account IDs). The script prints which keys it masked. **Read the
-files before committing them.** Entries named `*_synthetic` are derived from
-older vectors and should be replaced by real captures.
+`--live=replay` runs only the tests marked `replayable` (`test_live_rest.py`,
+`test_live_mqtt.py`) once per recording in `tests/recordings/<name>/recording.json`
+and skips every other live test. The SDK code under test is the real one —
+`RestTransport`, the `MqttTransport._run` loop, envelope unwrapping, parsers and
+event streams. `tests/support/replay.py` only replaces the far ends:
+
+- **REST** (respx) serves the recorded device list, the full `quota/all` bodies
+  (including error codes such as Wave 3's 1006) and a fake `certification`.
+  Every request's signature is checked by an implementation written from the
+  spec, independent of `ecoflow.auth`; a bad one gets `8521 signature is wrong`.
+  It models the live finding that a GET with `Content-Type: application/json`
+  is verified without its query params.
+- **MQTT**: `aiomqtt.Client` becomes a fake broker that plays the recorded raw
+  pushes on the subscribed topics, time-compressed (×20) and looping, so
+  "wait for the next push" always resolves.
+
+`tests/test_recordings.py` additionally checks, for every recording, that
+MQTT-decoded and REST statuses agree per device, that the check fails without
+envelope unwrapping, that the replay server rejects a wrong secret, and that
+nothing identifying is committed (PII guard).
+
+### Making a recording
+
+```bash
+# REST only — safe alongside Home Assistant:
+uv run python scripts/capture_vectors.py --record live-YYYYMMDD
+
+# With 60 s of MQTT pushes — takes the MQTT session, stop Home Assistant first:
+uv run python scripts/capture_vectors.py --record live-YYYYMMDD --mqtt-seconds 60
+
+# Only report which signature forms the API accepts (writes nothing):
+uv run python scripts/capture_vectors.py --check-signature
+```
+
+REST bodies are fetched with httpx + `build_auth_headers` (so `code`/`message`
+survive); MQTT pushes are recorded raw, before normalisation, with `t` =
+seconds since connect, including the initial state dump. MQTT credentials,
+`certificateAccount`, tokens and keys are never recorded.
+
+Redaction: each serial becomes a unique same-length placeholder — model prefix,
+`X`s, 2-digit index (`BK11XXXXXXXXXX01`) — in values, keys and inside strings.
+Values of identifying keys (`sn`, `*Sn`, `mac`, `ssid`, `wifi*`, `ip`, `*Ip`,
+`*Addr`, lat/lng/lon, `email`, `userId`, `*Account`, `deviceName`, `name`)
+become `"REDACTED"` / `0`; emails, IPv4 and MAC addresses are scrubbed from
+every string. The script prints the masked keys.
+
+**Review every recording before committing it** — read the file, check the
+masked keys, run `uv run pytest tests/test_recordings.py`. The owner approves
+each one. `tests/recordings/synthetic/` is hand-made from older vectors (its
+`meta.source` says so) and covers cases a real account may lack.
+
+### Recording format
+
+```json
+{
+  "meta": {"region": "EU", "sdk_version": "...", "captured_at": "...", "duration_s": 60, "source": "..."},
+  "rest": {
+    "device_list": [{"sn": "BK11XXXXXXXXXX01", "online": 1}],
+    "quota": {"BK11XXXXXXXXXX01": {"code": "0", "message": "Success", "data": {"...": 0}}}
+  },
+  "mqtt": [{"t": 0.42, "sn": "BK11XXXXXXXXXX01", "payload": {"params": {"...": 0}}}]
+}
+```
