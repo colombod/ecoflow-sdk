@@ -151,6 +151,51 @@ def test_stream_ultra_slave_unit_batt_soc() -> None:
     assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
 
 
+# Battery-pack MQTT push, as recorded live 2026-09-27 (BK11 and BK31 alike):
+# flat, no bmsBattSoc / vBat — the pack reports "soc" and "vol" (mV).
+PACK_PUSH: dict[str, Any] = {
+    "num": 0,
+    "soc": 13,
+    "f32ShowSoc": 12.770642,
+    "vol": 19251,
+    "cycles": 308,
+    "designCap": 100000,
+    "fullCap": 100000,
+    "remainCap": 12770,
+    "soh": 100,
+    "temp": 25,
+}
+
+
+def test_stream_pack_push_populates_soc_and_voltage() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload("X", PACK_PUSH)
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_voltage == pytest.approx(19.251)  # pyright: ignore[reportUnknownMemberType]
+    assert status.remaining_cap_wh == pytest.approx(12770 * 19251 / 1_000_000)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_slave_pack_soc_beats_zero_cms_soc() -> None:
+    """Cascade slave: REST cmsBattSoc=0 merged with its pack push → real SOC."""
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "BK31SLAVE", {"cmsBattSoc": 0.0, **PACK_PUSH}
+    )
+    assert status.batt_soc == pytest.approx(13.0)  # pyright: ignore[reportUnknownMemberType]
+
+
+def test_stream_bms_batt_soc_still_primary_over_pack_soc() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "X", {"bmsBattSoc": 47.0, "vBat": 20135, **PACK_PUSH}
+    )
+    assert status.batt_soc == pytest.approx(47.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_voltage == pytest.approx(20.135)  # pyright: ignore[reportUnknownMemberType]
+
+
 def test_stream_ultra_cascade_soc() -> None:
     """cascadeSysSoc maps to cascade_soc as int."""
     from ecoflow.models.stream_ultra import StreamUltraStatus

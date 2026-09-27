@@ -135,14 +135,22 @@ class StreamUltraStatus:
         CAPACITY QUIRK: remainCap/fullCap/designCap are in mAh. vBat is in mV.
         Wh = (mAh × mV) / 1_000_000. Requires vBat > 0.
         Source: tolwi/hassio-ecoflow-cloud research 2026-05-29.
+
+        PACK QUIRK (recorded live 2026-09-27): public-API MQTT pushes for STREAM
+        units are flat and carry no bmsBattSoc/vBat. The unit's battery pack
+        reports as its own push with ``soc`` and ``vol`` (mV) next to
+        cycles/designCap/fullCap/remainCap. REST ``quota/all`` has only the CMS
+        aggregate ``cmsBattSoc``, which is 0 on cascade slaves — so a slave's
+        real SOC is only visible through the pack push.
         """
         bms_soc = float(data.get("bmsBattSoc", 0))
+        pack_soc = float(data.get("soc", 0))
         cms_soc = float(data.get("cmsBattSoc", 0))
-        batt_soc = bms_soc if bms_soc > 0 else cms_soc
+        batt_soc = bms_soc or pack_soc or cms_soc
 
         remain_mah = int(data.get("remainCap", 0))
         full_mah = int(data.get("fullCap", 0))
-        vbat_mv = int(data.get("vBat", 0))
+        vbat_mv = int(data.get("vBat", 0)) or int(data.get("vol", 0))
 
         remaining_cap_wh = (remain_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
         full_cap_wh = (full_mah * vbat_mv) / 1_000_000 if vbat_mv > 0 else 0.0
@@ -174,7 +182,7 @@ class StreamUltraStatus:
             input_watts=float(data.get("inputWatts", 0)),
             output_watts=float(data.get("outputWatts", 0)),
             temp=float(data.get("temp", 0)),
-            battery_voltage=data.get("vBat", 0) / 1000.0,  # mV → V
+            battery_voltage=vbat_mv / 1000.0,  # mV → V (vBat, else pack vol)
             cycles=int(data.get("cycles", 0)),
             remaining_cap_mah=remain_mah,
             full_cap_mah=full_mah,
