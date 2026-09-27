@@ -206,12 +206,33 @@ def test_stream_ultra_cascade_soc() -> None:
 
 
 def test_stream_ultra_charge_discharge_state() -> None:
-    """chgDsgState maps to charge_discharge_state (1=charging, 2=discharging)."""
+    """chgDsgState maps to charge_discharge_state unchanged."""
     from ecoflow.models.stream_ultra import StreamUltraStatus
 
     payload = {"chgDsgState": 2}
     status = StreamUltraStatus.from_quota_payload("X", payload)
     assert status.charge_discharge_state == 2
+
+
+# Observed live 2026-09-27/28 on a STREAM Ultra + 4 AC Pro cascade:
+#   idle at reserve:  chgDsgState=0, powGetBpCms ≈ +30 W (noise)
+#   grid charging:    chgDsgState=2, powGetBpCms ≈ +5258 W, SOC rising
+#   covering load:    powGetBpCms = -608 W (grid 695 W + battery 608 W = load 1303 W)
+@pytest.mark.parametrize(
+    ("payload", "charging"),
+    [
+        ({"chgDsgState": 2, "powGetBpCms": 5258.0}, True),
+        ({"chgDsgState": 0, "powGetBpCms": 36.0}, False),
+        ({"powGetBpCms": -608.4}, False),
+    ],
+)
+def test_stream_is_charging_follows_recorded_states(
+    payload: dict[str, Any], charging: bool
+) -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload("X", payload)
+    assert status.is_charging is charging
 
 
 def test_stream_ultra_input_output_watts() -> None:
