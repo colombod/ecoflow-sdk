@@ -287,3 +287,25 @@ async def test_connect_injects_mqtt_into_devices() -> None:
         "device._mqtt is None after connect() — relay commands will always fail. "
         "Fix: backfill device._mqtt = self._mqtt after MqttTransport is created."
     )
+
+
+@respx.mock
+async def test_discover_matches_product_name_case_insensitively() -> None:
+    """productName casing varies ("Delta Pro 3" vs "DELTA Pro 3")."""
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/device/list").mock(
+        return_value=Response(
+            200,
+            json={
+                "code": 0,
+                "data": [
+                    {"sn": "MR51TEST", "productName": "Delta Pro 3", "online": 1},
+                    {"sn": "HW52TEST", "productName": "smart plug", "online": 1},
+                ],
+            },
+        )
+    )
+    client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
+    await client._discover()  # pyright: ignore[reportPrivateUsage]
+    assert [b.sn for b in client.batteries] == ["MR51TEST"]
+    assert [p.sn for p in client.plugs] == ["HW52TEST"]
+    assert client.unknown_devices == []

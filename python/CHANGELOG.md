@@ -9,6 +9,21 @@ This project uses [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- REST signature now covers the request parameters (sorted query params, or the
+  flattened JSON body for `PUT`), as the EcoFlow Developer API spec requires.
+  Previously only `accessKey`/`nonce`/`timestamp` were signed.
+- Public MQTT pushes are unwrapped from their `params`/`param`/`typeCode` envelope
+  into the REST `quota/all` key layout before parsing. Previously live MQTT updates
+  produced all-zero STREAM, Smart Meter, Smart Plug and battery statuses.
+- `BatteryStatus` parses the flat dotted keys (`pd.soc`, `inv.cfgAcEnabled`, ...)
+  returned by REST `quota/all` for DELTA/RIVER devices, and no longer reports the
+  EMS/info blocks as BMS modules.
+- Every public-API set command now carries the `from`/`id`/`version`/`sn` envelope
+  (was STREAM-only), matching the reference integration. Affects Smart Plug and
+  battery commands.
+- `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
+
 ### Removed
 - Ad-hoc `wave3_*.py` debug scripts from the package root. They used random
   `uuid4()` MQTT client IDs (burns the ~10 IDs/day broker quota) and a hardcoded

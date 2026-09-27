@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import itertools
 import logging
 from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
@@ -13,6 +14,9 @@ if TYPE_CHECKING:
     from ecoflow.transport.rest import RestTransport
 
 _log = logging.getLogger(__name__)
+
+# Monotonic per-process sequence for the command envelope ``id`` field.
+_command_seq = itertools.count(1)
 
 
 class BaseDevice:
@@ -41,6 +45,11 @@ class BaseDevice:
 
         Uses the official public-API topic /open/{user_id}/{sn}/set.
 
+        QUIRK: every public-API set command carries the envelope fields
+        ``from``, ``id``, ``version`` and ``sn`` (see AGENTS.md Quirk 13).
+        They are filled in here when the payload does not already set them.
+        Source: tolwi/hassio-ecoflow-cloud ``api/message.py`` JSONMessage.
+
         Raises:
             EcoFlowConnectionError: if MQTT is not connected.
         """
@@ -50,7 +59,14 @@ class BaseDevice:
         if self._mqtt is None or not self._mqtt.connected:
             raise EcoFlowConnectionError("MQTT not connected — cannot send command")
         topic = TOPIC_OPEN_SET.format(user_id=self._mqtt.creds.user_id, sn=self.sn)
-        await self._mqtt.publish(topic, payload)
+        message: dict[str, Any] = {
+            "from": "ecoflow-python",
+            "id": str(next(_command_seq)),
+            "version": "1.0",
+            "sn": self.sn,
+            **payload,
+        }
+        await self._mqtt.publish(topic, message)
 
     async def events(self) -> AsyncGenerator[Any, None]:
         """Async generator yielding status updates for this device.

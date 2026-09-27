@@ -380,6 +380,11 @@ def _stream_cmd(self, params: dict[str, Any]) -> dict[str, Any]:
     }
 ```
 
+**Generalised (2026-09):** `BaseDevice._publish()` now fills in `from`, `id`, `version`
+and `sn` for **every** public-API set command (plugs, batteries, ...), matching the
+tolwi reference's `JSONMessage` envelope. Payload keys override the defaults, so
+`_stream_cmd()` output is sent unchanged.
+
 This applies to **ALL STREAM commands**: `set_relay2`, `set_relay3`, `set_grid_export`,
 `set_backup_reserve`, `set_self_powered_mode`, `set_ai_schedule_mode`.
 
@@ -389,6 +394,24 @@ envelope used by a deployed Home Assistant integration.
 **Validated live (2026-06-01):** `set_relay2(on=True)` / `set_relay2(on=False)` confirmed
 working on BK11 STREAM Ultra — `relay2_on` toggled correctly as verified by REST `/quota/all`
 refresh after each command.
+
+---
+
+### Quirk 14: MQTT Pushes Are Wrapped — REST Is Flat
+
+REST `/quota/all` returns a flat dict, but MQTT `/quota` pushes wrap the same keys
+in a family-specific envelope:
+
+| Family | MQTT push | Equivalent REST keys |
+|--------|-----------|----------------------|
+| STREAM, Smart Meter, DELTA Pro 3 | `{"params": {"bmsBattSoc": 47}}` | `bmsBattSoc` |
+| Smart Plug, PowerStream | `{"cmdFunc": 2, "cmdId": 1, "param": {"watts": 2640}}` | `2_1.watts` |
+| DELTA 2 / RIVER 2 | `{"typeCode": "pdStatus", "params": {"soc": 80}}` | `pd.soc` |
+
+`MqttTransport.dispatch_message()` runs `transport/payload.normalize_quota_payload()`
+so device parsers only ever see the REST layout. Before this, MQTT updates parsed
+into all-zero statuses. `BatteryStatus` additionally groups flat `pd.*`/`inv.*`
+keys into per-module dicts.
 
 ---
 

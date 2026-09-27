@@ -26,7 +26,11 @@ class SmartPlugDevice(BaseDevice):
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update data from an incoming MQTT payload, accumulating chunks."""
         self._raw_data.update(data)
-        self.data = SmartPlugData.from_mqtt_payload(sn, self._raw_data)
+        # Public-API pushes are normalised to the REST "2_1.*" key layout.
+        if any(k.startswith("2_1.") for k in self._raw_data):
+            self.data = SmartPlugData.from_quota_payload(sn, self._raw_data)
+        else:
+            self.data = SmartPlugData.from_mqtt_payload(sn, self._raw_data)
         self.data.product_name = self.product_name
         self._notify_callbacks(self.data)
 

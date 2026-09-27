@@ -45,6 +45,13 @@ _DEVICE_CLASS_MAP: dict[str, type] = {
     DeviceModel.SMART_GENERATOR.value: SmartHomePanelDevice,  # partial, best-effort
 }
 
+# QUIRK: productName casing is not consistent across devices/firmware
+# (e.g. "Delta Pro 3", "WAVE 2" per tolwi/hassio-ecoflow-cloud registry),
+# so routing matches case-insensitively.
+_DEVICE_CLASS_BY_NAME: dict[str, type] = {
+    name.casefold(): cls for name, cls in _DEVICE_CLASS_MAP.items()
+}
+
 
 class EcoFlowClient:
     """Single entry point for the EcoFlow SDK.
@@ -163,7 +170,7 @@ class EcoFlowClient:
                 sn_prefix = sn[:4] if len(sn) >= 4 else ""
                 product_name = SN_PREFIX_TO_MODEL.get(sn_prefix, "")
 
-            cls = _DEVICE_CLASS_MAP.get(product_name)
+            cls = _DEVICE_CLASS_BY_NAME.get(product_name.casefold())
             if cls is None:
                 self.unknown_devices.append(
                     DiscoveredDevice(
