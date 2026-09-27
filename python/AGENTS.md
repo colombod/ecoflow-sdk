@@ -412,7 +412,7 @@ families and wrapped in a family-specific envelope for others:
 | Family | MQTT push | Equivalent REST keys | Evidence |
 |--------|-----------|----------------------|----------|
 | STREAM, Smart Meter | flat: `{"powGetSysGrid": 695.0, ...}` | same keys | **recorded live 2026-09-27** |
-| Smart Plug | `{"addr": .., "cmdFunc": 2, "cmdId": 1, "param": {"watts": 2640}}` | `2_1.watts` | **recorded live 2026-09-27** |
+| Smart Plug | `{"addr": .., "cmdFunc": 2, "cmdId": 1, "params": {"watts": 1030}}` — note `params`, not `param`; a heartbeat every ~2 s carrying only changed keys (`watts` only when the load changes) | `2_1.watts` | **recorded live 2026-09-27** |
 | PowerStream | `{"cmdFunc": .., "cmdId": .., "param": {...}}` | `<f>_<id>.*` | tolwi reference |
 | DELTA Pro 3 | `{"params": {...}}` | same keys | tolwi reference (unverified here) |
 | DELTA 2 / RIVER 2 | `{"typeCode": "pdStatus", "params": {"soc": 80}}` | `pd.soc` | tolwi reference |
