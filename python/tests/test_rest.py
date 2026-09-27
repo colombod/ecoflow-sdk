@@ -1,5 +1,6 @@
 """Tests for the RestTransport REST transport."""
 
+import httpx
 import pytest
 import respx
 from httpx import Response
@@ -188,3 +189,47 @@ async def test_api_error_raises_ecoflow_error() -> None:
     async with RestTransport(CREDS, region="EU") as client:
         with pytest.raises(EcoFlowError):
             await client.list_devices()
+
+
+def _sign_ok(request: httpx.Request, message_prefix: str) -> bool:
+    import hashlib
+    import hmac
+
+    h = request.headers
+    canonical = (
+        f"accessKey={h['accessKey']}&nonce={h['nonce']}&timestamp={h['timestamp']}"
+    )
+    if message_prefix:
+        canonical = f"{message_prefix}&{canonical}"
+    expected = hmac.new(b"test_secret", canonical.encode(), hashlib.sha256).hexdigest()
+    return h["sign"] == expected
+
+
+@respx.mock
+async def test_get_quota_signs_query_params() -> None:
+    route = respx.get(f"{BASE}/iot-open/sign/device/quota/all").mock(
+        return_value=Response(200, json={"code": "0", "data": {}})
+    )
+    async with RestTransport(CREDS, region="EU") as client:
+        await client.get_quota("SN99999")
+    assert _sign_ok(route.calls.last.request, "sn=SN99999")
+
+
+@respx.mock
+async def test_set_quota_signs_flattened_body() -> None:
+    route = respx.put(f"{BASE}/iot-open/sign/device/quota").mock(
+        return_value=Response(200, json={"code": "0", "data": {}})
+    )
+    async with RestTransport(CREDS, region="EU") as client:
+        await client.set_quota("SN99999", {"switch": 1})
+    assert _sign_ok(route.calls.last.request, "params.switch=1&sn=SN99999")
+
+
+@respx.mock
+async def test_list_devices_signs_without_params() -> None:
+    route = respx.get(f"{BASE}/iot-open/sign/device/list").mock(
+        return_value=Response(200, json={"code": "0", "data": []})
+    )
+    async with RestTransport(CREDS, region="EU") as client:
+        await client.list_devices()
+    assert _sign_ok(route.calls.last.request, "")

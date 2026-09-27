@@ -95,6 +95,31 @@ class SolarInput:
         )
 
 
+def _nest_dotted_keys(data: dict[str, Any]) -> dict[str, Any]:
+    """Group flat ``"pd.soc"``-style keys into nested ``{"pd": {"soc": ...}}``.
+
+    QUIRK: REST ``quota/all`` (and normalised MQTT pushes) for DELTA 2 / RIVER 2
+    families use flat dotted keys; this model reads per-module sub-dicts.
+    Already-nested payloads pass through unchanged.
+    """
+    nested: dict[str, Any] = {}
+    for key, value in data.items():
+        module, dot, field_name = key.partition(".")
+        if not dot:
+            if isinstance(value, dict):
+                # Copy so dotted keys merged in below never mutate the input.
+                nested[key] = {**cast(dict[str, Any], value), **nested.get(key, {})}
+            else:
+                nested[key] = value
+            continue
+        bucket = nested.get(module)
+        if not isinstance(bucket, dict):
+            bucket = {}
+            nested[module] = bucket
+        cast(dict[str, Any], bucket)[field_name] = value
+    return nested
+
+
 @dataclass
 class BatteryStatus:
     """Aggregated EcoFlow battery device status snapshot."""
@@ -122,18 +147,20 @@ class BatteryStatus:
 
     @classmethod
     def from_mqtt_payload(cls, sn: str, data: dict[str, Any]) -> BatteryStatus:
-        """Build a BatteryStatus snapshot from a raw MQTT payload dict."""
+        """Build a BatteryStatus snapshot from a quota payload (REST or MQTT)."""
+        data = _nest_dotted_keys(data)
         pd: dict[str, Any] = data.get("pd") or {}
         inv: dict[str, Any] = data.get("inv") or {}
         mppt_raw: dict[str, Any] | None = data.get("mppt")
         mppt: dict[str, Any] = mppt_raw or {}
 
-        # Main BMS modules: keys starting with 'bms' but not 'bms_slave'
+        # Main BMS modules: keys starting with 'bms' but not 'bms_slave'.
+        # bms_emsStatus / bms_bmsInfo are EMS and info blocks, not modules.
         bms_modules = [
             BmsModule.from_mqtt_payload(cast(dict[str, Any], v))
             for k, v in data.items()
             if k.startswith("bms")
-            and not k.startswith("bms_slave")
+            and not k.startswith(("bms_slave", "bms_emsStatus", "bms_bmsInfo"))
             and isinstance(v, dict)
         ]
 

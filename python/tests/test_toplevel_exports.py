@@ -126,7 +126,7 @@ class TestTopLevelExports:
     def test_version_is_correct(self) -> None:
         import ecoflow
 
-        assert ecoflow.__version__ == "0.2.0"
+        assert ecoflow.__version__ == _pyproject_version()
 
     def test_wave3_connection_importable(self) -> None:
         from ecoflow import Wave3Connection
@@ -173,3 +173,11 @@ class TestTopLevelExports:
         missing = expected - actual
         extra = actual - expected
         assert expected == actual, f"Missing: {missing}, Extra: {extra}"
+
+
+def _pyproject_version() -> str:
+    import tomllib
+    from pathlib import Path
+
+    data = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())
+    return str(data["project"]["version"])

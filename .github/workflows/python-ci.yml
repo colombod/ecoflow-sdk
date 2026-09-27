@@ -41,21 +41,8 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration and not write_integration" -v
 
-  integration:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    defaults:
-      run:
-        working-directory: python
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-      - run: uv sync --all-extras
-      - name: Integration tests (read-only)
-        env:
-          ECOFLOW_ACCESS_KEY: ${{ secrets.ECOFLOW_ACCESS_KEY }}
-          ECOFLOW_SECRET_KEY: ${{ secrets.ECOFLOW_SECRET_KEY }}
-          ECOFLOW_REGION: ${{ secrets.ECOFLOW_REGION }}
-          ECOFLOW_TEST_DEVICE_SN: ${{ secrets.ECOFLOW_TEST_DEVICE_SN }}
-        run: uv run pytest -m integration --timeout=60 -v
-        continue-on-error: true
+  # Live tests are deliberately NOT run in CI: they would share the account's
+  # single MQTT session with the owner's live system (AGENTS.md Quirk 2), and
+  # write tests move real hardware. Run them ad hoc on a trusted machine
+  # instead — see python/docs/api/live-testing.md. Captured, redacted payloads
+  # (tests/vectors/captured/) are replayed offline by the unit tests above.

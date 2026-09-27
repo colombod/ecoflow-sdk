@@ -1,0 +1,6 @@
+{
+  "device_class": "SmartPlugDevice",
+  "product_name": "Smart Plug",
+  "sn": "HW52XXXXXXXXXXXX",
+  "source": "synthetic: REST side is tests/vectors/smart_plug/payload_power.json; MQTT side uses the {cmdFunc:2, cmdId:1, param} envelope from the tolwi reference (REST '2_1.' prefix). Replace with a live capture (scripts/capture_vectors.py)."
+}

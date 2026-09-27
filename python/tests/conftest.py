@@ -30,7 +30,20 @@ def load_vector(device: str, name: str) -> tuple[dict[str, Any], dict[str, Any]]
     return payload, expected
 
 
+LIVE_TIERS = ("off", "rest", "mqtt")
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--live",
+        choices=LIVE_TIERS,
+        default="off",
+        help=(
+            "Run live read-only tests against the EcoFlow cloud. "
+            "'rest': REST only (safe alongside Home Assistant). "
+            "'mqtt': also opens the account's single MQTT session. Default: off."
+        ),
+    )
     parser.addoption(
         "--enable-write-tests",
         action="store_true",
@@ -42,7 +55,27 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 def pytest_collection_modifyitems(
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:
-    """Skip write_integration tests unless both gates are open."""
+    """Gate live tests.
+
+    Live read tests run only with an explicit ``--live`` tier, even when
+    tests/.env has credentials — so a plain ``pytest`` never touches devices:
+      * ``live_rest`` tests need ``--live=rest`` or ``--live=mqtt``.
+      * other ``integration`` tests open MQTT and need ``--live=mqtt``
+        (the broker allows ONE session per account — AGENTS.md Quirk 2).
+    ``write_integration`` tests additionally keep their own double opt-in.
+    """
+    tier = config.getoption("--live", default="off")
+    for item in items:
+        if item.get_closest_marker("live_rest"):
+            if tier == "off":
+                item.add_marker(pytest.mark.skip(reason="live test — pass --live=rest"))
+        elif item.get_closest_marker("integration") and tier != "mqtt":
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="opens the account's MQTT session — pass --live=mqtt"
+                )
+            )
+
     cli_flag = config.getoption("--enable-write-tests", default=False)
     env_flag = os.getenv("ECOFLOW_ENABLE_WRITE_TESTS", "").lower() == "true"
 

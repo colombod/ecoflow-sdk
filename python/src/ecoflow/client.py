@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
+import functools
 import hashlib as _hashlib
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from types import TracebackType
 from typing import Any
 
 from ecoflow.auth import EcoFlowCredentials
 from ecoflow.const import SN_PREFIX_TO_MODEL, DeviceModel
+from ecoflow.devices.base import BaseDevice, put_dropping_oldest
 from ecoflow.devices.battery import BatteryDevice
 from ecoflow.devices.discovered import DiscoveredDevice
 from ecoflow.devices.inverter import MicroInverterDevice
@@ -23,6 +26,20 @@ from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
 from ecoflow.transport.rest import RestTransport
 
 _log = logging.getLogger(__name__)
+
+# Buffer for EcoFlowClient.events(); oldest updates are dropped beyond this.
+_EVENT_BUFFER = 1000
+
+
+def _forward(
+    queue: asyncio.Queue[dict[str, Any]],
+    device: BaseDevice,
+    status: Any,  # noqa: ANN401
+) -> None:
+    put_dropping_oldest(
+        queue, {"sn": device.sn, "product_name": device.product_name, "data": status}
+    )
+
 
 # Map productName → device class
 _DEVICE_CLASS_MAP: dict[str, type] = {
@@ -45,6 +62,13 @@ _DEVICE_CLASS_MAP: dict[str, type] = {
     DeviceModel.SMART_GENERATOR.value: SmartHomePanelDevice,  # partial, best-effort
 }
 
+# QUIRK: productName casing is not consistent across devices/firmware
+# (e.g. "Delta Pro 3", "WAVE 2" per tolwi/hassio-ecoflow-cloud registry),
+# so routing matches case-insensitively.
+_DEVICE_CLASS_BY_NAME: dict[str, type] = {
+    name.casefold(): cls for name, cls in _DEVICE_CLASS_MAP.items()
+}
+
 
 class EcoFlowClient:
     """Single entry point for the EcoFlow SDK.
@@ -54,7 +78,23 @@ class EcoFlowClient:
             print(c.batteries)
     """
 
-    def __init__(self, access_key: str, secret_key: str, region: str = "EU") -> None:
+    def __init__(
+        self,
+        access_key: str,
+        secret_key: str,
+        region: str = "EU",
+        *,
+        enable_mqtt: bool = True,
+    ) -> None:
+        """Create a client.
+
+        Args:
+            enable_mqtt: Set False for REST-only use (``refresh()`` reads, no
+                live updates or commands). REST-only never opens an MQTT
+                session, so it cannot displace another integration (e.g. Home
+                Assistant) using the same keys — see AGENTS.md Quirk 2.
+        """
+        self._enable_mqtt = enable_mqtt
         self._credentials = EcoFlowCredentials(
             access_key=access_key, secret_key=secret_key
         )
@@ -95,8 +135,14 @@ class EcoFlowClient:
     # ------------------------------------------------------------------
 
     async def connect(self) -> None:
-        """Fetch MQTT credentials, connect, and discover all devices."""
+        """Discover all devices, then fetch MQTT credentials and connect.
+
+        With ``enable_mqtt=False`` only discovery runs.
+        """
         await self._discover()
+        if not self._enable_mqtt:
+            _log.info("REST-only mode — MQTT disabled")
+            return
         try:
             mqtt_data = await self._rest.get_mqtt_credentials()
             # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per day per
@@ -163,7 +209,7 @@ class EcoFlowClient:
                 sn_prefix = sn[:4] if len(sn) >= 4 else ""
                 product_name = SN_PREFIX_TO_MODEL.get(sn_prefix, "")
 
-            cls = _DEVICE_CLASS_MAP.get(product_name)
+            cls = _DEVICE_CLASS_BY_NAME.get(product_name.casefold())
             if cls is None:
                 self.unknown_devices.append(
                     DiscoveredDevice(
@@ -192,15 +238,24 @@ class EcoFlowClient:
                 self.stream_units.append(device)
 
     async def events(self) -> AsyncGenerator[dict[str, Any], None]:
-        """Async generator yielding raw device update events.
-        Events are routed to typed device _handle_message callbacks;
-        this generator yields a dict with {'sn', 'product_name', 'data'}.
+        """Async generator yielding updates from every typed device.
+
+        Each item is ``{"sn": ..., "product_name": ..., "data": <status>}``
+        where ``data`` is the device's typed status object.  Devices must be
+        discovered (``connect()``) before iterating.
         """
-        # Stub implementation — full MQTT streaming tested in integration tests
-        # (requires live MQTT connection; mocking asyncio-mqtt's message loop
-        # is deferred to integration testing)
-        yield {}  # type: ignore[misc]
-        return
+        queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=_EVENT_BUFFER)
+        removers: list[Callable[[], None]] = []
+        for device in self._all_typed:
+            removers.append(
+                device._add_sink(functools.partial(_forward, queue, device))
+            )  # noqa: SLF001
+        try:
+            while True:
+                yield await queue.get()
+        finally:
+            for remove in removers:
+                remove()
 
     async def __aenter__(self) -> EcoFlowClient:
         await self.connect()

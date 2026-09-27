@@ -426,7 +426,7 @@ def test_stream_ultra_vector_new_fields() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Real device relay2 ON/OFF snapshots (BK11ZK1B2H5S1478, 2026-06-01)
+# Real device relay2 ON/OFF snapshots (BK11TESTSN000001, 2026-06-01)
 # ---------------------------------------------------------------------------
 #
 # Captured via REST /quota/all after set_relay2(on=False) and set_relay2(on=True).

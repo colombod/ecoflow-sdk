@@ -53,7 +53,7 @@ Response fields you actually need:
     "url": "mqtt-e.ecoflow.com",
     "port": "8883",
     "protocol": "mqtts",
-    "certificateAccount": "open-b4b306eddfae4e8f...",
+    "certificateAccount": "open-0123456789abcdef...",
     "certificatePassword": "db2ca1ea2c8740d2..."
   }
 }
@@ -335,7 +335,7 @@ Successful response:
 {
   "code": "0",
   "data": {
-    "certificateAccount": "open-b4b306...",
+    "certificateAccount": "open-012345...",
     "certificatePassword": "db2ca1ea..."
   }
 }
@@ -482,7 +482,7 @@ in EcoFlow's older JSON API for some battery devices and should not be applied h
 import hashlib
 
 # Verify this prints the same string every time
-certificate_account = "open-b4b306eddfae4e8f..."
+certificate_account = "open-0123456789abcdef..."
 suffix = hashlib.sha256(certificate_account.encode()).hexdigest()[:12]
 print(f"ecoflow-sdk-{suffix}")
 # Should always print: ecoflow-sdk-a1b2c3d4e5f6 (same hash, every run)

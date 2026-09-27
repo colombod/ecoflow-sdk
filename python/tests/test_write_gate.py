@@ -31,11 +31,9 @@ def test_addoption_registers_enable_write_tests():
     parser = MagicMock()
     pytest_addoption(parser)
 
-    parser.addoption.assert_called_once()
-    call_args = parser.addoption.call_args
-    assert call_args.args[0] == "--enable-write-tests", (
-        f"Expected '--enable-write-tests', got {call_args.args[0]!r}"
-    )
+    calls = {c.args[0]: c for c in parser.addoption.call_args_list}
+    assert "--enable-write-tests" in calls, f"registered: {sorted(calls)}"
+    call_args = calls["--enable-write-tests"]
     assert call_args.kwargs.get("action") == "store_true"
     assert call_args.kwargs.get("default") is False
 

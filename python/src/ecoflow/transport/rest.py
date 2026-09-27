@@ -44,9 +44,9 @@ class RestTransport:
         self._timeout = timeout
         self._client = httpx.AsyncClient(base_url=host)
 
-    async def _headers(self) -> dict[str, str]:
+    async def _headers(self, params: dict[str, Any] | None = None) -> dict[str, str]:
         return {
-            **build_auth_headers(self._creds),
+            **build_auth_headers(self._creds, params),
             "Content-Type": "application/json",
         }
 
@@ -54,7 +54,7 @@ class RestTransport:
         try:
             resp = await self._client.get(
                 path,
-                headers=await self._headers(),
+                headers=await self._headers(params),
                 params=params,
                 timeout=self._timeout,
             )
@@ -66,7 +66,7 @@ class RestTransport:
         try:
             resp = await self._client.put(
                 path,
-                headers=await self._headers(),
+                headers=await self._headers(payload),
                 json=payload,
                 timeout=self._timeout,
             )

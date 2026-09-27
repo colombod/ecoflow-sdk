@@ -27,7 +27,7 @@ async def main() -> None:
 
     email = os.environ["ECOFLOW_EMAIL"]
     password = os.environ["ECOFLOW_PASSWORD"]
-    sn = os.environ.get("ECOFLOW_WAVE3_SN", "AC71ZK1APJ410297")
+    sn = os.environ["ECOFLOW_WAVE3_SN"]
 
     print(f"=== RAW MQTT DIAGNOSTIC for {sn} ===")
     creds = await PrivateCredentials.login(email=email, password=password)

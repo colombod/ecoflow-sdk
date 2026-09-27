@@ -19,6 +19,7 @@ from ecoflow.const import (
     TOPIC_OPEN_QUOTA,
 )
 from ecoflow.exceptions import EcoFlowConnectionError
+from ecoflow.transport.payload import normalize_quota_payload
 
 _log = logging.getLogger(__name__)
 
@@ -151,7 +152,11 @@ class MqttTransport:
         Handles both topic patterns:
           /open/{user_id}/{sn}/quota  → SN is at index -2 (primary)
           /app/device/property/{sn}   → SN is at index -1 (legacy fallback)
+
+        The payload is unwrapped from its MQTT envelope into the flat REST
+        ``quota/all`` key layout first (see ``normalize_quota_payload``).
         """
+        payload = normalize_quota_payload(payload)
         parts = topic.split("/")
         # Try second-to-last first — covers /open/{user_id}/{sn}/quota
         sn = parts[-2] if len(parts) >= 2 else parts[-1]

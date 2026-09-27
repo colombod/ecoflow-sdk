@@ -105,7 +105,7 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
             json={
                 "code": 0,
                 "data": {
-                    "certificateAccount": "open-b4b306eddfae4e8f8667f7281b994077",
+                    "certificateAccount": "open-0123456789abcdef0123456789abcdef",
                     "certificatePassword": "s3cr3t",
                     "url": "mqtt.ecoflow.com",
                     "port": "8883",
@@ -129,7 +129,7 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
         await client.connect()
 
     assert len(captured_creds) == 1, "MqttCredentials should have been constructed"
-    assert captured_creds[0].user_id == "open-b4b306eddfae4e8f8667f7281b994077", (
+    assert captured_creds[0].user_id == "open-0123456789abcdef0123456789abcdef", (
         f"user_id must come from certificateAccount, got: {captured_creds[0].user_id!r}"
     )
 
@@ -241,7 +241,7 @@ async def test_connect_injects_mqtt_into_devices() -> None:
                 "code": 0,
                 "data": [
                     {
-                        "sn": "BK11ZK1B2H5S1478",
+                        "sn": "BK11TESTSN000001",
                         "productName": "STREAM Ultra",
                         "online": 1,
                     },
@@ -287,3 +287,47 @@ async def test_connect_injects_mqtt_into_devices() -> None:
         "device._mqtt is None after connect() — relay commands will always fail. "
         "Fix: backfill device._mqtt = self._mqtt after MqttTransport is created."
     )
+
+
+@respx.mock
+async def test_discover_matches_product_name_case_insensitively() -> None:
+    """productName casing varies ("Delta Pro 3" vs "DELTA Pro 3")."""
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/device/list").mock(
+        return_value=Response(
+            200,
+            json={
+                "code": 0,
+                "data": [
+                    {"sn": "MR51TEST", "productName": "Delta Pro 3", "online": 1},
+                    {"sn": "HW52TEST", "productName": "smart plug", "online": 1},
+                ],
+            },
+        )
+    )
+    client = EcoFlowClient(access_key="k", secret_key="s", region="EU")
+    await client._discover()  # pyright: ignore[reportPrivateUsage]
+    assert [b.sn for b in client.batteries] == ["MR51TEST"]
+    assert [p.sn for p in client.plugs] == ["HW52TEST"]
+    assert client.unknown_devices == []
+
+
+@respx.mock
+async def test_rest_only_mode_never_requests_mqtt_credentials() -> None:
+    """enable_mqtt=False must not fetch certification or open MQTT."""
+    respx.get("https://api-e.ecoflow.com/iot-open/sign/device/list").mock(
+        return_value=Response(
+            200,
+            json={"code": 0, "data": [{"sn": "HW52TEST", "productName": "Smart Plug"}]},
+        )
+    )
+    cert = respx.get("https://api-e.ecoflow.com/iot-open/sign/certification").mock(
+        return_value=Response(200, json={"code": 0, "data": {}})
+    )
+    with patch("ecoflow.client.MqttTransport") as mqtt_cls:
+        async with EcoFlowClient(
+            access_key="k", secret_key="s", enable_mqtt=False
+        ) as c:
+            assert [p.sn for p in c.plugs] == ["HW52TEST"]
+            assert c.mqtt_connected is False
+    assert not cert.called
+    mqtt_cls.assert_not_called()

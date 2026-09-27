@@ -7,6 +7,71 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- `device.events()` now yields every update (it previously never yielded), and
+  `EcoFlowClient.events()` merges all devices (was a stub).
+- Messages sharing a timestamp are no longer discarded as stale (only strictly
+  older ones are); coarse clocks could drop chunks of a state dump.
+- REST signature now covers the request parameters (sorted query params, or the
+  flattened JSON body for `PUT`), as the EcoFlow Developer API spec requires.
+  Previously only `accessKey`/`nonce`/`timestamp` were signed.
+- Public MQTT pushes are unwrapped from their `params`/`param`/`typeCode` envelope
+  into the REST `quota/all` key layout before parsing. Previously live MQTT updates
+  produced all-zero STREAM, Smart Meter, Smart Plug and battery statuses.
+- `BatteryStatus` parses the flat dotted keys (`pd.soc`, `inv.cfgAcEnabled`, ...)
+  returned by REST `quota/all` for DELTA/RIVER devices, and no longer reports the
+  EMS/info blocks as BMS modules.
+- Every public-API set command now carries the `from`/`id`/`version`/`sn` envelope
+  (was STREAM-only), matching the reference integration. Affects Smart Plug and
+  battery commands.
+- `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
+
+### Added
+- `EcoFlowClient(..., enable_mqtt=False)` REST-only mode — never opens MQTT, so it
+  can run alongside another integration using the same keys.
+- `device.wait_for_update()` — await the next MQTT update (bound it with
+  `asyncio.timeout`).
+- Tiered live tests behind an explicit `--live=rest|mqtt` flag, an MQTT-vs-REST
+  consistency check, `scripts/capture_vectors.py` (redacted payload capture) and
+  offline replay of captured vectors. Runbook: `docs/api/live-testing.md`.
+
+### Changed
+- Live integration tests are no longer part of CI.
+- `ecoflow.__version__` is read from the installed package metadata (was stuck at
+  `"0.2.0"`).
+- `wave3_*.py` investigation scripts no longer default to a hardcoded device
+  serial; set `ECOFLOW_WAVE3_SN`. `wave3_diag.py` / `wave3_wildcard.py` are
+  flagged as burning MQTT client-ID quota (random `uuid4()` IDs).
+
+### Security
+- Replaced real device serial numbers and a real `certificateAccount` in docs and
+  test fixtures with placeholders (they remain in git history).
+
+---
+
+## [0.3.0] - 2026-06-01
+
+### Added
+- Wave 3 support through the private API (`ecoflow.private.Wave3Connection`):
+  email/password login, Protobuf decoding (XOR-decrypted), and write commands
+  (`turn_on`, `turn_off`, `set_mode`, `set_temperature`, `set_fan_speed`,
+  `set_humidity_target`, `set_charge_limit`, `set_discharge_limit`).
+  Requires the `wave3` extra (`protobuf`).
+- `EcoFlowClient.mqtt_connected` and `EcoFlowClient.mqtt_subscriptions`.
+- Read-only E2E tests (`@pytest.mark.integration`).
+
+### Fixed
+- STREAM set commands now include the full envelope (`from`, `id`, `version`,
+  `dirDest`, `dirSrc`, `dest`, `needAck`); without it the device ignores them.
+  `set_relay2()` validated on BK11 hardware.
+- Wave 3 (`AC71`) devices are routed to `client.wave3_units` via the SN prefix.
+- Stable, deterministic MQTT client IDs (public and private API) to avoid the
+  broker's daily unique-client-ID quota; fail-fast on first-connect error 135.
+
+---
+
 ## [0.2.0] - 2026-05-29
 
 ### Fixed
@@ -48,9 +113,9 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
-[0.2.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.1.0...python-v0.2.0
+## [0.1.0]
 
-## [Unreleased]
+Initial release.
 
 ### Added
 - `EcoFlowClient` — async entry point with typed device collections
@@ -70,4 +135,7 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
-[Unreleased]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.2.0...HEAD
+[Unreleased]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.3.0...HEAD
+[0.3.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.2.0...python-v0.3.0
+[0.2.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.1.0...python-v0.2.0
+[0.1.0]: https://github.com/colombod/ecoflow-sdk/releases/tag/python-v0.1.0
