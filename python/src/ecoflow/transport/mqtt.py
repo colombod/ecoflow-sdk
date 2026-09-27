@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import ssl
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from types import TracebackType
@@ -109,6 +110,21 @@ class MqttTransport:
 
     async def connect(self) -> None:
         """Start the background MQTT task and wait for broker confirmation."""
+        proactor = getattr(asyncio, "ProactorEventLoop", None)
+        if (
+            sys.platform == "win32"
+            and proactor is not None
+            and isinstance(asyncio.get_running_loop(), proactor)
+        ):
+            # QUIRK: aiomqtt (paho) needs loop.add_reader/add_writer, which the
+            # default Windows ProactorEventLoop lacks. Without this check every
+            # attempt fails with NotImplementedError and connect() times out.
+            raise EcoFlowConnectionError(
+                "MQTT on Windows needs a SelectorEventLoop — the default "
+                "ProactorEventLoop cannot run aiomqtt. Use "
+                "asyncio.run(main(), loop_factory=asyncio.SelectorEventLoop) "
+                "(Python 3.12+) or asyncio.Runner(loop_factory=...)."
+            )
         self._ready.clear()
         self._fatal_error = None
         self._run_task = asyncio.create_task(self._run())
