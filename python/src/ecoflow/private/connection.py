@@ -85,6 +85,7 @@ class Wave3Connection:
         self._ready: asyncio.Event = asyncio.Event()
         self._publish_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
         self._user_id: str = ""  # set after login in connect()
+        self._fatal_error: EcoFlowConnectionError | None = None
 
     async def connect(self) -> None:
         """Authenticate, create Wave3Device instances, start the MQTT loop.
@@ -113,6 +114,9 @@ class Wave3Connection:
             raise TimeoutError(
                 f"Wave3 MQTT connection timed out after {_CONNECT_TIMEOUT_S:.0f}s"
             ) from None
+        if self._fatal_error is not None:
+            await self.close()
+            raise self._fatal_error
 
     async def close(self) -> None:
         """Cancel the background MQTT task and wait for it to finish."""
@@ -142,6 +146,7 @@ class Wave3Connection:
         """
         tls_ctx = ssl.create_default_context()
         backoff = 1.0
+        ever_connected = False
         while True:
             try:
                 async with aiomqtt.Client(
@@ -172,6 +177,7 @@ class Wave3Connection:
                             }
                         ).encode()
                         await client.publish(get_topic, get_payload, qos=1)
+                    ever_connected = True
                     self._ready.set()
                     backoff = 1.0
                     async with asyncio.TaskGroup() as tg:
@@ -179,6 +185,27 @@ class Wave3Connection:
                         tg.create_task(self._publish_loop(client, creds.user_id))
             except asyncio.CancelledError:
                 return
+            except aiomqtt.MqttCodeError as exc:
+                if exc.rc == 135 and not ever_connected:
+                    # QUIRK 5 (AGENTS.md), as in MqttTransport: a 135 on the very
+                    # first CONNACK will not clear by retrying — another session
+                    # holds the account, the daily client-ID quota is spent, or
+                    # the client ID has the wrong shape. Fail fast and say so.
+                    self._fatal_error = EcoFlowConnectionError(
+                        "Wave 3 MQTT error 135 (Not authorized) on first connect. "
+                        "Close the EcoFlow app / other clients using this account "
+                        "(one session per account); if nothing else is connected, "
+                        "the daily client-ID quota may be spent (resets at midnight "
+                        "UTC). Not retrying."
+                    )
+                    self._ready.set()
+                    return
+                self._ready.clear()
+                _log.warning(
+                    "Wave3 MQTT connection lost (%s), retrying in %.0fs", exc, backoff
+                )
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 300.0)
             except Exception as exc:
                 self._ready.clear()
                 _log.warning(
