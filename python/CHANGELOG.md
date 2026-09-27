@@ -10,6 +10,8 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- `Wave3Connection.connect()` fails fast with a clear `EcoFlowConnectionError`
+  on MQTT 135 at first connect, instead of retrying into a generic timeout.
 - Wave 3 private-API MQTT connects again: the client ID is back to the
   `ANDROID_<32 hex>_<userId>` shape the broker requires (every other shape gets
   135), now derived from the user ID so it stays stable (`private_client_id`).
@@ -42,6 +44,10 @@ This project uses [semantic versioning](https://semver.org/).
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
 ### Added
+- STREAM status: `self_powered_mode`, `ai_schedule_mode`, `grid_voltage`,
+  `real_health`, min/max cell temperature and voltage, and lifetime
+  charge/discharge energy (Wh). Smart Plug: `frequency_hz`, `max_watts`. Each
+  confirmed against the reference integration and the live recording.
 - `EcoFlowClient(..., enable_mqtt=False)` REST-only mode — never opens MQTT, so it
   can run alongside another integration using the same keys.
 - `device.wait_for_update()` — await the next MQTT update (bound it with

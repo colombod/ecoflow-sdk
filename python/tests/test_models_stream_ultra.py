@@ -640,3 +640,53 @@ class TestStreamUltraRealRelaySnapshots:
         assert s_off.max_charge_soc == s_on.max_charge_soc
         assert s_off.min_discharge_soc == s_on.min_discharge_soc
         assert s_off.backup_reserve_soc == s_on.backup_reserve_soc
+
+
+# Fields confirmed against the tolwi reference AND the live recording
+# (tests/recordings/live-20260927, STREAM Ultra values below).
+def test_stream_reads_operating_modes_flat_and_nested() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    flat = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "energyStrategyOperateMode.operateSelfPoweredOpen": False,
+            "energyStrategyOperateMode.operateIntelligentScheduleModeOpen": True,
+        },
+    )
+    nested = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "energyStrategyOperateMode": {
+                "operateSelfPoweredOpen": True,
+                "operateIntelligentScheduleModeOpen": False,
+            }
+        },
+    )
+    assert (flat.self_powered_mode, flat.ai_schedule_mode) == (False, True)
+    assert (nested.self_powered_mode, nested.ai_schedule_mode) == (True, False)
+
+
+def test_stream_reads_grid_voltage_health_cells_and_lifetime_energy() -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    status = StreamUltraStatus.from_quota_payload(
+        "X",
+        {
+            "gridConnectionVol": 243.74815,
+            "realSoh": 99.72002,
+            "maxCellTemp": 25,
+            "minCellTemp": 24,
+            "maxCellVol": 3210,
+            "minCellVol": 3207,
+            "accuChgEnergy": 625564,
+            "accuDsgEnergy": 591527,
+        },
+    )
+    assert status.grid_voltage == pytest.approx(243.74815)  # pyright: ignore[reportUnknownMemberType]
+    assert status.real_health == pytest.approx(99.72002)  # pyright: ignore[reportUnknownMemberType]
+    assert (status.min_cell_temp, status.max_cell_temp) == (24, 25)
+    assert status.min_cell_voltage == pytest.approx(3.207)  # pyright: ignore[reportUnknownMemberType]
+    assert status.max_cell_voltage == pytest.approx(3.210)  # pyright: ignore[reportUnknownMemberType]
+    assert status.lifetime_charge_energy_wh == 625564
+    assert status.lifetime_discharge_energy_wh == 591527
