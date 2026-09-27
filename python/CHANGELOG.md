@@ -24,10 +24,10 @@ This project uses [semantic versioning](https://semver.org/).
   battery commands.
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
-### Removed
-- Ad-hoc `wave3_*.py` debug scripts from the package root. They used random
-  `uuid4()` MQTT client IDs (burns the ~10 IDs/day broker quota) and a hardcoded
-  device serial. Use the E2E tests in `tests/e2e/` instead.
+### Changed
+- `wave3_*.py` investigation scripts no longer default to a hardcoded device
+  serial; set `ECOFLOW_WAVE3_SN`. `wave3_diag.py` / `wave3_wildcard.py` are
+  flagged as burning MQTT client-ID quota (random `uuid4()` IDs).
 
 ### Security
 - Replaced real device serial numbers and a real `certificateAccount` in docs and
