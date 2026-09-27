@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass
@@ -127,6 +127,32 @@ class StreamUltraStatus:
     discharge_time_remaining_min: int = 0
     """Discharge time remaining in minutes. From bmsDsgRemTime."""
 
+    # Fields below: confirmed against the tolwi reference AND the live recording
+    # tests/recordings/live-20260927 (names, units and plausible values).
+    self_powered_mode: bool = False
+    """Self-powered operating mode on.
+    energyStrategyOperateMode.operateSelfPoweredOpen."""
+    ai_schedule_mode: bool = False
+    """AI (intelligent schedule) mode on.
+    energyStrategyOperateMode.operateIntelligentScheduleModeOpen."""
+    grid_voltage: float = 0.0
+    """Grid voltage at the unit (V). From gridConnectionVol."""
+    real_health: float = 0.0
+    """Measured battery state of health (%). From realSoh (soh is the rounded %)."""
+    min_cell_temp: int = 0
+    """Coolest battery cell (°C). From minCellTemp."""
+    max_cell_temp: int = 0
+    """Hottest battery cell (°C). From maxCellTemp."""
+    min_cell_voltage: float = 0.0
+    """Lowest cell voltage (V, from minCellVol mV)."""
+    max_cell_voltage: float = 0.0
+    """Highest cell voltage (V, from maxCellVol mV)."""
+    lifetime_charge_energy_wh: int = 0
+    """Energy charged into this unit's battery over its life (Wh). accuChgEnergy.
+    Live check: 625 564 Wh over 308 cycles of a ~1.92 kWh pack."""
+    lifetime_discharge_energy_wh: int = 0
+    """Energy discharged from this unit's battery over its life (Wh). accuDsgEnergy."""
+
     updated_at: datetime | None = None
 
     @property
@@ -159,6 +185,15 @@ class StreamUltraStatus:
         pack_soc = float(data.get("soc", 0))
         cms_soc = float(data.get("cmsBattSoc", 0))
         batt_soc = bms_soc or pack_soc or cms_soc
+
+        # REST flattens this object ("energyStrategyOperateMode.operateX");
+        # accept the nested form too in case a push carries it unflattened.
+        nested = data.get("energyStrategyOperateMode")
+        modes = cast(dict[str, Any], nested) if isinstance(nested, dict) else {}
+
+        def _mode(name: str) -> bool:
+            flat = data.get(f"energyStrategyOperateMode.{name}")
+            return bool(modes.get(name, False) if flat is None else flat)
 
         remain_mah = int(data.get("remainCap", 0))
         full_mah = int(data.get("fullCap", 0))
@@ -205,5 +240,15 @@ class StreamUltraStatus:
             remaining_time_min=int(data.get("remainTime", 0)),
             charge_time_remaining_min=int(data.get("bmsChgRemTime", 0)),
             discharge_time_remaining_min=int(data.get("bmsDsgRemTime", 0)),
+            self_powered_mode=_mode("operateSelfPoweredOpen"),
+            ai_schedule_mode=_mode("operateIntelligentScheduleModeOpen"),
+            grid_voltage=float(data.get("gridConnectionVol", 0)),
+            real_health=float(data.get("realSoh", 0)),
+            min_cell_temp=int(data.get("minCellTemp", 0)),
+            max_cell_temp=int(data.get("maxCellTemp", 0)),
+            min_cell_voltage=int(data.get("minCellVol", 0)) / 1000.0,
+            max_cell_voltage=int(data.get("maxCellVol", 0)) / 1000.0,
+            lifetime_charge_energy_wh=int(data.get("accuChgEnergy", 0)),
+            lifetime_discharge_energy_wh=int(data.get("accuDsgEnergy", 0)),
             updated_at=datetime.now(tz=UTC),
         )

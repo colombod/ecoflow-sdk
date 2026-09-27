@@ -41,6 +41,10 @@ class SmartPlugData:
     on_time_seconds: int
     temp: float
     brightness: int = field(default=100)
+    frequency_hz: int = 0
+    """Mains frequency (Hz). REST 2_1.freq."""
+    max_watts: int = 0
+    """Configured maximum load (W). REST 2_1.maxWatts."""
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
@@ -92,5 +96,7 @@ class SmartPlugData:
             on_time_seconds=data.get("2_1.runTime", 0),
             temp=float(data.get("2_1.temp", 0)),  # already °C — no /10
             brightness=round(raw_brightness / 1023 * 100) if raw_brightness > 0 else 0,
+            frequency_hz=int(data.get("2_1.freq", 0)),
+            max_watts=int(data.get("2_1.maxWatts", 0)),
             updated_at=datetime.now(UTC),
         )
