@@ -370,3 +370,32 @@ async def test_run_connects_with_private_client_id() -> None:
     with patch("ecoflow.private.connection.aiomqtt.Client", client_cls):
         await conn._run(FAKE_CREDS)  # pyright: ignore[reportPrivateUsage]
     assert client_cls.call_args.kwargs["identifier"] == private_client_id("987654")
+
+
+async def test_connect_fails_fast_on_135_first_connect() -> None:
+    """Seen live 2026-09-27: 135 on the first CONNACK was retried silently and
+    surfaced as a generic 15 s TimeoutError. Mirror MqttTransport (Quirk 5):
+    one attempt, then a clear EcoFlowConnectionError."""
+    import aiomqtt as _aiomqtt
+
+    from ecoflow.exceptions import EcoFlowConnectionError
+
+    attempts = 0
+
+    async def failing_aenter(*_a: object, **_k: object) -> object:
+        nonlocal attempts
+        attempts += 1
+        raise _aiomqtt.MqttCodeError(135)
+
+    mock_cm = MagicMock()
+    mock_cm.__aenter__ = failing_aenter
+    mock_cm.__aexit__ = AsyncMock(return_value=False)
+    conn = _make_conn("AC71TESTSN000001")
+    with (
+        patch(_LOGIN_PATH, new=AsyncMock(return_value=FAKE_CREDS)),
+        patch("ecoflow.private.connection.aiomqtt.Client", return_value=mock_cm),
+    ):
+        with pytest.raises(EcoFlowConnectionError, match="135"):
+            await asyncio.wait_for(conn.connect(), timeout=5)
+    assert attempts == 1
+    await conn.close()
