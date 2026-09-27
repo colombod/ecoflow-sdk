@@ -217,7 +217,7 @@ def build_command(sn: str, **kwargs: Any) -> bytes:
         devStandbyTime: int         → auto-off timeout in minutes
 
     Args:
-        sn: Device serial number (e.g. "AC71ZK1APJ410297").
+        sn: Device serial number (e.g. "AC71XXXXXXXXXXXX").
         **kwargs: Wave3ConfigWrite field values. Unknown fields are silently ignored.
 
     Returns:

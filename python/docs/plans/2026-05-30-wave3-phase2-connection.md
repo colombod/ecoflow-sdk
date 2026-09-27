@@ -255,9 +255,9 @@ Usage:
     async with Wave3Connection(
         email="me@example.com",
         password="my_password",
-        device_sns=["AC71ZK1APJ410297"],
+        device_sns=["AC71XXXXXXXXXXXX"],
     ) as wave3:
-        device = wave3.devices["AC71ZK1APJ410297"]
+        device = wave3.devices["AC71XXXXXXXXXXXX"]
         await asyncio.sleep(5)   # wait for first MQTT push
         print(device.status.battery_soc)
 """
@@ -746,7 +746,7 @@ Add to `tests/.env` (not `.env.example` — never commit real credentials):
 ```
 ECOFLOW_EMAIL=your_actual_ecoflow_app_email@example.com
 ECOFLOW_PASSWORD=your_actual_ecoflow_app_password
-ECOFLOW_WAVE3_SN=AC71ZK1APJ410297
+ECOFLOW_WAVE3_SN=AC71XXXXXXXXXXXX
 ```
 
 > Replace the placeholders with the actual Wave 3 device credentials from your EcoFlow account.
@@ -790,7 +790,7 @@ Run with: uv run pytest tests/e2e/test_private_read.py -m integration -v -s --ti
 Credentials loaded from tests/.env:
   ECOFLOW_EMAIL       — EcoFlow app email address
   ECOFLOW_PASSWORD    — EcoFlow app password
-  ECOFLOW_WAVE3_SN    — Wave 3 device serial number (e.g. AC71ZK1APJ410297)
+  ECOFLOW_WAVE3_SN    — Wave 3 device serial number (e.g. AC71XXXXXXXXXXXX)
 
 Tests auto-skip when credentials are not set.
 No write operations are performed — no device state is changed.
@@ -1016,9 +1016,9 @@ async def main() -> None:
     async with Wave3Connection(
         email="me@example.com",     # your EcoFlow app login email
         password="my_password",     # your EcoFlow app login password
-        device_sns=["AC71ZK1APJ410297"],
+        device_sns=["AC71XXXXXXXXXXXX"],
     ) as wave3:
-        device = wave3.devices["AC71ZK1APJ410297"]
+        device = wave3.devices["AC71XXXXXXXXXXXX"]
         await asyncio.sleep(10)    # wait for first MQTT status push
         status = device.status
         print(f"Battery: {status.battery_soc:.0f}%")

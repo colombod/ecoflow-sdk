@@ -7,6 +7,40 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Removed
+- Ad-hoc `wave3_*.py` debug scripts from the package root. They used random
+  `uuid4()` MQTT client IDs (burns the ~10 IDs/day broker quota) and a hardcoded
+  device serial. Use the E2E tests in `tests/e2e/` instead.
+
+### Security
+- Replaced real device serial numbers and a real `certificateAccount` in docs and
+  test fixtures with placeholders (they remain in git history).
+
+---
+
+## [0.3.0] - 2026-06-01
+
+### Added
+- Wave 3 support through the private API (`ecoflow.private.Wave3Connection`):
+  email/password login, Protobuf decoding (XOR-decrypted), and write commands
+  (`turn_on`, `turn_off`, `set_mode`, `set_temperature`, `set_fan_speed`,
+  `set_humidity_target`, `set_charge_limit`, `set_discharge_limit`).
+  Requires the `wave3` extra (`protobuf`).
+- `EcoFlowClient.mqtt_connected` and `EcoFlowClient.mqtt_subscriptions`.
+- Read-only E2E tests (`@pytest.mark.integration`).
+
+### Fixed
+- STREAM set commands now include the full envelope (`from`, `id`, `version`,
+  `dirDest`, `dirSrc`, `dest`, `needAck`); without it the device ignores them.
+  `set_relay2()` validated on BK11 hardware.
+- Wave 3 (`AC71`) devices are routed to `client.wave3_units` via the SN prefix.
+- Stable, deterministic MQTT client IDs (public and private API) to avoid the
+  broker's daily unique-client-ID quota; fail-fast on first-connect error 135.
+
+---
+
 ## [0.2.0] - 2026-05-29
 
 ### Fixed
@@ -48,9 +82,9 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
-[0.2.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.1.0...python-v0.2.0
+## [0.1.0]
 
-## [Unreleased]
+Initial release.
 
 ### Added
 - `EcoFlowClient` — async entry point with typed device collections
@@ -70,4 +104,7 @@ This project uses [semantic versioning](https://semver.org/).
 
 ---
 
-[Unreleased]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.2.0...HEAD
+[Unreleased]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.3.0...HEAD
+[0.3.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.2.0...python-v0.3.0
+[0.2.0]: https://github.com/colombod/ecoflow-sdk/compare/python-v0.1.0...python-v0.2.0
+[0.1.0]: https://github.com/colombod/ecoflow-sdk/releases/tag/python-v0.1.0

@@ -105,7 +105,7 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
             json={
                 "code": 0,
                 "data": {
-                    "certificateAccount": "open-b4b306eddfae4e8f8667f7281b994077",
+                    "certificateAccount": "open-0123456789abcdef0123456789abcdef",
                     "certificatePassword": "s3cr3t",
                     "url": "mqtt.ecoflow.com",
                     "port": "8883",
@@ -129,7 +129,7 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
         await client.connect()
 
     assert len(captured_creds) == 1, "MqttCredentials should have been constructed"
-    assert captured_creds[0].user_id == "open-b4b306eddfae4e8f8667f7281b994077", (
+    assert captured_creds[0].user_id == "open-0123456789abcdef0123456789abcdef", (
         f"user_id must come from certificateAccount, got: {captured_creds[0].user_id!r}"
     )
 
@@ -241,7 +241,7 @@ async def test_connect_injects_mqtt_into_devices() -> None:
                 "code": 0,
                 "data": [
                     {
-                        "sn": "BK11ZK1B2H5S1478",
+                        "sn": "BK11TESTSN000001",
                         "productName": "STREAM Ultra",
                         "online": 1,
                     },

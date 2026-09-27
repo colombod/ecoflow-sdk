@@ -36,9 +36,9 @@ async def main() -> None:
     async with Wave3Connection(
         email="me@example.com",
         password="my_password",       # see Security note below
-        device_sns=["AC71ZK1APJ410297"],
+        device_sns=["AC71XXXXXXXXXXXX"],
     ) as wave3:
-        sn = "AC71ZK1APJ410297"
+        sn = "AC71XXXXXXXXXXXX"
         device = wave3.devices[sn]
 
         # The device pushes status over MQTT — wait for the first message.
@@ -117,7 +117,7 @@ variables or a `.env` file (gitignored):
 # .env  — add this file to .gitignore
 ECOFLOW_EMAIL=me@example.com
 ECOFLOW_PASSWORD=my_password
-ECOFLOW_WAVE3_SN=AC71ZK1APJ410297
+ECOFLOW_WAVE3_SN=AC71XXXXXXXXXXXX
 ```
 
 ```python

@@ -80,17 +80,19 @@ EcoFlowError                    ← base; catch-all
 
 ```
 tests/
-├── test_*.py                         — Unit tests (mocked, no real devices, ~391 tests)
+├── test_*.py                         — Unit tests (mocked, no real devices, ~400 tests)
 │   ├── test_models_wave3_private.py  — ACTIVE_PAYLOAD/STANDBY_PAYLOAD fixtures from real device
 │   └── test_private_decoder.py       — XOR decryption + Protobuf dispatch tests
 ├── conftest.py                       — Credential helpers (skip if tests/.env missing)
 └── e2e/
     ├── test_read.py                  — Read integration tests (real devices, @pytest.mark.integration)
     ├── test_private_read.py          — Wave 3 private API read tests (@pytest.mark.integration)
-    └── write/
-        └── test_wave3_commands.py    — Wave 3 write tests (@pytest.mark.write_integration,
-                                        requires ECOFLOW_ENABLE_WRITE_TESTS=true AND
-                                        --enable-write-tests CLI flag — both needed)
+    └── write/                        — Write tests (@pytest.mark.write_integration,
+        │                               requires ECOFLOW_ENABLE_WRITE_TESTS=true AND
+        │                               --enable-write-tests CLI flag — both needed)
+        ├── test_wave3_commands.py    — Wave 3 (private API)
+        ├── test_stream_relay_commands.py — STREAM relay2/relay3
+        └── test_write_plug.py        — Smart Plug on/off
 ```
 
 ---
@@ -428,7 +430,7 @@ via the API. This is labeled "temporary" in the code.
 ## Running Tests
 
 ```bash
-# Unit tests only (fast, no real devices needed) — ~391 tests
+# Unit tests only (fast, no real devices needed) — ~400 tests
 uv run pytest -m "not integration and not write_integration" -q
 
 # Integration read tests (requires real devices + tests/.env)

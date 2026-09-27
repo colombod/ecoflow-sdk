@@ -876,7 +876,7 @@ import pytest
 
 from ecoflow.models.wave3 import Wave3Mode, Wave3Status
 
-SN = "AC71ZK1APJ410297"
+SN = "AC71XXXXXXXXXXXX"
 
 
 # ---------------------------------------------------------------------------
