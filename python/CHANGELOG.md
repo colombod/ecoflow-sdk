@@ -17,6 +17,9 @@ This project uses [semantic versioning](https://semver.org/).
 - REST signature now covers the request parameters (sorted query params, or the
   flattened JSON body for `PUT`), as the EcoFlow Developer API spec requires.
   Previously only `accessKey`/`nonce`/`timestamp` were signed.
+- `GET` requests no longer send `Content-Type: application/json`. With that header
+  the API verifies the signature without the query params, so every signed
+  `quota/all` read failed with 8521 "signature is wrong" (verified live).
 - Public MQTT pushes are unwrapped from their `params`/`param`/`typeCode` envelope
   into the REST `quota/all` key layout before parsing. Previously live MQTT updates
   produced all-zero STREAM, Smart Meter, Smart Plug and battery statuses.

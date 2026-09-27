@@ -127,5 +127,6 @@ class TestVenvCreated:
         assert (ROOT / ".venv").is_dir(), ".venv/ must exist after uv sync --all-extras"
 
     def test_venv_has_pytest(self) -> None:
-        pytest_bin = ROOT / ".venv" / "bin" / "pytest"
-        assert pytest_bin.exists(), "pytest must be installed in .venv"
+        venv = ROOT / ".venv"
+        candidates = [venv / "bin" / "pytest", venv / "Scripts" / "pytest.exe"]
+        assert any(p.exists() for p in candidates), "pytest must be installed in .venv"
