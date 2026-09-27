@@ -10,6 +10,10 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Wave 3 private-API MQTT connects again: the client ID is back to the
+  `ANDROID_<32 hex>_<userId>` shape the broker requires (every other shape gets
+  135), now derived from the user ID so it stays stable (`private_client_id`).
+  Since 0.3.0 every Wave 3 connection was refused. Verified live.
 - STREAM `charge_discharge_state` docs: `2` means **charging**, not discharging
   (0 = idle; verified live during a 5.2 kW grid charge). `battery_power_watts` is
   positive while charging, negative while discharging. New `StreamUltraStatus.is_charging`.

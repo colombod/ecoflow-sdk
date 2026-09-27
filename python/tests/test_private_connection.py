@@ -334,3 +334,39 @@ async def test_run_publishes_get_trigger_for_each_device() -> None:
     for sn in sns:
         expected = f"/app/USERXYZ/{sn}/thing/property/get"
         assert expected in published_topics, f"Missing GET trigger for {sn}"
+
+
+# ---------------------------------------------------------------------------
+# MQTT client ID — format required by the private broker, stable per account
+# ---------------------------------------------------------------------------
+
+
+def test_private_client_id_has_the_format_the_broker_requires() -> None:
+    """The private broker answers 135 (Not authorized) to any client ID not
+    shaped ANDROID_<32 upper hex>_<userId> (docs/api/private-authentication.md).
+    Commit 67c3c87 switched to "ecoflow-private-<hash>" and every Wave 3
+    connection has been refused since — seen live 2026-09-27."""
+    import re
+
+    from ecoflow.private.connection import private_client_id
+
+    client_id = private_client_id("987654")
+    assert re.fullmatch(r"ANDROID_[0-9A-F]{32}_987654", client_id), client_id
+
+
+def test_private_client_id_is_stable_per_account() -> None:
+    """Deterministic: reconnects reuse one of the ~10 daily IDs (Quirk 1)."""
+    from ecoflow.private.connection import private_client_id
+
+    assert private_client_id("987654") == private_client_id("987654")
+    assert private_client_id("987654") != private_client_id("123456")
+
+
+async def test_run_connects_with_private_client_id() -> None:
+    from ecoflow.private.connection import private_client_id
+
+    conn = _make_conn("AC71TESTSN000001")
+    client_cls = MagicMock(side_effect=asyncio.CancelledError)
+    with patch("ecoflow.private.connection.aiomqtt.Client", client_cls):
+        await conn._run(FAKE_CREDS)  # pyright: ignore[reportPrivateUsage]
+    assert client_cls.call_args.kwargs["identifier"] == private_client_id("987654")

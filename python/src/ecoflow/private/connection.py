@@ -41,6 +41,23 @@ _log = logging.getLogger(__name__)
 _CONNECT_TIMEOUT_S: float = 15.0
 
 
+def private_client_id(user_id: str) -> str:
+    """MQTT client ID for the private (app) broker: stable AND well-formed.
+
+    QUIRK (format): the private broker only authorises client IDs shaped
+    ``ANDROID_<32 upper-case hex>_<userId>``, as the EcoFlow app sends them; any
+    other shape is refused with 135 (Not authorized). Commit 67c3c87 replaced
+    this with ``ecoflow-private-<hash>`` and every Wave 3 connection failed
+    from then on (seen live 2026-09-27).
+
+    QUIRK (quota, AGENTS.md Quirk 1): the broker allows ~10 unique client IDs
+    per account per day, so the hex part is derived from ``user_id`` instead of
+    ``uuid4()`` — every reconnect reuses the same ID.
+    """
+    digest = _hashlib.sha256(user_id.encode()).hexdigest()[:32].upper()
+    return f"ANDROID_{digest}_{user_id}"
+
+
 class Wave3Connection:
     """Manages Wave 3 device connections via EcoFlow's private MQTT API.
 
@@ -127,20 +144,12 @@ class Wave3Connection:
         backoff = 1.0
         while True:
             try:
-                # QUIRK: EcoFlow MQTT broker allows ~10 unique client IDs per
-                # day per account. Random UUIDs burn this quota instantly.
-                # A stable, deterministic ID reuses the same slot on reconnect.
-                # Source: EcoFlow community reports (ioBroker,
-                # hassio-ecoflow-cloud issue trackers).
-                _hash = _hashlib.sha256(creds.user_id.encode()).hexdigest()
-                _stable_suffix = _hash[:12]
-                identifier = f"ecoflow-private-{_stable_suffix}"
                 async with aiomqtt.Client(
                     hostname="mqtt.ecoflow.com",
                     port=8883,
                     username=creds.certificate_account,
                     password=creds.certificate_password,
-                    identifier=identifier,
+                    identifier=private_client_id(creds.user_id),
                     keepalive=60,
                     tls_context=tls_ctx,
                 ) as client:
