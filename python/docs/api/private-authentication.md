@@ -8,7 +8,7 @@ and communicates over a Protobuf MQTT channel.
 
 > **Note:** All other EcoFlow devices (Delta, River, PowerStream, …) continue to use
 > `EcoFlowClient` with `accessKey`/`secretKey` from the Developer Portal.
-> See [Authentication](authentication.md) for that flow.
+> See [Getting started](getting-started.md) for that flow.
 
 ---
 

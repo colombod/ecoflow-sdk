@@ -73,6 +73,8 @@ This project uses [semantic versioning](https://semver.org/).
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
 ### Added
+- Docs: `docs/architecture.md` (Mermaid diagrams), architecture decision records in
+  `docs/decisions/`, `docs/history.md`, `docs/validation-status.md` and a docs index.
 - **Service digital twin** (`pip install ecoflow-python[twin]`, `ecoflow-twin serve`): a local
   clone of the Developer API that speaks real HTTPS REST and MQTT 3.1.1 over TLS, plays
   back recordings and reproduces EcoFlow's refusals (signature 8521, one session per
@@ -111,7 +113,8 @@ This project uses [semantic versioning](https://semver.org/).
 
 ### Security
 - Replaced real device serial numbers and a real `certificateAccount` in docs and
-  test fixtures with placeholders (they remain in git history).
+  test fixtures with placeholders. They were later purged from git history as well
+  (2026-09-28; see `docs/decisions/0012-pii-policy.md`).
 
 ---
 

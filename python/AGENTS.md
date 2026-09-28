@@ -188,11 +188,16 @@ ID. Within one debugging session (~20 connection attempts), the entire day's quo
 _stable_suffix = hashlib.sha256(account.encode()).hexdigest()[:12]
 client_id = f"ecoflow-sdk-{_stable_suffix}"
 
-# Private API — derived from userId
-_hash = hashlib.sha256(creds.user_id.encode()).hexdigest()
-client_id = f"ecoflow-private-{_hash[:12]}"
+# Private API — derived from userId, in the only shape the app broker accepts
+client_id = private_client_id(user_id)  # ANDROID_<sha256(userId)[:32].upper()>_<userId>
 ```
 One slot used, regardless of how many times the library reconnects.
+
+**Amended 2026-09-28 (PR #11):** that PR #6 commit changed the private ID to
+`ecoflow-private-<hash>`. It was stable, but the app broker answers 135 to any ID not shaped
+`ANDROID_<32 hex>_<userId>`, so every Wave 3 connection failed from 0.3.0 until the shape was
+restored. Keep **both** properties: stable *and* the broker's shape
+(`docs/decisions/0002-stable-mqtt-client-ids.md`).
 
 **If you see error 135 with nothing else connected:**
 1. Stop ALL connection attempts immediately. Every retry burns another slot if the client ID
@@ -241,7 +246,7 @@ client_id = mqtt_data.get("clientId") or f"ecoflow-sdk-{_stable_suffix}"
 | | Public API (EU) | Private API |
 |-|-----------------|-------------|
 | Broker | `mqtt-e.ecoflow.com:8883` | `mqtt.ecoflow.com:8883` |
-| Wire format | JSON (`{"params": {...}}`) | Protobuf binary |
+| Wire format | JSON (flat or family-wrapped, see Quirk 14) | Protobuf binary |
 | Auth | `certificateAccount` from `/certification` | `certificateAccount` from `/iot-auth/app/certification` |
 | Topic | `/open/{certAccount}/{sn}/quota` | `/app/device/property/{sn}` |
 
@@ -697,17 +702,22 @@ alongside Home Assistant without taking the account's single session (Quirk 2).
   `set_relay2(on=True/False)` confirmed working on BK11 STREAM Ultra — `relay2_on` toggled
   correctly via REST `/quota/all` refresh. The full envelope quirk (Quirk 13) was the missing
   piece. `set_relay3` follows identical envelope structure and is expected to work the same way.
-- **Public API MQTT for STREAM devices**: MQTT reads work in principle (topic confirmed:
-  `/open/{certAccount}/{sn}/quota`) but could not be validated live due to the quota incident.
-  REST reads (`device.refresh()`) are confirmed working.
+- **Public API MQTT for STREAM devices**: validated live 2026-09-27 and recorded
+  (`tests/recordings/live-20260927`, `live-20260928`).
+- Full per-command status (live / recorded / reference / suspect / gap):
+  `docs/validation-status.md`.
 
 ---
 
-## Architecture Diagrams
+## Architecture, Decisions and History
 
-See `docs/diagrams/`:
-- `overview.svg` — system overview (two API paths, device types, data flow)
-- `device-model.svg` — device class hierarchy + capabilities per device
-- `auth-flow.svg` — authentication flow for both API paths
+- `docs/architecture.md` — current Mermaid diagrams: system context, modules, read/command
+  flows, test tiers, recording pipeline.
+- `docs/decisions/` — ADRs with evidence. **Read the relevant one before changing behaviour
+  it describes.** Cite PR numbers and commit titles, never SHAs (history was rewritten once).
+- `docs/history.md` — timeline and lessons learned.
+- `docs/validation-status.md` — what is proven on hardware; update it after every live run.
+- `docs/diagrams/` — the v0.3.0 Graphviz diagrams, kept as a historical snapshot (partly
+  outdated; see its README).
 
 MQTT guide with full protocol details: `docs/api/mqtt-guide.md`
