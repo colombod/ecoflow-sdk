@@ -71,9 +71,11 @@ The SDK needs no twin-specific code. The **only** SDK addition is `Endpoints`:
 a trusted CA. The MQTT broker address always comes from the `certification`
 response, just as with EcoFlow, so pointing REST at the twin is enough.
 
-Because these variables redirect every request, including the access-key
-header, the SDK logs a **warning** whenever they are set, and `rest_base` must
-be `https://`. Pass `endpoints=` explicitly in code when you want no
+The SDK logs a **warning** for each one that is set:
+`ECOFLOW_REST_BASE` redirects every REST request, including the access-key
+header, to that host; `ECOFLOW_CA_FILE` only changes which CA is trusted for
+TLS (requests still go to the configured host). `rest_base` must be `https://`
+with a host and a valid port, and must not contain credentials. Pass `endpoints=` explicitly in code when you want no
 environment involvement at all.
 
 **Keep the twin CA local.** The twin's server certificate is valid for

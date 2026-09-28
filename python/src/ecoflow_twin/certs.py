@@ -52,7 +52,13 @@ def ensure_certs(state_dir: Path) -> TwinCerts:
     certs = TwinCerts(
         state_dir / "ca.pem", state_dir / "server.pem", state_dir / "server.key"
     )
-    if all(p.exists() for p in (certs.ca_file, certs.cert_file, certs.key_file)):
+    files = (certs.ca_file, certs.cert_file, certs.key_file)
+    for path in files:
+        # A symlink here (e.g. planted in a shared state dir) would make us
+        # write, chmod or serve someone else's file. Never follow one.
+        if path.is_symlink():
+            raise PermissionError(f"{path} is a symlink; refusing to use it")
+    if all(p.exists() for p in files):
         _restrict(certs.key_file)  # tighten keys written by older versions
         return certs
     now = dt.datetime.now(dt.UTC)
@@ -117,19 +123,30 @@ def ensure_certs(state_dir: Path) -> TwinCerts:
         .sign(ca_key, hashes.SHA256())
     )
     pem = serialization.Encoding.PEM
-    certs.ca_file.write_bytes(ca_cert.public_bytes(pem))
-    certs.cert_file.write_bytes(cert.public_bytes(pem))
+    _write_new(certs.ca_file, ca_cert.public_bytes(pem), 0o644)
+    _write_new(certs.cert_file, cert.public_bytes(pem), 0o644)
     key_pem = key.private_bytes(
         pem, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
     )
     # The server certificate is valid for EcoFlow's real host names (so apps can
     # be pointed at the twin by DNS). Anyone who can read this key and whose
     # machine trusts ca.pem could impersonate EcoFlow, so it is owner-only.
-    fd = os.open(certs.key_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "wb") as f:
-        f.write(key_pem)
+    _write_new(certs.key_file, key_pem, 0o600)
     _restrict(certs.key_file)
     return certs
+
+
+def _write_new(path: Path, data: bytes, mode: int) -> None:
+    """Write *data* to a freshly created *path*, never through a symlink.
+
+    Any leftover file is removed first; ``O_EXCL`` then refuses a name that
+    reappeared in between (a symlink included) instead of following it.
+    """
+    path.unlink(missing_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags | getattr(os, "O_BINARY", 0), mode)
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
 
 
 def _restrict(path: Path) -> None:
@@ -144,7 +161,14 @@ def _restrict(path: Path) -> None:
     except OSError:
         if sys.platform == "win32":  # pragma: no cover - no POSIX modes
             return
-    if sys.platform != "win32" and path.stat().st_mode & 0o077:
+    if sys.platform == "win32":  # pragma: no cover - no POSIX modes
+        return
+    st = path.lstat()
+    if st.st_uid != os.getuid():
+        raise PermissionError(
+            f"{path} belongs to another user; use a --state-dir only you can write"
+        )
+    if st.st_mode & 0o077:
         raise PermissionError(
             f"{path} is accessible by other users and could not be made "
             "owner-only; fix its permissions or use a fresh --state-dir"

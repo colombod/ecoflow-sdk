@@ -16,7 +16,7 @@ PR #11's first replay patched `httpx` and `aiomqtt` inside the test process. Tha
   - one session per account;
   - a client-ID limit (default 10).
 - Playback of the recorded MQTT timeline in a loop, and command effects for the few keys seen live.
-- A local CA. Its private key is never saved; the server key is owner-only.
+- A local CA. Its private key is never saved. The server key is owner-only, is never written through or read from a symlink, and must belong to the current user.
 - `ecoflow-twin serve`, which prints its endpoints as JSON.
 
 ## Consequences

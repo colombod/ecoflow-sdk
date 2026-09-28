@@ -12,7 +12,8 @@ To point any SDK-based app at the twin without changing code, the SDK reads `ECO
 - **Make the override visible:**
   - `Endpoints.from_env()` logs a warning for a REST override, since requests that include the access key go to that host.
   - It logs a separate warning for a CA override, which affects trust only.
-- `rest_base` must be `https://` and must include a host, so signed requests never travel in cleartext.
+- `rest_base` must be `https://` with a host and a valid port, so signed requests never travel in cleartext and a malformed value fails at configuration time.
+- Credentials in the URL are refused, and the warning logs only `https://host:port`, so neither a log line nor an error message can repeat a secret.
 - Passing `endpoints=` explicitly bypasses the environment entirely.
 
 ## Consequences

@@ -10,11 +10,16 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Security
-- `Endpoints.from_env()` logs a warning whenever `ECOFLOW_REST_BASE` /
-  `ECOFLOW_CA_FILE` redirect the SDK (every request, including the access-key
-  header, goes there), and `Endpoints.rest_base` must be `https://`.
+- `Endpoints.from_env()` logs a warning for each override it applies:
+  `ECOFLOW_REST_BASE` redirects every REST request, including the access-key
+  header, to another host; `ECOFLOW_CA_FILE` only changes which CA is trusted for
+  TLS. The warning names only the override's `https://host:port`.
+  `Endpoints.rest_base` must be `https://` with a host and a valid port, and must
+  not contain credentials.
 - Twin: `server.key` is written owner-only (`0600`), and keys from older runs are
-  tightened on reuse. The server certificate is valid for EcoFlow's real host
+  tightened on reuse. The twin never writes through, or serves, a symlinked
+  `ca.pem` / `server.pem` / `server.key`, and it refuses a key owned by another
+  user. The server certificate is valid for EcoFlow's real host
   names; `docs/api/digital-twin.md` now says to trust `ca.pem` per process only.
 - Recordings: masked identifiers the capture redactor missed in `live-20260928`
   (and `meshId` in `live-20260927`): LAN IPs stored as integers, serial-number

@@ -123,3 +123,38 @@ def test_ca_only_override_warns_about_trust_not_host(
 
 def test_accepts_https_host_with_port() -> None:
     assert Endpoints(rest_base="https://127.0.0.1:8443").rest_base
+
+
+@pytest.mark.parametrize(
+    "base", ["https://twin.test:abc", "https://twin.test:65536", "https://twin.test:-1"]
+)
+def test_rest_base_rejects_invalid_port(base: str) -> None:
+    with pytest.raises(ValueError, match="port"):
+        Endpoints(rest_base=base)
+
+
+@pytest.mark.parametrize(
+    "base", ["https://user:hunter2@twin.test", "https://token@twin.test"]
+)
+def test_rest_base_rejects_credentials_without_echoing_them(base: str) -> None:
+    with pytest.raises(ValueError, match="credentials") as info:
+        Endpoints(rest_base=base)
+    assert "hunter2" not in str(info.value) and "token" not in str(info.value)
+
+
+def test_override_warning_logs_only_the_origin(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Paths and queries may carry secrets; the warning names only scheme://host:port."""
+    monkeypatch.setenv(ENV_REST_BASE, "https://twin.test:8443/base?t=secret")
+    monkeypatch.delenv(ENV_CA_FILE, raising=False)
+    with caplog.at_level("WARNING", logger="ecoflow.endpoints"):
+        Endpoints.from_env()
+    assert "https://twin.test:8443" in caplog.text
+    assert "secret" not in caplog.text and "/base" not in caplog.text
+
+
+def test_rest_origin_brackets_ipv6() -> None:
+    assert (
+        Endpoints(rest_base="https://[::1]:8443/x").rest_origin == "https://[::1]:8443"
+    )

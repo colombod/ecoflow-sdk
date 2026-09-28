@@ -30,13 +30,31 @@ class Endpoints:
 
     def __post_init__(self) -> None:
         # Signed requests carry the access key; never send them in cleartext,
-        # and reject malformed values ("https:foo", "https://") up front.
+        # and reject malformed values ("https:foo", "https://", a bad port) up
+        # front. Credentials in the URL are refused so no message or log line
+        # can echo them; errors never repeat the value itself.
         if self.rest_base is not None:
             parts = urlsplit(self.rest_base)
+            try:
+                parts.port  # noqa: B018 - raises ValueError on a bad port
+            except ValueError:
+                raise ValueError("rest_base has an invalid port") from None
             if parts.scheme != "https" or not parts.hostname:
-                raise ValueError(
-                    f"rest_base must be an https://host URL, got {self.rest_base!r}"
-                )
+                raise ValueError("rest_base must be an https://host URL")
+            if parts.username is not None or parts.password is not None:
+                raise ValueError("rest_base must not contain credentials")
+
+    @property
+    def rest_origin(self) -> str | None:
+        """``https://host[:port]`` of ``rest_base``: safe to log."""
+        if self.rest_base is None:
+            return None
+        parts = urlsplit(self.rest_base)
+        port = f":{parts.port}" if parts.port is not None else ""
+        host = (
+            f"[{parts.hostname}]" if ":" in (parts.hostname or "") else parts.hostname
+        )
+        return f"{parts.scheme}://{host}{port}"
 
     @classmethod
     def from_env(cls) -> Endpoints:
@@ -56,7 +74,7 @@ class Endpoints:
                 "requests, including your access key, go there instead of "
                 "EcoFlow's cloud. Unset it unless you are using a twin.",
                 ENV_REST_BASE,
-                endpoints.rest_base,
+                endpoints.rest_origin,
             )
         if endpoints.ca_file is not None:
             _log.warning(

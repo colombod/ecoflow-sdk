@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import os
 import sys
 from pathlib import Path
 
@@ -89,3 +90,45 @@ def test_chmod_failure_is_fine_when_key_already_private(
 
     monkeypatch.setattr(Path, "chmod", fail_chmod)
     ensure_certs(tmp_path)  # must not raise
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX symlinks")
+@pytest.mark.parametrize("name", ["server.key", "server.pem", "ca.pem"])
+def test_refuses_symlink_in_state_dir(tmp_path: Path, name: str) -> None:
+    """A planted link would make the twin write its key where others can read it."""
+    target = tmp_path / "elsewhere"
+    target.write_bytes(b"not ours")
+    state = tmp_path / "state"
+    state.mkdir()
+    (state / name).symlink_to(target)
+    with pytest.raises(PermissionError, match="symlink"):
+        ensure_certs(state)
+    assert target.read_bytes() == b"not ours"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX symlinks")
+def test_refuses_symlinked_key_on_reuse(tmp_path: Path) -> None:
+    certs = ensure_certs(tmp_path)
+    moved = tmp_path / "moved.key"
+    certs.key_file.rename(moved)
+    certs.key_file.symlink_to(moved)
+    with pytest.raises(PermissionError, match="symlink"):
+        ensure_certs(tmp_path)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX ownership")
+def test_refuses_key_owned_by_another_user(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ensure_certs(tmp_path)
+    real_uid = os.getuid()
+    monkeypatch.setattr(os, "getuid", lambda: real_uid + 1)
+    with pytest.raises(PermissionError, match="another user"):
+        ensure_certs(tmp_path)
+
+
+def test_regenerates_leftovers_without_following_them(tmp_path: Path) -> None:
+    """A partial state dir is rebuilt from scratch (stale files are replaced)."""
+    (tmp_path / "server.pem").write_bytes(b"stale")
+    certs = ensure_certs(tmp_path)
+    assert certs.cert_file.read_bytes().startswith(b"-----BEGIN CERTIFICATE-----")
