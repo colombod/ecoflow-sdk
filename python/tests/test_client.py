@@ -120,7 +120,7 @@ async def test_connect_uses_certificate_account_as_mqtt_user_id() -> None:
     async def fake_mqtt_connect(self) -> None:  # type: ignore[override]
         pass
 
-    def _capture_side_effect(creds: MqttCredentials) -> AsyncMock:
+    def _capture_side_effect(creds: MqttCredentials, **_kwargs: object) -> AsyncMock:
         captured_creds.append(creds)
         return AsyncMock(connect=AsyncMock(), on_message=AsyncMock())
 
@@ -172,7 +172,7 @@ async def test_connect_registers_callbacks_before_mqtt_connect() -> None:
     call_order: list[str] = []
 
     class FakeMqttClient:
-        def __init__(self, creds: object) -> None:
+        def __init__(self, creds: object, **_kwargs: object) -> None:
             pass
 
         def on_message(self, sn: str, cb: object, **kwargs: object) -> None:
