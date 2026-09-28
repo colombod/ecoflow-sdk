@@ -34,15 +34,22 @@ class Endpoints:
         # front. Credentials in the URL are refused so no message or log line
         # can echo them; errors never repeat the value itself.
         if self.rest_base is not None:
-            parts = urlsplit(self.rest_base)
             try:
-                parts.port  # noqa: B018 - raises ValueError on a bad port
+                parts = urlsplit(self.rest_base)
+                port = parts.port  # raises ValueError on a malformed port
             except ValueError:
-                raise ValueError("rest_base has an invalid port") from None
-            if parts.scheme != "https" or not parts.hostname:
+                raise ValueError("rest_base is not a valid URL") from None
+            if port == 0:
+                raise ValueError("rest_base has an invalid port")
+            host = parts.hostname or ""
+            if parts.scheme != "https" or not host or any(c.isspace() for c in host):
                 raise ValueError("rest_base must be an https://host URL")
             if parts.username is not None or parts.password is not None:
                 raise ValueError("rest_base must not contain credentials")
+            # httpx would carry these into every request (and the signature
+            # covers the query), so they can only be a mistake.
+            if parts.query or parts.fragment:
+                raise ValueError("rest_base must not have a query or fragment")
 
     @property
     def rest_origin(self) -> str | None:

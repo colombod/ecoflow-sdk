@@ -75,7 +75,8 @@ The SDK logs a **warning** for each one that is set:
 `ECOFLOW_REST_BASE` redirects every REST request, including the access-key
 header, to that host; `ECOFLOW_CA_FILE` only changes which CA is trusted for
 TLS (requests still go to the configured host). `rest_base` must be `https://`
-with a host and a valid port, and must not contain credentials. Pass `endpoints=` explicitly in code when you want no
+with a host and a valid port, and must not contain credentials, a query or a
+fragment. Pass `endpoints=` explicitly in code when you want no
 environment involvement at all.
 
 **Keep the twin CA local.** The twin's server certificate is valid for

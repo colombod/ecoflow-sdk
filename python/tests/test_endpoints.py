@@ -126,11 +126,40 @@ def test_accepts_https_host_with_port() -> None:
 
 
 @pytest.mark.parametrize(
-    "base", ["https://twin.test:abc", "https://twin.test:65536", "https://twin.test:-1"]
+    "base",
+    [
+        "https://twin.test:abc",
+        "https://twin.test:65536",
+        "https://twin.test:-1",
+        "https://twin.test:8443:9",
+        "https://[::1",
+    ],
 )
-def test_rest_base_rejects_invalid_port(base: str) -> None:
-    with pytest.raises(ValueError, match="port"):
+def test_rest_base_rejects_malformed_url(base: str) -> None:
+    with pytest.raises(ValueError, match="not a valid URL"):
         Endpoints(rest_base=base)
+
+
+def test_rest_base_rejects_port_zero() -> None:
+    with pytest.raises(ValueError, match="port"):
+        Endpoints(rest_base="https://twin.test:0")
+
+
+def test_rest_base_rejects_whitespace_in_host() -> None:
+    with pytest.raises(ValueError, match="https"):
+        Endpoints(rest_base="https:// twin.test")
+
+
+@pytest.mark.parametrize("base", ["https://twin.test?x=1", "https://twin.test#frag"])
+def test_rest_base_rejects_query_and_fragment(base: str) -> None:
+    with pytest.raises(ValueError, match="query or fragment"):
+        Endpoints(rest_base=base)
+
+
+def test_rest_base_accepts_a_path_prefix() -> None:
+    assert Endpoints(rest_base="https://twin.test:8443/base/").rest_origin == (
+        "https://twin.test:8443"
+    )
 
 
 @pytest.mark.parametrize(
@@ -145,8 +174,8 @@ def test_rest_base_rejects_credentials_without_echoing_them(base: str) -> None:
 def test_override_warning_logs_only_the_origin(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Paths and queries may carry secrets; the warning names only scheme://host:port."""
-    monkeypatch.setenv(ENV_REST_BASE, "https://twin.test:8443/base?t=secret")
+    """A path may carry a secret; the warning names only scheme://host:port."""
+    monkeypatch.setenv(ENV_REST_BASE, "https://twin.test:8443/base/secret-token/")
     monkeypatch.delenv(ENV_CA_FILE, raising=False)
     with caplog.at_level("WARNING", logger="ecoflow.endpoints"):
         Endpoints.from_env()

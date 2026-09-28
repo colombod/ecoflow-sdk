@@ -15,7 +15,7 @@ This project uses [semantic versioning](https://semver.org/).
   header, to another host; `ECOFLOW_CA_FILE` only changes which CA is trusted for
   TLS. The warning names only the override's `https://host:port`.
   `Endpoints.rest_base` must be `https://` with a host and a valid port, and must
-  not contain credentials.
+  not contain credentials, a query or a fragment.
 - Twin: `server.key` is written owner-only (`0600`), and keys from older runs are
   tightened on reuse. The twin never writes through, or serves, a symlinked
   `ca.pem` / `server.pem` / `server.key`, and it refuses a key owned by another
