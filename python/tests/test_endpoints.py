@@ -93,7 +93,33 @@ def test_no_warning_without_override(
     assert caplog.text == ""
 
 
-@pytest.mark.parametrize("base", ["http://twin.test", "twin.test", "ftp://twin.test"])
+@pytest.mark.parametrize(
+    "base",
+    [
+        "http://twin.test",
+        "twin.test",
+        "ftp://twin.test",
+        "https:foo",
+        "https://",
+        "https:///x",
+    ],
+)
 def test_rest_base_must_be_https(base: str) -> None:
     with pytest.raises(ValueError, match="https"):
         Endpoints(rest_base=base)
+
+
+def test_ca_only_override_warns_about_trust_not_host(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Only the trusted CA changes; requests still go to EcoFlow."""
+    monkeypatch.delenv(ENV_REST_BASE, raising=False)
+    monkeypatch.setenv(ENV_CA_FILE, "/tmp/twin-ca.pem")
+    with caplog.at_level("WARNING", logger="ecoflow.endpoints"):
+        Endpoints.from_env()
+    assert "/tmp/twin-ca.pem" in caplog.text and "trust" in caplog.text
+    assert "access key" not in caplog.text
+
+
+def test_accepts_https_host_with_port() -> None:
+    assert Endpoints(rest_base="https://127.0.0.1:8443").rest_base

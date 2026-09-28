@@ -29,30 +29,40 @@ class Endpoints:
     ca_file: str | None = None
 
     def __post_init__(self) -> None:
-        # Signed requests carry the access key; never send them in cleartext.
-        if self.rest_base is not None and urlsplit(self.rest_base).scheme != "https":
-            raise ValueError(
-                f"rest_base must be an https:// URL, got {self.rest_base!r}"
-            )
+        # Signed requests carry the access key; never send them in cleartext,
+        # and reject malformed values ("https:foo", "https://") up front.
+        if self.rest_base is not None:
+            parts = urlsplit(self.rest_base)
+            if parts.scheme != "https" or not parts.hostname:
+                raise ValueError(
+                    f"rest_base must be an https://host URL, got {self.rest_base!r}"
+                )
 
     @classmethod
     def from_env(cls) -> Endpoints:
         """``ECOFLOW_REST_BASE`` / ``ECOFLOW_CA_FILE``; unset means EcoFlow's cloud.
 
-        An override redirects every request, including the access key header,
-        and changes which CA is trusted, so it is logged as a warning.
+        Each override is logged as a warning: ``ECOFLOW_REST_BASE`` redirects
+        every request, including the access-key header; ``ECOFLOW_CA_FILE``
+        changes which CA is trusted (the host stays EcoFlow's).
         """
         endpoints = cls(
             rest_base=os.environ.get(ENV_REST_BASE) or None,
             ca_file=os.environ.get(ENV_CA_FILE) or None,
         )
-        if endpoints != cls():
+        if endpoints.rest_base is not None:
             _log.warning(
-                "EcoFlow endpoints overridden from the environment "
-                "(%s=%s, %s=%s): requests, including your access key, go there "
-                "instead of EcoFlow's cloud. Unset them unless you are using a twin.",
+                "EcoFlow REST host overridden from the environment (%s=%s): "
+                "requests, including your access key, go there instead of "
+                "EcoFlow's cloud. Unset it unless you are using a twin.",
                 ENV_REST_BASE,
                 endpoints.rest_base,
+            )
+        if endpoints.ca_file is not None:
+            _log.warning(
+                "EcoFlow TLS trust overridden from the environment (%s=%s): "
+                "connections trust that CA instead of the system store. Unset "
+                "it unless you are using a twin.",
                 ENV_CA_FILE,
                 endpoints.ca_file,
             )

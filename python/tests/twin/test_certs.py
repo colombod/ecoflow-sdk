@@ -61,3 +61,31 @@ def test_reused_key_is_tightened(tmp_path: Path) -> None:
     certs.key_file.chmod(0o644)  # as written by older versions
     ensure_certs(tmp_path)
     assert certs.key_file.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_refuses_shared_key_that_cannot_be_tightened(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    certs = ensure_certs(tmp_path)
+    certs.key_file.chmod(0o644)
+
+    def fail_chmod(self: Path, mode: int) -> None:
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(Path, "chmod", fail_chmod)
+    with pytest.raises(PermissionError, match="owner-only"):
+        ensure_certs(tmp_path)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_chmod_failure_is_fine_when_key_already_private(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ensure_certs(tmp_path)  # key is 0600
+
+    def fail_chmod(self: Path, mode: int) -> None:
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(Path, "chmod", fail_chmod)
+    ensure_certs(tmp_path)  # must not raise

@@ -12,6 +12,7 @@ import datetime as dt
 import ipaddress
 import os
 import ssl
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -132,8 +133,19 @@ def ensure_certs(state_dir: Path) -> TwinCerts:
 
 
 def _restrict(path: Path) -> None:
-    """Make *path* readable by its owner only (no-op where chmod is limited)."""
+    """Make *path* readable by its owner only, or refuse to use it.
+
+    On POSIX a key that stays group/world-accessible (e.g. on a read-only
+    mount where chmod fails) must not be served. Windows has no POSIX modes,
+    so there the best effort is kept.
+    """
     try:
         path.chmod(0o600)
-    except OSError:  # pragma: no cover - e.g. some Windows filesystems
-        pass
+    except OSError:
+        if sys.platform == "win32":  # pragma: no cover - no POSIX modes
+            return
+    if sys.platform != "win32" and path.stat().st_mode & 0o077:
+        raise PermissionError(
+            f"{path} is accessible by other users and could not be made "
+            "owner-only; fix its permissions or use a fresh --state-dir"
+        )
