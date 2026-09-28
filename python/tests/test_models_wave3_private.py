@@ -292,3 +292,23 @@ class TestRealDevicePayloads:
         """Standby draw: ~1.54 W AC power even when not cooling."""
         status = Wave3Status.from_mqtt_payload(STANDBY_PAYLOAD)
         assert status.ac_power_watts == pytest.approx(1.54, abs=0.1)  # pyright: ignore[reportUnknownMemberType]
+
+
+# Recorded live 2026-09-28 (Wave 3 on a STREAM Ultra outlet, battery 90 %).
+def test_wave3_reads_ac_plug_and_runtime_electricals() -> None:
+    from ecoflow.models.wave3 import Wave3Status
+
+    status = Wave3Status.from_mqtt_payload(
+        {
+            "pow_get_ac": 41.55,
+            "plug_in_info_ac_in_flag": 1,
+            "plug_in_info_ac_in_vol": 247.0,
+            "bms_batt_vol": 53470.0,
+            "bms_batt_amp": -79.0,
+        }
+    )
+    assert status.ac_plugged_in is True
+    assert status.ac_power_watts == pytest.approx(41.55)  # pyright: ignore[reportUnknownMemberType]
+    assert status.ac_input_voltage == pytest.approx(247.0)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_voltage == pytest.approx(53.47)  # pyright: ignore[reportUnknownMemberType]
+    assert status.battery_current_amps == pytest.approx(-0.079)  # pyright: ignore[reportUnknownMemberType]
