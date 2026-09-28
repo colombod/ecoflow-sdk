@@ -10,6 +10,12 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Wave 3: the decoder now reads the runtime message (`cmd_id 22`), which carries AC input
+  voltage and battery voltage/current. New `ac_plugged_in`, `ac_input_voltage`,
+  `battery_voltage`, `battery_current_amps`. `Wave3Device` withholds its status until
+  the battery level has arrived, so there are no more placeholder "0 % / off"
+  readings. `ac_input_power_watts` is documented as not sent by the firmware; the
+  AC power is `ac_power_watts`. All verified live.
 - `Wave3Connection.connect()` fails fast with a clear `EcoFlowConnectionError`
   on MQTT 135 at first connect, instead of retrying into a generic timeout.
 - Wave 3 private-API MQTT connects again: the client ID is back to the

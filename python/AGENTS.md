@@ -348,6 +348,34 @@ display or act on `battery_soc` if `is_on` is `False`.
 
 ---
 
+### Quirk 12b: The Full State Dump Arrives on the Device's Schedule (recorded 2026-09-28)
+
+**Evidence:** 5 separate sessions recorded on 2026-09-28, with the EcoFlow app closed. The full
+display message (`cmd_func 254 / cmd_id 21`, ~50 fields including `bms_batt_soc`) arrived
+within 7 s in some sessions and **not within 66 s** in others. That held even when the GET
+trigger (Quirk 8) was re-sent every 8 s, and with `operateType: "latestQuotas"` instead of
+`"get"`. In between, the Wave 3 sends:
+
+| Message | Content |
+|---------|---------|
+| `254/21`, 4 bytes | a single field (`bms_dsg_rem_time`) |
+| `254/22` runtime | ~50 fields: `plug_in_info_ac_in_vol` (V), `bms_batt_vol` (mV), `bms_batt_amp` (mA, negative = discharge), BMS alarms and firmware. **The decoder discarded it before 2026-09-28.** |
+| `32/50` every ~10 s | another module. Decoded with the Wave 3 schemas it produces nonsense (e.g. 99.99 W "AC in"); ignore it. |
+
+**Consequences:**
+
+- `Wave3Device` publishes no status until the SOC has been seen. Before that, the first partial
+  messages read as "0 % / off" for ~20 s.
+- Don't spam GETs to force a dump; it doesn't help (see the owner's rule on not blasting the
+  service).
+- `pow_get_ac_in` is **never sent**: it read 0 while the unit charged at ~700 W from AC. The AC
+  power is `pow_get_ac` (equal to self-consumption while running from AC), and
+  `plug_in_info_ac_in_flag` says whether AC is connected.
+- `pow_get_bms` is positive when charging and negative when discharging. Verified by switching
+  the unit's feeding STREAM outlet off (−18 W) and on (+700 W).
+
+---
+
 ## 🚨 STREAM DEVICE QUIRKS
 
 ### Quirk 13: Commands Need Full Envelope (dirDest/dirSrc/dest/needAck/from/id/version)
