@@ -2,9 +2,10 @@
 
 * MQTT and REST agree: for each comparable device, the status decoded from the
   recorded MQTT pushes (through the real ``MqttTransport.dispatch_message``)
-  matches the status from a REST refresh served by the replay server.
-* The replay server is a faithful gatekeeper: wrong secrets and the
-  JSON-Content-Type-on-GET mistake are rejected with 8521, like the real API.
+  matches the status from a REST refresh served by the service twin
+  (``ecoflow_twin``) over real HTTPS.
+* The twin is a faithful gatekeeper: a wrong secret is rejected with 8521.
+  (Signature rules, the Content-Type trap and broker rules: tests/twin/.)
 * PII guard: nothing identifying may be committed.
 * The redactor in scripts/capture_vectors.py does what the guard expects.
 """
@@ -18,29 +19,25 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
-import httpx
 import pytest
 
-from ecoflow.auth import EcoFlowCredentials, build_auth_headers
+from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
+from ecoflow.endpoints import Endpoints
 from ecoflow.exceptions import EcoFlowError
 from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
 from ecoflow.transport.rest import RestTransport
-from tests.support import replay as replay_module
+from ecoflow_twin import TWIN_ACCESS_KEY, TWIN_ACCOUNT, TWIN_SECRET_KEY, TwinServer
+from ecoflow_twin.recording import Recording
 from tests.support.consistency import CHECKS, compare
-from tests.support.replay import (
-    RECORDINGS_DIR,
-    REPLAY_ACCESS_KEY,
-    REPLAY_ACCOUNT,
-    REPLAY_SECRET_KEY,
-    Recording,
-    ReplaySession,
-    discover_recordings,
-    quota_topic,
-)
+from tests.support.recordings import RECORDINGS_DIR, all_recordings
 
-RECORDINGS = discover_recordings()
+RECORDINGS = all_recordings()
 PLACEHOLDER_SN = re.compile(r"^[A-Z0-9]{4}X+[0-9]{2}$")
+
+
+def quota_topic(sn: str) -> str:
+    return f"/open/{TWIN_ACCOUNT}/{sn}/quota"
 
 
 def _current(device: Any) -> Any:  # noqa: ANN401
@@ -61,19 +58,23 @@ def _typed(client: EcoFlowClient) -> dict[str, Any]:
 
 def _transport() -> MqttTransport:
     """An unconnected transport, used only for its real dispatch/normalisation."""
-    creds = MqttCredentials(
-        "replay.invalid", 8883, "mqtts", "u", "p", "c", REPLAY_ACCOUNT
-    )
+    creds = MqttCredentials("twin.invalid", 8883, "mqtts", "u", "p", "c", TWIN_ACCOUNT)
     return MqttTransport(creds)
 
 
-async def _rest_only_status(sn: str) -> Any:  # noqa: ANN401
-    """REST-only status from a separate client (inside an active ReplaySession).
+def _rest_client(endpoints: Endpoints) -> EcoFlowClient:
+    return EcoFlowClient(
+        TWIN_ACCESS_KEY, TWIN_SECRET_KEY, enable_mqtt=False, endpoints=endpoints
+    )
+
+
+async def _rest_only_status(endpoints: Endpoints, sn: str) -> Any:  # noqa: ANN401
+    """REST-only status from a separate client.
 
     Not ``device.refresh()`` on the MQTT-fed device: STREAM refresh merges REST
     into the MQTT state, which would compare the pushes with themselves.
     """
-    client = EcoFlowClient(REPLAY_ACCESS_KEY, REPLAY_SECRET_KEY, enable_mqtt=False)
+    client = _rest_client(endpoints)
     await client.connect()
     try:
         return await _typed(client)[sn].refresh()
@@ -95,9 +96,12 @@ def test_recordings_exist() -> None:
 
 
 @pytest.mark.parametrize(("recording", "sn"), _device_cases())
-async def test_mqtt_pushes_agree_with_rest(recording: Recording, sn: str) -> None:
-    with ReplaySession(recording):
-        client = EcoFlowClient(REPLAY_ACCESS_KEY, REPLAY_SECRET_KEY, enable_mqtt=False)
+async def test_mqtt_pushes_agree_with_rest(
+    recording: Recording, sn: str, tmp_path: Path
+) -> None:
+    async with TwinServer(recording, state_dir=tmp_path) as twin:
+        endpoints = twin.sdk_endpoints()
+        client = _rest_client(endpoints)
         await client.connect()
         try:
             device = _typed(client).get(sn)
@@ -110,7 +114,7 @@ async def test_mqtt_pushes_agree_with_rest(recording: Recording, sn: str) -> Non
             mqtt_status = _current(device)
             if str(recording.quota.get(sn, {}).get("code")) != "0":
                 pytest.skip(f"{sn[:4]}: REST quota not available (e.g. Wave 3 → 1006)")
-            rest_status = await _rest_only_status(sn)
+            rest_status = await _rest_only_status(endpoints, sn)
         finally:
             await client.disconnect()
     if type(rest_status) not in CHECKS:
@@ -122,80 +126,32 @@ async def test_mqtt_pushes_agree_with_rest(recording: Recording, sn: str) -> Non
     assert result.ok, f"compared={result.compared} mismatches={result.mismatches}"
 
 
-async def test_replay_detects_unnormalised_envelope() -> None:
+async def test_replay_detects_unnormalised_envelope(tmp_path: Path) -> None:
     """Negative control: without envelope unwrapping, the comparison must fail."""
     recording = next(r for r in RECORDINGS if r.name == "synthetic")
     sn = next(s for s in recording.serials if s.startswith("HW52"))  # enveloped
-    with ReplaySession(recording):
-        client = EcoFlowClient(REPLAY_ACCESS_KEY, REPLAY_SECRET_KEY, enable_mqtt=False)
+    async with TwinServer(recording, state_dir=tmp_path) as twin:
+        endpoints = twin.sdk_endpoints()
+        client = _rest_client(endpoints)
         await client.connect()
         try:
             device = _typed(client)[sn]
             for push in recording.pushes(sn):
                 device._handle_message(sn, push)  # noqa: SLF001 — bypasses normalisation
-            result = compare(_current(device), await _rest_only_status(sn))
+            result = compare(_current(device), await _rest_only_status(endpoints, sn))
         finally:
             await client.disconnect()
     assert not result.ok
 
 
-# ---------------------------------------------------------------------------
-# The replay server enforces EcoFlow's signing rules
-# ---------------------------------------------------------------------------
-
-
-async def test_replay_rejects_wrong_secret() -> None:
-    recording = RECORDINGS[0]
-    with ReplaySession(recording) as session:
-        creds = EcoFlowCredentials(REPLAY_ACCESS_KEY, "not-the-secret")
-        async with RestTransport(creds) as rest:
+async def test_twin_rejects_wrong_secret(tmp_path: Path) -> None:
+    server = TwinServer(RECORDINGS[0], state_dir=tmp_path)
+    async with server as twin:
+        creds = EcoFlowCredentials(TWIN_ACCESS_KEY, "not-the-secret")
+        async with RestTransport(creds, endpoints=twin.sdk_endpoints()) as rest:
             with pytest.raises(EcoFlowError, match="8521"):
-                await rest.get_quota(recording.serials[0])
-    assert session.rejections == 1
-
-
-async def test_replay_rejects_json_content_type_on_signed_get() -> None:
-    """Mirrors the live API (2026-09-27): that header drops the query from the
-    signature check, so a correctly param-signed GET fails with 8521."""
-    recording = RECORDINGS[0]
-    sn = recording.serials[0]
-    creds = EcoFlowCredentials(REPLAY_ACCESS_KEY, REPLAY_SECRET_KEY)
-    url = "https://api-e.ecoflow.com/iot-open/sign/device/quota/all"
-    with ReplaySession(recording) as session:
-        async with httpx.AsyncClient() as http:
-            plain = await http.get(
-                url, params={"sn": sn}, headers=build_auth_headers(creds, {"sn": sn})
-            )
-            with_json = await http.get(
-                url,
-                params={"sn": sn},
-                headers={
-                    **build_auth_headers(creds, {"sn": sn}),
-                    "Content-Type": "application/json",
-                },
-            )
-    assert plain.json()["code"] != "8521"
-    assert with_json.json()["code"] == "8521"
-    assert session.rejections == 1
-
-
-def test_replay_signature_is_independent_of_sdk() -> None:
-    source = Path(replay_module.__file__).read_text(encoding="utf-8")
-    assert not re.search(r"^\s*(from|import)\s+ecoflow\.auth", source, re.MULTILINE)
-
-
-async def test_fake_broker_loops_and_filters_by_subscription() -> None:
-    recording = next(r for r in RECORDINGS if r.name == "synthetic")
-    sn = recording.serials[0]
-    session = ReplaySession(recording, speed=1000)
-    await session.broker.subscribe(quota_topic(sn))
-    seen: list[str] = []
-    async for message in session.broker.messages:
-        seen.append(message.topic)
-        if len(seen) > len(recording.pushes(sn)):
-            break
-    assert set(seen) == {quota_topic(sn)}  # only subscribed topics
-    assert len(seen) > len(recording.pushes(sn))  # the timeline loops
+                await rest.get_quota(RECORDINGS[0].serials[0])
+    assert server.rest_stats.rejections == 1
 
 
 # ---------------------------------------------------------------------------
