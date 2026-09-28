@@ -1289,7 +1289,8 @@ async def test_wave3_is_1006_and_meter_is_empty(client: Any) -> None:
     w = await (await c.get("/iot-open/sign/device/quota/all", params={"sn": wave}, headers=_signed({"sn": wave}))).json()
     m = await (await c.get("/iot-open/sign/device/quota/all", params={"sn": meter}, headers=_signed({"sn": meter}))).json()
     assert w["code"] == "1006"
-    assert m["code"] == "0" and m["data"] == {}
+    # Recorded live: code 0 with NO data field at all (not an empty dict).
+    assert m["code"] == "0" and "data" not in m
 
 
 async def test_wrong_secret_is_8521_and_counted(client: Any) -> None:
