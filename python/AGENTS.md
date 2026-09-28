@@ -362,6 +362,18 @@ trigger (Quirk 8) was re-sent every 8 s, and with `operateType: "latestQuotas"` 
 | `254/22` runtime | ~50 fields: `plug_in_info_ac_in_vol` (V), `bms_batt_vol` (mV), `bms_batt_amp` (mA, negative = discharge), BMS alarms and firmware. **The decoder discarded it before 2026-09-28.** |
 | `32/50` every ~10 s | another module. Decoded with the Wave 3 schemas it produces nonsense (e.g. 99.99 W "AC in"); ignore it. |
 
+**Measured cadence (10-minute passive recording, 2026-09-28):** the full display message arrived
+at 60, 180, 300, 421 and 541 s, **exactly every 120 s**. The runtime message `254/22` arrives every
+300 s. Changed fields arrive every ~2 s. One `latestQuotas` request with the
+`/app/{userId}/{sn}/thing/property/get_reply` topic subscribed (the reference integration's method)
+got **no reply** from the Wave 3.
+
+**Verified reliable usage (live outlet test, 2026-09-28):** with one long-lived session, the first
+complete status arrived at 31 s (SOC 89.43 %). Switching the feeding STREAM Ultra outlet (AC2,
+`relay3`) off showed `ac_plugged_in=False` and battery power −18 W within ~2 s, and the next full
+upload showed the SOC falling (89.43 → 89.26 %). Switching it back on showed charging ramp to +701 W
+within 12 s.
+
 **Consequences:**
 
 - `Wave3Device` publishes no status until the SOC has been seen. Before that, the first partial
