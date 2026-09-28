@@ -68,11 +68,63 @@ RECORDINGS_DIR = ROOT / "tests" / "recordings"
 
 # Keys whose values identify the owner, a device or a place. Matched against
 # the last segment of dotted keys too ("2_1.staIpAddr" → "staIpAddr").
-_IDENTIFYING_KEY = re.compile(
-    r"(^|[._])(sn|\w*Sn|mac|\w*Mac|ssid|\w*Ssid|wifi\w*|ip|\w*Ip|\w*Addr|"
-    r"lat|lng|lon|latitude|longitude|email|userId|\w*Account|deviceName|name)$",
-    re.IGNORECASE,
+# A key is identifying if ANY of its words (camelCase/_/. split) is one of
+# these. Matching only a key's suffix missed iotIpAddress, snSuffix,
+# iotLan2EncKeySummary, meshId and systemGroupId in live-20260928 (LAN IPs
+# stored as ints, serial tails, key fingerprints, installation IDs).
+IDENTIFYING_WORDS = frozenset(
+    {
+        "sn",
+        "serial",
+        "mac",
+        "bssid",
+        "ssid",
+        "ip",
+        "ipv4",
+        "ipv6",
+        "addr",
+        "address",
+        "gateway",
+        "lat",
+        "lng",
+        "lon",
+        "latitude",
+        "longitude",
+        "gps",
+        "location",
+        "email",
+        "user",
+        "account",
+        "name",
+        "token",
+        "secret",
+        "password",
+        "passwd",
+        "cert",
+        "key",
+        "mesh",
+        "group",
+        "timezone",
+        "tz",
+        "uid",
+        "uuid",
+        "hash",
+        "summary",
+    }
 )
+# Needed for device routing; not identifying.
+NON_IDENTIFYING_KEYS = frozenset({"productName"})
+_KEY_WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+")
+
+
+def is_identifying_key(key: str) -> bool:
+    """True if any word of the key's last segment is an identifying word."""
+    last = key.rsplit(".", 1)[-1]
+    if last in NON_IDENTIFYING_KEYS:
+        return False
+    return any(w.lower() in IDENTIFYING_WORDS for w in _KEY_WORD.findall(last))
+
+
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
 _IPV4 = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")
 _MAC = re.compile(
@@ -108,11 +160,7 @@ class Redactor:
             return [self(v, key) for v in cast(list[Any], value)]
         if isinstance(value, bool):
             return value  # never identifying
-        if (
-            key
-            and _IDENTIFYING_KEY.search(key)
-            and isinstance(value, str | int | float)
-        ):
+        if key and is_identifying_key(key) and isinstance(value, str | int | float):
             self.masked_keys.add(key)
             if isinstance(value, str):
                 return self._map.get(
