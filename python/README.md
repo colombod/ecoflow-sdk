@@ -172,7 +172,21 @@ asyncio.run(main())
 | [Architecture Overview](docs/diagrams/overview.svg) | System architecture diagram |
 | [Device Model](docs/diagrams/device-model.svg) | Device class hierarchy + capabilities |
 | [Auth Flow](docs/diagrams/auth-flow.svg) | Authentication flow for both APIs |
-| [AGENTS.md](AGENTS.md) | Guide for AI agents and contributors |
+| [Digital twin](docs/api/digital-twin.md) | Develop and test without EcoFlow's cloud: protocols, flows, emulated behaviour |
+| [Live testing](docs/api/live-testing.md) | Tiered live tests, recording real sessions, redaction |
+| [AGENTS.md](AGENTS.md) | Guide for AI agents and contributors (every quirk found live) |
+
+---
+
+## Develop and test without EcoFlow's cloud
+
+```bash
+uv run ecoflow-twin serve --recording tests/recordings/live-20260928/recording.json
+```
+
+This starts a local **service twin**: real HTTPS + MQTT/TLS, replaying a recorded session of real
+devices. Export the printed `env` block and any SDK-based app runs against it unchanged, with no
+keys, no rate limits and no hardware side effects. See [docs/api/digital-twin.md](docs/api/digital-twin.md).
 
 ---
 
@@ -184,7 +198,8 @@ cd ecoflow-sdk/python
 uv sync --all-extras
 
 uv run pytest -m "not integration and not write_integration" -q   # unit tests
-uv run pytest -m integration -v -s --timeout=60                   # E2E (needs tests/.env)
+uv run pytest tests/e2e --live=replay -v                          # E2E against the twin (no keys)
+uv run pytest tests/e2e/test_live_rest.py --live=rest -v -s        # live, REST only (needs tests/.env)
 uv run ruff check . && uv run ruff format --check .               # lint + format
 uv run pyright                                                     # type check
 ```

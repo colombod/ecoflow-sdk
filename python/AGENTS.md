@@ -37,6 +37,18 @@ src/ecoflow/
     ├── auth.py       — login(email, password) → PrivateCredentials (2-step, base64 password)
     ├── connection.py — Wave3Connection (direct aiomqtt, Protobuf, stable client IDs)
     └── proto/        — decoder.py, encoder.py, wave3_pb2.py (vendored Protobuf schema)
+
+src/ecoflow_twin/     — Service digital twin (extra: twin). Never imported by ecoflow.
+├── recording.py      — Load/validate tests/recordings/*/recording.json
+├── timeline.py       — Time-compressed, looping playback of recorded pushes
+├── certs.py          — Local CA + server cert (SANs: localhost/127.0.0.1/EcoFlow hosts)
+├── signing.py        — EcoFlow's REST signature rule, independent of ecoflow.auth
+├── state.py          — Recorded bodies + command effects (only live-verified ones)
+├── rest.py           — HTTPS Developer API (aiohttp): list, quota/all, certification
+├── mqtt_codec.py     — MQTT 3.1.1 packet codec (EcoFlow's client subset)
+├── broker.py         — MQTT broker: Quirk 1/2/3 refusals (CONNACK 5 = 135), playback, /set
+├── server.py         — TwinServer / TwinEndpoints: compose on local TLS ports
+└── cli.py            — ecoflow-twin serve --recording PATH  (prints endpoints as JSON)
 ```
 
 ### Device Classes (`devices/`)
@@ -83,10 +95,11 @@ tests/
 ├── test_*.py                         — Unit tests (mocked, no real devices, ~400 tests)
 │   ├── test_models_wave3_private.py  — ACTIVE_PAYLOAD/STANDBY_PAYLOAD fixtures from real device
 │   ├── test_private_decoder.py       — XOR decryption + Protobuf dispatch tests
-│   └── test_recordings.py            — Per-recording MQTT-vs-REST agreement, replay-server checks, PII guard
+│   └── test_recordings.py            — Per-recording MQTT-vs-REST agreement over the twin, PII guard
 ├── conftest.py                       — --live tier gate + credential helpers
 ├── support/consistency.py            — MQTT-vs-REST stable-field comparison (live + offline)
-├── support/replay.py                 — ReplaySession: fake REST server (verifies signatures) + fake broker
+├── support/recordings.py             — RECORDINGS_DIR / all_recordings() for the suites
+├── twin/                             — Service twin unit + behaviour tests (real aiomqtt/httpx clients)
 ├── recordings/<name>/recording.json  — Redacted real sessions (+ synthetic/) replayed by --live=replay
 └── e2e/
     ├── conftest.py                   — public_creds / rest_client / mqtt_client fixtures
@@ -536,8 +549,11 @@ uv run pytest -m "not integration and not write_integration" -q
 uv run pytest tests/e2e/test_live_rest.py --live=rest -v -s     # REST only, HA-safe
 uv run pytest tests/e2e -m integration --live=mqtt -v -s        # takes MQTT session
 
-# Replay the live REST/MQTT modules offline against tests/recordings/ (what CI runs)
+# Replay the live REST/MQTT modules against the service twin (what CI runs)
 uv run pytest tests/e2e --live=replay -v
+
+# Run the service twin for an app or agent (docs/api/digital-twin.md)
+uv run ecoflow-twin serve --recording tests/recordings/live-20260928/recording.json
 
 # Record a redacted session for replay (REST-only by default; --mqtt-seconds N takes
 # the MQTT session). Owner reviews + approves before commit.
