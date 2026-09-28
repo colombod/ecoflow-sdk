@@ -44,7 +44,8 @@ def decode(raw: bytes) -> dict[str, Any]:
     Pipeline:
     1. Parse outer Wave3SetMessage envelope.
     2. XOR-decrypt pdata if enc_type==1 and src!=32.
-    3. Dispatch inner message by cmd_func/cmd_id — cmd_ids 1 and 21 only.
+    3. Dispatch inner message by cmd_func/cmd_id — 254/1 and 254/21 (display),
+       254/22 (runtime).
     4. Flatten proto fields to dict via ListFields().
     5. Extract per-mode setpoints from wave_mode_info.
 
@@ -64,6 +65,12 @@ def decode(raw: bytes) -> dict[str, Any]:
         cmd_id = getattr(h, "cmd_id", 0)
         if cmd_func == 254 and cmd_id in (1, 21):
             inner: Any = wave3_pb2.Wave3DisplayPropertyUpload()  # type: ignore[attr-defined]
+        elif cmd_func == 254 and cmd_id == 22:
+            # QUIRK (recorded live 2026-09-28): AC input voltage and battery
+            # voltage/current arrive only in this runtime message, which was
+            # previously discarded. cmd_func 32 messages come from another
+            # module and decode to nonsense with these schemas — keep ignoring.
+            inner = wave3_pb2.Wave3RuntimePropertyUpload()  # type: ignore[attr-defined]
         else:
             return {}
         inner.ParseFromString(pdata)

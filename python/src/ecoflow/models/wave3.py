@@ -63,8 +63,19 @@ class Wave3Status:
     input_power_watts: float = 0.0  # pow_in_sum_w
     output_power_watts: float = 0.0  # pow_out_sum_w
     ac_power_watts: float = 0.0  # pow_get_ac
+    """AC-side power (W). Recorded live 2026-09-28: equals self-consumption
+    (41.6 W) while running from the AC outlet — the only AC power figure this
+    firmware sends."""
     ac_input_power_watts: float = 0.0  # pow_get_ac_in
+    """Not sent by current firmware (observed 0 while charging at ~700 W from
+    AC, 2026-09-28). Use ``ac_power_watts`` / ``ac_plugged_in``."""
     battery_power_watts: float = 0.0  # pow_get_bms
+    """Battery power (W): POSITIVE = charging, NEGATIVE = discharging (verified
+    live: +700 W recharging from AC, -18 W with the AC outlet switched off)."""
+    ac_plugged_in: bool = False  # plug_in_info_ac_in_flag
+    ac_input_voltage: float = 0.0  # plug_in_info_ac_in_vol (V) — runtime msg 254/22
+    battery_voltage: float = 0.0  # bms_batt_vol mV -> V — runtime msg 254/22
+    battery_current_amps: float = 0.0  # bms_batt_amp mA -> A (negative = discharge)
     pv_power_watts: float = 0.0  # pow_get_pv
     self_consume_watts: float = 0.0  # pow_get_self_consume
     water_level: int = 0  # condensate_water_level (0-100%)
@@ -124,6 +135,10 @@ class Wave3Status:
             ac_power_watts=float(payload.get("pow_get_ac", 0.0)),
             ac_input_power_watts=float(payload.get("pow_get_ac_in", 0.0)),
             battery_power_watts=float(payload.get("pow_get_bms", 0.0)),
+            ac_plugged_in=bool(payload.get("plug_in_info_ac_in_flag", 0)),
+            ac_input_voltage=float(payload.get("plug_in_info_ac_in_vol", 0.0)),
+            battery_voltage=float(payload.get("bms_batt_vol", 0.0)) / 1000.0,
+            battery_current_amps=float(payload.get("bms_batt_amp", 0.0)) / 1000.0,
             pv_power_watts=float(payload.get("pow_get_pv", 0.0)),
             self_consume_watts=float(payload.get("pow_get_self_consume", 0.0)),
             water_level=int(payload.get("condensate_water_level", 0)),
