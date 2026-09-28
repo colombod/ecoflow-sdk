@@ -54,7 +54,7 @@ Response fields you actually need:
     "port": "8883",
     "protocol": "mqtts",
     "certificateAccount": "open-0123456789abcdef...",
-    "certificatePassword": "REDACTED..."
+    "certificatePassword": "REDACTED"
   }
 }
 ```
@@ -336,7 +336,7 @@ Successful response:
   "code": "0",
   "data": {
     "certificateAccount": "open-012345...",
-    "certificatePassword": "REDACTED..."
+    "certificatePassword": "REDACTED"
   }
 }
 ```

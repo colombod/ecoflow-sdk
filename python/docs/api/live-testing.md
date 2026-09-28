@@ -20,6 +20,12 @@ Fill in `tests/.env`:
 | `ECOFLOW_REGION` | `EU` or `US` |
 | `ECOFLOW_EMAIL`, `ECOFLOW_PASSWORD`, `ECOFLOW_WAVE3_SN` | Wave 3 private-API tests only |
 
+**Real serial numbers live only in `tests/.env`** (gitignored): `ECOFLOW_WAVE3_SN`,
+`ECOFLOW_STREAM_ULTRA_SN`, `ECOFLOW_STREAM_AC_PRO_SN`, `ECOFLOW_SMART_METER_SN`. Live runs
+and recording refreshes need them. Committed files — code, docs, recordings, commit
+messages — use placeholders only (`BK11XXXXXXXXXX01`); the PII guard in
+`tests/test_recordings.py` enforces this for recordings.
+
 A plain `uv run pytest` **never** runs live tests, even with `tests/.env`
 present — every live test needs an explicit `--live` tier.
 
