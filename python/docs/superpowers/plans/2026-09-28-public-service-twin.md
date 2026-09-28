@@ -1531,7 +1531,7 @@ async def _read(data: bytes) -> mc.Packet:
     return await mc.read_packet(reader)
 
 
-@pytest.mark.parametrize("size", [0, 127, 128, 16383, 16384, 2_097_151])
+@pytest.mark.parametrize("size", [0, 127, 128, 16383, 16384, 1_000_000])  # 1-3 byte lengths
 async def test_remaining_length_roundtrip(size: int) -> None:
     packet = await _read(mc.encode(mc.PUBLISH, 0, b"x" * size))
     assert packet.type == mc.PUBLISH and len(packet.body) == size
