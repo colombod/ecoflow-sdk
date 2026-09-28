@@ -64,22 +64,26 @@ uv run pytest tests/e2e --live=replay -v      # what CI runs — no network, no 
 `test_live_mqtt.py`) once per recording in `tests/recordings/<name>/recording.json`
 and skips every other live test. The SDK code under test is the real one —
 `RestTransport`, the `MqttTransport._run` loop, envelope unwrapping, parsers and
-event streams. `tests/support/replay.py` only replaces the far ends:
+event streams. They talk to the **service twin** (`ecoflow_twin`) over real
+sockets, one twin per recording:
 
-- **REST** (respx) serves the recorded device list, the full `quota/all` bodies
-  (including error codes such as Wave 3's 1006) and a fake `certification`.
+- **HTTPS REST** serves the recorded device list, the full `quota/all` bodies
+  (including error codes such as Wave 3's 1006, and the meter's body that has
+  no `data` at all) and a `certification` that points at the twin's broker.
   Every request's signature is checked by an implementation written from the
-  spec, independent of `ecoflow.auth`; a bad one gets `8521 signature is wrong`.
-  It models the live finding that a GET with `Content-Type: application/json`
-  is verified without its query params.
-- **MQTT**: `aiomqtt.Client` becomes a fake broker that plays the recorded raw
-  pushes on the subscribed topics, time-compressed (×20) and looping, so
-  "wait for the next push" always resolves.
+  spec, independent of `ecoflow.auth`, including the `Content-Type` trap.
+- **MQTT 3.1.1 over TLS** plays the recorded raw pushes on the subscribed
+  topics. The timeline is time-compressed so one loop takes about 5 s, and it
+  loops. The broker applies EcoFlow's session rules: one session per account,
+  and limited unique client IDs.
 
-`tests/test_recordings.py` additionally checks, for every recording, that
+The full protocol reference, the behaviour table and how to use the twin from
+any app or language are in **[digital-twin.md](digital-twin.md)**.
+
+`tests/test_recordings.py` also checks, for every recording, that
 MQTT-decoded and REST statuses agree per device, that the check fails without
-envelope unwrapping, that the replay server rejects a wrong secret, and that
-nothing identifying is committed (PII guard).
+envelope unwrapping, and that the twin rejects a wrong secret. Its PII guard
+makes sure nothing identifying is committed.
 
 ### Making a recording
 

@@ -151,3 +151,12 @@ async def test_garbage_drops_only_that_connection(broker: Any) -> None:
     w.close()
     async with _client(port):  # broker still serves others
         pass
+
+
+async def test_empty_client_id_is_135(broker: Any) -> None:
+    """Quirk 3: EcoFlow refuses an empty client ID with 135."""
+    _b, port = broker
+    with pytest.raises(aiomqtt.MqttCodeError) as err:
+        async with _client(port, identifier=""):
+            pass
+    assert err.value.rc == 135
