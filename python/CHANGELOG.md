@@ -10,6 +10,8 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Smart Plug: a pushed `volt: 0` no longer replaces the known mains voltage. The plug
+  sends 0 about 2 s before every real reading (recorded live), which showed as a 0 V glitch.
 - Wave 3: the decoder now reads the runtime message (`cmd_id 22`), which carries AC input
   voltage and battery voltage/current. New `ac_plugged_in`, `ac_input_voltage`,
   `battery_voltage`, `battery_current_amps`. `Wave3Device` withholds its status until
