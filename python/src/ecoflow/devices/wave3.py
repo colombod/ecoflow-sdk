@@ -82,6 +82,14 @@ class Wave3Device(BaseDevice):
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update status from an incoming MQTT payload, accumulating chunks."""
         self._raw_data.update(data)
+        # QUIRK (seen live 2026-09-28): the first messages after connect are
+        # partial and lack the battery level, which then read as 0 % / off for
+        # ~20 s. Publish nothing until the state dump with the SOC has arrived.
+        if (
+            "bms_batt_soc" not in self._raw_data
+            and "cms_batt_soc" not in self._raw_data
+        ):
+            return
         self.status = Wave3Status.from_mqtt_payload(self._raw_data)
         self.status.sn = sn
         self.status.product_name = self.product_name

@@ -297,3 +297,24 @@ def test_decode_no_exception_on_any_failure() -> None:
     assert decode(b"not proto") == {}
     assert decode(b"\x00" * 100) == {}
     assert decode(bytes(range(50))) == {}
+
+
+# ---------------------------------------------------------------------------
+# cmd_id 22 — runtime message (recorded live 2026-09-28)
+# ---------------------------------------------------------------------------
+
+
+def test_decode_cmd_id_22_dispatches_runtime_property_upload() -> None:
+    """The Wave 3 sends AC input voltage and battery voltage/current in a
+    separate runtime message (cmd_func=254, cmd_id=22) that was discarded."""
+    from ecoflow.private.proto.decoder import decode
+
+    inner = wave3_pb2.Wave3RuntimePropertyUpload()
+    inner.plug_in_info_ac_in_vol = 247.0
+    inner.bms_batt_vol = 53470.0
+    inner.bms_batt_amp = -79.0
+    raw = _build_outer(cmd_func=254, cmd_id=22, pdata=inner.SerializeToString())
+    result = decode(raw)
+    assert result["plug_in_info_ac_in_vol"] == pytest.approx(247.0)  # pyright: ignore[reportUnknownMemberType]
+    assert result["bms_batt_vol"] == pytest.approx(53470.0)  # pyright: ignore[reportUnknownMemberType]
+    assert result["bms_batt_amp"] == pytest.approx(-79.0)  # pyright: ignore[reportUnknownMemberType]
