@@ -2507,8 +2507,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -2517,7 +2517,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -2525,8 +2525,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -2768,8 +2768,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -2778,7 +2778,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -2786,8 +2786,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -2834,11 +2834,11 @@
         "gridConnectionVolL2": 118.18463,
         "gridConnectionVolL3": 118.20572,
         "powGetSysGrid": 7721.523,
-        "systemGroupId": 2087133186,
+        "systemGroupId": 0,
         "townCode": 0,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London"
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED"
       },
       "sn": "BK21XXXXXXXXXX03",
       "t": 55.042
@@ -3070,8 +3070,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -3080,7 +3080,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -3088,8 +3088,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -3331,8 +3331,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -3341,7 +3341,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -3349,8 +3349,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -3592,8 +3592,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -3602,7 +3602,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -3610,8 +3610,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -3888,17 +3888,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 27,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -6183,17 +6183,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 28,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -8489,8 +8489,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -8499,7 +8499,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -8507,8 +8507,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -8634,17 +8634,17 @@
         "invVcapRms": 72,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 2516691136,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 4,
         "iotLan1LastRecvDataTime": 1790556202,
-        "iotLan1MeshIdSummary": 1744583314,
+        "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": -1020,
         "iotLan1PlugCounts": 1,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556202,
         "iotMemHeapSize": 71080,
         "iotMemInternalFreeSize": 56480,
@@ -8819,17 +8819,17 @@
         "invVcapRms": 113,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 771860672,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 2,
         "iotLan1LastRecvDataTime": 0,
         "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": 0,
         "iotLan1PlugCounts": 0,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556203,
         "iotMemHeapSize": 72992,
         "iotMemInternalFreeSize": 58392,
@@ -9135,8 +9135,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -9145,7 +9145,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -9153,8 +9153,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -9265,17 +9265,17 @@
         "invVcapRms": 136,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 906078400,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 1,
         "iotLan1LastRecvDataTime": 0,
         "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": 0,
         "iotLan1PlugCounts": 0,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556202,
         "iotMemHeapSize": 65488,
         "iotMemInternalFreeSize": 50888,
@@ -9297,17 +9297,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "",
+              "snSuffix": "REDACTED",
               "workmode": 0
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 1
             },
             {
               "pwr": 0,
-              "snSuffix": "",
+              "snSuffix": "REDACTED",
               "workmode": 0
             }
           ]
@@ -9597,8 +9597,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -9607,7 +9607,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -9615,8 +9615,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -9692,11 +9692,11 @@
         "gridConnectionVolL2": 119.17514,
         "gridConnectionVolL3": 119.195244,
         "powGetSysGrid": 7744.9907,
-        "systemGroupId": 2087133186,
+        "systemGroupId": 0,
         "townCode": 0,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London"
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED"
       },
       "sn": "BK21XXXXXXXXXX03",
       "t": 175.356
@@ -9928,8 +9928,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -9938,7 +9938,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -9946,8 +9946,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -10189,8 +10189,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -10199,7 +10199,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -10207,8 +10207,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -10319,17 +10319,17 @@
         "invVcapRms": 174,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 1291954368,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 4,
         "iotLan1LastRecvDataTime": 1790556202,
-        "iotLan1MeshIdSummary": 1744583314,
+        "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": -980,
         "iotLan1PlugCounts": 1,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556202,
         "iotMemHeapSize": 66648,
         "iotMemInternalFreeSize": 52048,
@@ -10351,17 +10351,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -10606,17 +10606,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 25,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -12834,17 +12834,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -15039,8 +15039,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -15049,7 +15049,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -15057,8 +15057,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -15330,8 +15330,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -15340,7 +15340,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -15348,8 +15348,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -15591,8 +15591,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -15601,7 +15601,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -15609,8 +15609,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -15657,11 +15657,11 @@
         "gridConnectionVolL2": 118.901344,
         "gridConnectionVolL3": 118.92522,
         "powGetSysGrid": 7877.437,
-        "systemGroupId": 2087133186,
+        "systemGroupId": 0,
         "townCode": 0,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London"
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED"
       },
       "sn": "BK21XXXXXXXXXX03",
       "t": 295.483
@@ -15893,8 +15893,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -15903,7 +15903,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -15911,8 +15911,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -16151,17 +16151,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 26,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -18406,17 +18406,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -20715,8 +20715,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -20725,7 +20725,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -20733,8 +20733,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -20985,8 +20985,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -20995,7 +20995,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -21003,8 +21003,8 @@
         "updateBanFlag": 0,
         "useLanMeter": true,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -21246,8 +21246,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -21256,7 +21256,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -21264,8 +21264,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -21354,11 +21354,11 @@
         "gridConnectionVolL2": 119.01118,
         "gridConnectionVolL3": 119.02946,
         "powGetSysGrid": 7828.5063,
-        "systemGroupId": 2087133186,
+        "systemGroupId": 0,
         "townCode": 0,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London"
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED"
       },
       "sn": "BK21XXXXXXXXXX03",
       "t": 415.772
@@ -21590,8 +21590,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -21600,7 +21600,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -21608,8 +21608,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -21772,17 +21772,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 26,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -24039,17 +24039,17 @@
         "invVcapRms": 137,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 906078400,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 1,
         "iotLan1LastRecvDataTime": 0,
         "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": 0,
         "iotLan1PlugCounts": 0,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556503,
         "iotMemHeapSize": 65488,
         "iotMemInternalFreeSize": 50888,
@@ -24071,17 +24071,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "",
+              "snSuffix": "REDACTED",
               "workmode": 0
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 1
             },
             {
               "pwr": 0,
-              "snSuffix": "",
+              "snSuffix": "REDACTED",
               "workmode": 0
             }
           ]
@@ -24240,17 +24240,17 @@
         "invVcapRms": 113,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 771860672,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 2,
         "iotLan1LastRecvDataTime": 0,
         "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": 0,
         "iotLan1PlugCounts": 0,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556502,
         "iotMemHeapSize": 71092,
         "iotMemInternalFreeSize": 56492,
@@ -24425,17 +24425,17 @@
         "invVcapRms": 112,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 1275177152,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 4,
         "iotLan1LastRecvDataTime": 1790556502,
-        "iotLan1MeshIdSummary": 1744583314,
+        "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": -960,
         "iotLan1PlugCounts": 1,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556502,
         "iotMemHeapSize": 70500,
         "iotMemInternalFreeSize": 55900,
@@ -24610,17 +24610,17 @@
         "invVcapRms": 73,
         "iotBleAuthState": 1,
         "iotBleState": 0,
-        "iotGatewayAddress": 16885952,
-        "iotIpAddress": 2516691136,
+        "iotGatewayAddress": 0,
+        "iotIpAddress": 0,
         "iotLan1FsmState": 4,
         "iotLan1LastRecvDataTime": 1790556502,
-        "iotLan1MeshIdSummary": 1744583314,
+        "iotLan1MeshIdSummary": 0,
         "iotLan1PlugConsPwr": -960,
         "iotLan1PlugCounts": 1,
         "iotLan2DevOnlineCounts": 5,
-        "iotLan2EncKeySummary": 858874680,
+        "iotLan2EncKeySummary": 0,
         "iotLan2FsmState": 3,
-        "iotLan2IdSummary": 1895604226,
+        "iotLan2IdSummary": 0,
         "iotLan2LastRecvDataTime": 1790556502,
         "iotMemHeapSize": 70780,
         "iotMemInternalFreeSize": 56180,
@@ -24942,17 +24942,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 25,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -27211,8 +27211,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -27221,7 +27221,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -27229,8 +27229,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -27472,8 +27472,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -27482,7 +27482,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -27490,8 +27490,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -27538,11 +27538,11 @@
         "gridConnectionVolL2": 119.23549,
         "gridConnectionVolL3": 119.25668,
         "powGetSysGrid": 7825.8843,
-        "systemGroupId": 2087133186,
+        "systemGroupId": 0,
         "townCode": 0,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London"
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED"
       },
       "sn": "BK21XXXXXXXXXX03",
       "t": 535.091
@@ -27785,8 +27785,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -27795,7 +27795,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -27803,8 +27803,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -28046,8 +28046,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -28056,7 +28056,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -28064,8 +28064,8 @@
         "updateBanFlag": 0,
         "useLanMeter": false,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -28307,8 +28307,8 @@
         "sysPhaseDetectionProgress": 0,
         "sysPhaseDetectionResult": 0,
         "sysPhasesFeedGridPowMax": 0,
-        "systemGroupId": 2087133186,
-        "systemMeshId": 1,
+        "systemGroupId": 0,
+        "systemMeshId": 0,
         "timezoneChangeList": {
           "timeZoneChangeItem": [
             {
@@ -28317,7 +28317,7 @@
             },
             {
               "utcTime": 1806195600,
-              "utcTimezone": 100
+              "utcTimezone": 0
             }
           ]
         },
@@ -28325,8 +28325,8 @@
         "updateBanFlag": 0,
         "useLanMeter": true,
         "utcSetMode": true,
-        "utcTimezone": 100,
-        "utcTimezoneId": "Europe/London",
+        "utcTimezone": 0,
+        "utcTimezoneId": "REDACTED",
         "wifiApMeshId": {
           "idList": [
             146,
@@ -28571,17 +28571,17 @@
           "output": [
             {
               "pwr": 0,
-              "snSuffix": "0224",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "0429",
+              "snSuffix": "REDACTED",
               "workmode": 2
             },
             {
               "pwr": 0,
-              "snSuffix": "1478",
+              "snSuffix": "REDACTED",
               "workmode": 2
             }
           ]
@@ -30950,9 +30950,9 @@
           "2_1.matterFabric": 0,
           "2_1.maxCur": 0,
           "2_1.maxWatts": 3250,
-          "2_1.meshEnable": 1,
-          "2_1.meshId": 4234616834,
-          "2_1.meshLayel": 1,
+          "2_1.meshEnable": 0,
+          "2_1.meshId": 0,
+          "2_1.meshLayel": 0,
           "2_1.mqttErr": 6,
           "2_1.mqttErrTime": 1789913649,
           "2_1.otaDlErr": 0,

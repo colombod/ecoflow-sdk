@@ -9,6 +9,15 @@ This project uses [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+- Recordings: masked identifiers the capture redactor missed in `live-20260928`
+  (and `meshId` in `live-20260927`): LAN IPs stored as integers, serial-number
+  tails, LAN key/ID fingerprints, mesh/installation IDs and the timezone. The
+  redactor matched identifying words only at the end of a key; it now matches
+  them anywhere in the key (`scripts/capture_vectors.py: is_identifying_key`).
+- `tests/test_recordings.py` enforces an independent copy of that rule on every
+  committed recording, so a redactor regression fails CI.
+
 ### Fixed
 - Smart Plug: a pushed `volt: 0` no longer replaces the known mains voltage. The plug
   sends 0 about 2 s before every real reading (recorded live), which showed as a 0 V glitch.

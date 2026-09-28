@@ -165,6 +165,31 @@ _MAC = re.compile(
 )
 _FORBIDDEN_KEYS = {"certificatePassword", "accessKey", "secretKey", "token", "password"}
 
+# Independent of the redactor: any key containing one of these words must hold
+# a masked value. live-20260928 leaked LAN IPs stored as ints (iotIpAddress),
+# serial tails (snSuffix), key/ID fingerprints (iotLan2EncKeySummary) and
+# installation IDs (meshId, systemGroupId) past a suffix-only key match.
+_ID_WORDS = {
+    "sn", "serial", "mac", "bssid", "ssid", "ip", "ipv4", "ipv6", "addr",
+    "address", "gateway", "lat", "lng", "lon", "latitude", "longitude", "gps",
+    "location", "email", "user", "account", "name", "token", "secret",
+    "password", "passwd", "cert", "key", "mesh", "group", "timezone", "tz",
+    "uid", "uuid", "hash", "summary",
+}  # fmt: skip
+_ID_KEY_EXEMPT = {"productName"}
+
+
+def _identifying(key: str) -> bool:
+    last = key.rsplit(".", 1)[-1]
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", last)
+    return last not in _ID_KEY_EXEMPT and any(w.lower() in _ID_WORDS for w in words)
+
+
+def _masked(value: Any) -> bool:  # noqa: ANN401
+    if isinstance(value, bool) or value in (0, "", "REDACTED"):
+        return True
+    return isinstance(value, str) and bool(PLACEHOLDER_SN.match(value))
+
 
 def _walk(value: Any, key: str = "") -> list[tuple[str, Any]]:  # noqa: ANN401
     if isinstance(value, dict):
@@ -197,6 +222,8 @@ def test_recording_has_no_pii(recording: Recording) -> None:
         assert match.group() == "00:00:00:00:00:00", match.group()
     for key, value in _walk(json.loads(text)):
         assert key not in _FORBIDDEN_KEYS, f"credential-like key {key!r}"
+        if _identifying(key) and not isinstance(value, dict | list):
+            assert _masked(value), f"identifying key {key!r} holds unmasked data"
         if key in ("sn", "deviceName") and isinstance(value, str):
             assert value == "REDACTED" or PLACEHOLDER_SN.match(value), (
                 f"{key}={value!r} is neither a placeholder nor REDACTED"
@@ -267,3 +294,48 @@ def test_redactor_masks_identifying_data() -> None:
     assert out["bmsBattSoc"] == 47.0 and out["relay2Onoff"] is True  # untouched
     assert out["bms_bmsStatus"]["soc"] == 80
     assert {"wifiName", "deviceName", "certificateAccount"} <= redact.masked_keys
+
+
+def test_redactor_masks_identifiers_hidden_mid_key() -> None:
+    """Regression for live-20260928: identifying words not at the key's end."""
+    redact = _capture_script().Redactor([])
+    raw = {
+        "iotIpAddress": 3232235786,  # 192.168.1.10 packed as an int
+        "iotGatewayAddress": 3232235777,
+        "snSuffix": "9999",
+        "2_1.meshId": 123456789,
+        "systemGroupId": 987654321,
+        "iotLan2EncKeySummary": 111111111,
+        "iotLan2IdSummary": 222222222,
+        "utcTimezoneId": "Europe/Nowhere",
+        "productName": "Smart Plug",  # routing needs it
+        "moduleWifiRssi": -70.0,  # signal strength is not identifying
+        "cmsBattSoc": 45.0,
+    }
+    out = redact(raw)
+    for key in ("iotIpAddress", "iotGatewayAddress", "2_1.meshId", "systemGroupId",
+                "iotLan2EncKeySummary", "iotLan2IdSummary"):  # fmt: skip
+        assert out[key] == 0, key
+    assert out["snSuffix"] == "REDACTED" and out["utcTimezoneId"] == "REDACTED"
+    assert out["productName"] == "Smart Plug"
+    assert out["moduleWifiRssi"] == -70.0 and out["cmsBattSoc"] == 45.0
+
+
+def test_pii_guard_rule_matches_redactor_rule() -> None:
+    """The guard's independent word rule and the redactor's agree."""
+    script = _capture_script()
+    keys = [
+        "iotIpAddress",
+        "snSuffix",
+        "2_1.meshId",
+        "packSn",
+        "deviceName",
+        "productName",
+        "cmsBattSoc",
+        "moduleWifiRssi",
+        "bmsSn",
+        "userId",
+    ]
+    assert [script.is_identifying_key(k) for k in keys] == [
+        _identifying(k) for k in keys
+    ]
