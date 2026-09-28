@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import ssl
 import subprocess
 import sys
 from pathlib import Path
@@ -46,7 +47,7 @@ def test_serve_prints_endpoints_and_answers_signed_curl_style_request(
         r = httpx.get(
             f"{info['rest_base']}/iot-open/sign/device/list",
             headers=headers,
-            verify=info["ca_file"],
+            verify=ssl.create_default_context(cafile=info["ca_file"]),
             timeout=10,
         )
         assert r.json()["code"] == "0"
@@ -54,3 +55,14 @@ def test_serve_prints_endpoints_and_answers_signed_curl_style_request(
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+@pytest.mark.parametrize("missing", ["aiohttp", "cryptography"])
+def test_missing_twin_extra_gives_install_hint(missing: str) -> None:
+    """A plain `pip install ecoflow-python` ships the CLI; say how to fix it."""
+    code = f"import sys; sys.modules[{missing!r}] = None; import ecoflow_twin.cli"
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False
+    )
+    assert result.returncode != 0
+    assert "pip install 'ecoflow-python[twin]'" in result.stderr

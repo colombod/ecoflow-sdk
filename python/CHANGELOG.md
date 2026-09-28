@@ -10,6 +10,12 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Security
+- `Endpoints.from_env()` logs a warning whenever `ECOFLOW_REST_BASE` /
+  `ECOFLOW_CA_FILE` redirect the SDK (every request, including the access-key
+  header, goes there), and `Endpoints.rest_base` must be `https://`.
+- Twin: `server.key` is written owner-only (`0600`), and keys from older runs are
+  tightened on reuse. The server certificate is valid for EcoFlow's real host
+  names; `docs/api/digital-twin.md` now says to trust `ca.pem` per process only.
 - Recordings: masked identifiers the capture redactor missed in `live-20260928`
   (and `meshId` in `live-20260927`): LAN IPs stored as integers, serial-number
   tails, LAN key/ID fingerprints, mesh/installation IDs and the timezone. The
@@ -19,6 +25,12 @@ This project uses [semantic versioning](https://semver.org/).
   committed recording, so a redactor regression fails CI.
 
 ### Fixed
+- `ecoflow-twin` / `import ecoflow_twin` without the `twin` extra now fails with
+  `pip install 'ecoflow-python[twin]'` instead of a bare `ModuleNotFoundError`
+  (the twin ships in the wheel; its dependencies are optional).
+- `docs/api/mqtt-guide.md` described every MQTT push as `{"params": ...}`; it now
+  shows the recorded shapes (flat STREAM/meter pushes, plug `params` envelope).
+- Commit references broken by the history rewrite now cite commit titles.
 - Smart Plug: a pushed `volt: 0` no longer replaces the known mains voltage. The plug
   sends 0 about 2 s before every real reading (recorded live), which showed as a 0 V glitch.
 - Wave 3: the decoder now reads the runtime message (`cmd_id 22`), which carries AC input

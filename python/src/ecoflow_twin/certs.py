@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import datetime as dt
 import ipaddress
+import os
 import ssl
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,6 +52,7 @@ def ensure_certs(state_dir: Path) -> TwinCerts:
         state_dir / "ca.pem", state_dir / "server.pem", state_dir / "server.key"
     )
     if all(p.exists() for p in (certs.ca_file, certs.cert_file, certs.key_file)):
+        _restrict(certs.key_file)  # tighten keys written by older versions
         return certs
     now = dt.datetime.now(dt.UTC)
     ca_key = ec.generate_private_key(ec.SECP256R1())
@@ -116,9 +118,22 @@ def ensure_certs(state_dir: Path) -> TwinCerts:
     pem = serialization.Encoding.PEM
     certs.ca_file.write_bytes(ca_cert.public_bytes(pem))
     certs.cert_file.write_bytes(cert.public_bytes(pem))
-    certs.key_file.write_bytes(
-        key.private_bytes(
-            pem, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
-        )
+    key_pem = key.private_bytes(
+        pem, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
     )
+    # The server certificate is valid for EcoFlow's real host names (so apps can
+    # be pointed at the twin by DNS). Anyone who can read this key and whose
+    # machine trusts ca.pem could impersonate EcoFlow, so it is owner-only.
+    fd = os.open(certs.key_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        f.write(key_pem)
+    _restrict(certs.key_file)
     return certs
+
+
+def _restrict(path: Path) -> None:
+    """Make *path* readable by its owner only (no-op where chmod is limited)."""
+    try:
+        path.chmod(0o600)
+    except OSError:  # pragma: no cover - e.g. some Windows filesystems
+        pass

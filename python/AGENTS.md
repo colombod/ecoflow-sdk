@@ -182,7 +182,7 @@ return error 135 until the daily quota resets at midnight UTC.
 connection attempt. Each failed probe, each test run, each reconnect retry counted as a new unique
 ID. Within one debugging session (~20 connection attempts), the entire day's quota was gone.
 
-**The fix (commit 9be75a9):** Client IDs are now deterministic and stable:
+**The fix (the PR #6 commit "feat: STREAM relay commands"):** Client IDs are now deterministic and stable:
 ```python
 # Public API — derived from certificateAccount
 _stable_suffix = hashlib.sha256(account.encode()).hexdigest()[:12]
@@ -420,7 +420,7 @@ not change:
 | `id` | `str(next(_seq))` | monotonic per-command sequence number |
 | `version` | `"1.0"` | protocol version |
 
-**Fix (commit 7a37ca7):** `_stream_cmd()` in `devices/stream_ultra.py` now builds the
+**Fix (the PR #6 commit "feat: STREAM relay commands"):** `_stream_cmd()` in `devices/stream_ultra.py` now builds the
 full envelope before passing to `_publish()`:
 
 ```python

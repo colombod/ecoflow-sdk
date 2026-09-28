@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import sys
 from pathlib import Path
 
+import pytest
 from cryptography import x509
 
 from ecoflow_twin.certs import SERVER_IPS, SERVER_NAMES, ensure_certs
@@ -45,3 +47,17 @@ async def test_tls_handshake_with_strict_client(tmp_path: Path) -> None:
     writer.close()
     server.close()
     await server.wait_closed()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_server_key_is_owner_only(tmp_path: Path) -> None:
+    certs = ensure_certs(tmp_path)
+    assert certs.key_file.stat().st_mode & 0o777 == 0o600
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX permissions")
+def test_reused_key_is_tightened(tmp_path: Path) -> None:
+    certs = ensure_certs(tmp_path)
+    certs.key_file.chmod(0o644)  # as written by older versions
+    ensure_certs(tmp_path)
+    assert certs.key_file.stat().st_mode & 0o777 == 0o600

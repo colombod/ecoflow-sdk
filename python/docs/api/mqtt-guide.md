@@ -104,24 +104,30 @@ await client.publish(f"/open/{certificate_account}/{sn}/set", payload, qos=1)
 
 ### Payload Format (JSON)
 
-Incoming telemetry on the quota topic:
+Incoming telemetry on the quota topic is **not** uniformly wrapped. Shapes
+recorded live (2026-09-27/28, see `tests/recordings/`):
+
+STREAM Ultra / AC Pro and Smart Meter: flat, partial pushes (only some keys
+per message; battery packs arrive as their own push with `soc`, `vol`, …):
 ```json
-{
-  "params": {
-    "permanentWatts": 120.5,
-    "dynamicWatts": 115.0,
-    "gridStatus": 1
-  }
-}
+{"powGetSysGrid": 695.0, "powGetSysLoad": 738.7, "powGetBpCms": -40.2}
 ```
 
-Outgoing commands on the set topic:
+Smart Plug: a `params` envelope with command routing; REST exposes the same
+keys prefixed `2_1.` (`2_1.watts`):
 ```json
-{
-  "params": {
-    "switch": true
-  }
-}
+{"addr": "…", "cmdFunc": 2, "cmdId": 1, "params": {"watts": 1030}}
+```
+
+Other families (DELTA 2 / RIVER 2 `typeCode`, PowerStream `param`, DELTA Pro 3
+`params`) follow the tolwi reference and are not yet recorded here. The SDK
+unwraps all of them in `transport/payload.normalize_quota_payload()` (AGENTS.md
+Quirk 14).
+
+Outgoing commands on the set topic carry an envelope plus the device's command
+format (see the STREAM section below and Quirk 13):
+```json
+{"from": "ecoflow-python", "id": "1", "version": "1.0", "sn": "…", "params": {"…": "…"}}
 ```
 
 Field names match the REST `/iot-open/sign/device/quota/all` response for the same device.

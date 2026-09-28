@@ -71,6 +71,19 @@ The SDK needs no twin-specific code. The **only** SDK addition is `Endpoints`:
 a trusted CA. The MQTT broker address always comes from the `certification`
 response, just as with EcoFlow, so pointing REST at the twin is enough.
 
+Because these variables redirect every request, including the access-key
+header, the SDK logs a **warning** whenever they are set, and `rest_base` must
+be `https://`. Pass `endpoints=` explicitly in code when you want no
+environment involvement at all.
+
+**Keep the twin CA local.** The twin's server certificate is valid for
+EcoFlow's real host names (`api-e.ecoflow.com`, `mqtt-e.ecoflow.com`, …) so apps
+can be pointed at it. Trust `ca.pem` only per process (`ECOFLOW_CA_FILE`,
+`curl --cacert`); never add it to a system or browser trust store, or anyone
+who can read `server.key` could impersonate EcoFlow on that machine. The twin
+writes `server.key` owner-only (`0600`), and the CA's own private key is never
+saved, so no further certificates can be issued from it.
+
 ## Connection flow
 
 This is the same sequence the SDK runs against EcoFlow, with every step
@@ -244,4 +257,5 @@ it would have shown up as occasional 0 V glitches in any app.
 - **Clients that hard-code EcoFlow's hostnames** (e.g. Home Assistant's
   integration) need DNS rewriting and the twin CA installed. That is Twin 3
   ([#24](https://github.com/colombod/ecoflow-sdk/issues/24)). The certificate
-  already includes those hostnames.
+  already includes those hostnames, so Twin 3 must confine that trust to the
+  sandbox (container or VM) running the client — see "Keep the twin CA local".

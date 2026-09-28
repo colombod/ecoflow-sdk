@@ -71,3 +71,29 @@ def test_explicit_endpoints_win_over_env(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv(ENV_REST_BASE, "https://from-env.test")
     client = EcoFlowClient("k", "s", endpoints=Endpoints())
     assert client.endpoints.rest_base is None
+
+
+def test_env_override_is_logged_as_warning(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setenv(ENV_REST_BASE, "https://twin.test")
+    monkeypatch.delenv(ENV_CA_FILE, raising=False)
+    with caplog.at_level("WARNING", logger="ecoflow.endpoints"):
+        Endpoints.from_env()
+    assert "https://twin.test" in caplog.text and "access key" in caplog.text
+
+
+def test_no_warning_without_override(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.delenv(ENV_REST_BASE, raising=False)
+    monkeypatch.delenv(ENV_CA_FILE, raising=False)
+    with caplog.at_level("WARNING", logger="ecoflow.endpoints"):
+        Endpoints.from_env()
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize("base", ["http://twin.test", "twin.test", "ftp://twin.test"])
+def test_rest_base_must_be_https(base: str) -> None:
+    with pytest.raises(ValueError, match="https"):
+        Endpoints(rest_base=base)
