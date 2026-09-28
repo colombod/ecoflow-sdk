@@ -477,6 +477,19 @@ keys into per-module dicts.
 
 ---
 
+### Quirk 15: Smart Plug Pushes a Transient `volt: 0` (recorded 2026-09-27/28)
+
+In both live recordings, every `volt` update from the Smart Plug arrived as a **pair**: first
+`volt: 0`, then the real mains voltage about 2 s later (4 of 4 pairs in 11 minutes).
+A plug that is reporting is powered, so the 0 is never real. `SmartPlugDevice` keeps the
+last known voltage when a push says 0.
+
+The service twin found this. The replay test failed about 1 run in 3, whenever its snapshot
+fell inside the 0.1 s window (20× replay) between the pair. Live, it would show as a 0 V
+glitch in any app.
+
+---
+
 ## Public API Device Limitations (Confirmed Live)
 
 ### Wave 3 Returns Error 1006
