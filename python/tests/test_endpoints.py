@@ -156,10 +156,20 @@ def test_rest_base_rejects_query_and_fragment(base: str) -> None:
         Endpoints(rest_base=base)
 
 
-def test_rest_base_accepts_a_path_prefix() -> None:
-    assert Endpoints(rest_base="https://twin.test:8443/base/").rest_origin == (
-        "https://twin.test:8443"
+@pytest.mark.parametrize(
+    "base", ["https://twin.test:8443/base", "https://twin.test:8443/base/"]
+)
+@respx.mock
+async def test_rest_base_path_prefix_is_kept_on_requests(base: str) -> None:
+    """httpx joins base_url's path with the request path (leading "/" or not),
+    so a twin mounted under a prefix gets /base/iot-open/... — not the root."""
+    route = respx.get("https://twin.test:8443/base/iot-open/sign/device/list").mock(
+        return_value=Response(200, json={"code": "0", "data": []})
     )
+    async with RestTransport(CREDS, endpoints=Endpoints(rest_base=base)) as rest:
+        assert await rest.list_devices() == []
+    assert route.called
+    assert Endpoints(rest_base=base).rest_origin == "https://twin.test:8443"
 
 
 @pytest.mark.parametrize(
