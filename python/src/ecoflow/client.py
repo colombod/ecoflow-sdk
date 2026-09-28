@@ -22,6 +22,7 @@ from ecoflow.devices.plug import SmartPlugDevice
 from ecoflow.devices.stream_ac_pro import StreamAcProDevice
 from ecoflow.devices.stream_ultra import StreamUltraDevice
 from ecoflow.devices.wave3 import Wave3Device
+from ecoflow.endpoints import Endpoints
 from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
 from ecoflow.transport.rest import RestTransport
 
@@ -85,6 +86,7 @@ class EcoFlowClient:
         region: str = "EU",
         *,
         enable_mqtt: bool = True,
+        endpoints: Endpoints | None = None,
     ) -> None:
         """Create a client.
 
@@ -93,13 +95,19 @@ class EcoFlowClient:
                 live updates or commands). REST-only never opens an MQTT
                 session, so it cannot displace another integration (e.g. Home
                 Assistant) using the same keys — see AGENTS.md Quirk 2.
+            endpoints: Where to connect. ``None`` reads ``Endpoints.from_env()``
+                (``ECOFLOW_REST_BASE`` / ``ECOFLOW_CA_FILE``), so any app can be
+                pointed at a digital twin without code changes.
         """
         self._enable_mqtt = enable_mqtt
         self._credentials = EcoFlowCredentials(
             access_key=access_key, secret_key=secret_key
         )
         self._region = region
-        self._rest: RestTransport = RestTransport(self._credentials, region=region)
+        self.endpoints = endpoints if endpoints is not None else Endpoints.from_env()
+        self._rest: RestTransport = RestTransport(
+            self._credentials, region=region, endpoints=self.endpoints
+        )
         self._mqtt: MqttTransport | None = None
 
         # Typed device collections — populated on connect()
@@ -165,7 +173,9 @@ class EcoFlowClient:
                 # API returns certificateAccount, not userId
                 user_id=mqtt_data.get("certificateAccount", ""),
             )
-            self._mqtt = MqttTransport(mqtt_creds)
+            self._mqtt = MqttTransport(
+                mqtt_creds, ssl_context=self.endpoints.ssl_context()
+            )
             # Backfill the mqtt reference into all devices.  Devices were
             # created during _discover() before MqttTransport existed, so
             # their _mqtt attribute is still None.  Without this, _publish()

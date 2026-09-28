@@ -50,9 +50,12 @@ class MqttTransport:
         self,
         credentials: MqttCredentials,
         connect_timeout: float = MQTT_CONNECT_TIMEOUT_S,
+        *,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         self._creds = credentials
         self._timeout = connect_timeout
+        self._ssl_context = ssl_context
         # Maps SN → (topic_template, [callbacks])
         self._subscriptions: dict[str, tuple[str, list[MessageCallback]]] = {}
         self._connected = False
@@ -193,7 +196,7 @@ class MqttTransport:
 
     async def _run(self) -> None:
         """Background task: own the aiomqtt connection and reconnect on failure."""
-        tls_context = ssl.create_default_context()
+        tls_context = self._ssl_context or ssl.create_default_context()
         backoff = 1.0
         backoff_max = 300.0
         # Track whether we have ever successfully established a connection.

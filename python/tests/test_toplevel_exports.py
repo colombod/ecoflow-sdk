@@ -139,6 +139,11 @@ class TestTopLevelExports:
 
         assert Wave3Mode.__name__ == "Wave3Mode"
 
+    def test_endpoints_importable(self) -> None:
+        from ecoflow import Endpoints
+
+        assert Endpoints().rest_base is None
+
     def test_all_list_contains_expected_symbols(self) -> None:
         import ecoflow
 
@@ -146,6 +151,7 @@ class TestTopLevelExports:
         expected = {
             "EcoFlowClient",
             "EcoFlowCredentials",
+            "Endpoints",
             "EcoFlowError",
             "EcoFlowAuthError",
             "EcoFlowConnectionError",

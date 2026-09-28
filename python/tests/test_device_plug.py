@@ -168,3 +168,23 @@ async def test_set_max_watts_accepts_boundary_values() -> None:
     with patch.object(plug, "_publish", new_callable=AsyncMock):
         await plug.set_max_watts(0)
         await plug.set_max_watts(2500)
+
+
+def test_transient_zero_volt_push_keeps_known_voltage() -> None:
+    """Recorded live (4 of 4 cases, live-20260927/28): the plug pushes
+    ``volt: 0`` ~2 s before the real mains voltage. A powered plug cannot see
+    0 V, so the known voltage is kept instead of glitching to 0."""
+    plug = make_plug()
+    plug._on_message(plug.sn, {"2_1.volt": 247, "2_1.watts": 1030})  # pyright: ignore[reportPrivateUsage]
+    plug._on_message(plug.sn, {"2_1.volt": 0, "2_1.watts": 1040})  # pyright: ignore[reportPrivateUsage]
+    assert plug.data is not None
+    assert plug.data.voltage == 247.0
+    assert plug.data.power_watts == pytest.approx(104.0)  # pyright: ignore[reportUnknownMemberType]
+    plug._on_message(plug.sn, {"2_1.volt": 240})  # pyright: ignore[reportPrivateUsage]
+    assert plug.data.voltage == 240.0
+
+
+def test_zero_volt_before_any_real_reading_stays_zero() -> None:
+    plug = make_plug()
+    plug._on_message(plug.sn, {"2_1.volt": 0})  # pyright: ignore[reportPrivateUsage]
+    assert plug.data is not None and plug.data.voltage == 0.0

@@ -74,7 +74,9 @@ async def test_quota_all_is_signed_and_parses(
         pytest.skip("no STREAM / meter / plug / battery devices on this account")
     creds = EcoFlowCredentials(public_creds.access_key, public_creds.secret_key)
     parsed = 0
-    async with RestTransport(creds, region=public_creds.region) as rest:
+    async with RestTransport(
+        creds, region=public_creds.region, endpoints=public_creds.endpoints
+    ) as rest:
         for device in targets:
             label = f"{type(device).__name__} {device.sn[:4]}…"
             if not await rest.get_quota(device.sn):

@@ -10,6 +10,8 @@ This project uses [semantic versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- Smart Plug: a pushed `volt: 0` no longer replaces the known mains voltage. The plug
+  sends 0 about 2 s before every real reading (recorded live), which showed as a 0 V glitch.
 - Wave 3: the decoder now reads the runtime message (`cmd_id 22`), which carries AC input
   voltage and battery voltage/current. New `ac_plugged_in`, `ac_input_voltage`,
   `battery_voltage`, `battery_current_amps`. `Wave3Device` withholds its status until
@@ -50,6 +52,15 @@ This project uses [semantic versioning](https://semver.org/).
 - `productName` routing is case-insensitive (`"Delta Pro 3"`, `"WAVE 2"`, ...).
 
 ### Added
+- **Service digital twin** (`pip install ecoflow-python[twin]`, `ecoflow-twin serve`): a local
+  clone of the Developer API that speaks real HTTPS REST and MQTT 3.1.1 over TLS, plays
+  back recordings and reproduces EcoFlow's refusals (signature 8521, one session per
+  account, client-ID quota). Apps, agents and CI can build against it without
+  credentials. Guide: `docs/api/digital-twin.md`.
+- `Endpoints` (`ECOFLOW_REST_BASE` / `ECOFLOW_CA_FILE`, read by default): point any
+  SDK-based app at a twin without code changes.
+- The replay tier now runs over real sockets against the twin. A CI job checks
+  non-Python clients (curl + mosquitto_sub).
 - STREAM status: `self_powered_mode`, `ai_schedule_mode`, `grid_voltage`,
   `real_health`, min/max cell temperature and voltage, and lifetime
   charge/discharge energy (Wh). Smart Plug: `frequency_hz`, `max_watts`. Each
