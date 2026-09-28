@@ -96,11 +96,18 @@ Subscribe to the quota topic at QoS 1:
 await client.subscribe(f"/open/{certificate_account}/{sn}/quota", qos=1)
 ```
 
-Publish commands as JSON at QoS 1:
+Publish commands as JSON at QoS 1, with the envelope (`from`/`id`/`version`/`sn`)
+the device expects. A bare `{"params": …}` is ignored silently by STREAM devices,
+which also need `cmdId`/`cmdFunc`/`dirDest`/`dirSrc`/`dest`/`needAck` (Quirk 13; see
+[Payload Format](#payload-format-json) and the STREAM section below). Smart Plug example:
 ```python
-payload = json.dumps({"params": {"switch": True}})
+payload = json.dumps({
+    "from": "my-app", "id": "1", "version": "1.0", "sn": sn,
+    "cmdCode": "WN511_SOCKET_SET_PLUG_SWITCH_MESSAGE", "params": {"plugSwitch": 1},
+})
 await client.publish(f"/open/{certificate_account}/{sn}/set", payload, qos=1)
 ```
+The SDK builds these for you (`BaseDevice._publish`); prefer it over raw MQTT.
 
 ### Payload Format (JSON)
 
@@ -353,9 +360,11 @@ Successful response:
 import hashlib, ssl
 import aiomqtt
 
-# Stable client ID from userId (not certificateAccount)
-_hash = hashlib.sha256(user_id.encode()).hexdigest()[:12]
-client_id = f"ecoflow-private-{_hash}"
+# Stable client ID from userId, in the only shape the app broker accepts:
+# ANDROID_<32 upper-case hex>_<userId>. Any other shape (e.g. "ecoflow-private-…")
+# is refused with 135; a random hex burns the daily quota. See ecoflow.private.private_client_id.
+_hex = hashlib.sha256(user_id.encode()).hexdigest()[:32].upper()
+client_id = f"ANDROID_{_hex}_{user_id}"
 
 tls_ctx = ssl.create_default_context()
 async with aiomqtt.Client(

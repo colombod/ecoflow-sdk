@@ -36,6 +36,9 @@ This project uses [semantic versioning](https://semver.org/).
 - `docs/api/mqtt-guide.md` described every MQTT push as `{"params": ...}`; it now
   shows the recorded shapes (flat STREAM/meter pushes, plug `params` envelope).
 - Commit references broken by the history rewrite now cite commit titles.
+- Docs showed random (`uuid4`) or refused (`ecoflow-private-…`) MQTT client IDs in
+  `getting-started.md`, `mqtt-guide.md` and `private-authentication.md`; they now show
+  the stable IDs the SDK actually uses. The raw MQTT command example includes the envelope.
 - Smart Plug: a pushed `volt: 0` no longer replaces the known mains voltage. The plug
   sends 0 about 2 s before every real reading (recorded live), which showed as a 0 V glitch.
 - Wave 3: the decoder now reads the runtime message (`cmd_id 22`), which carries AC input

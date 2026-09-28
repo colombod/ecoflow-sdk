@@ -120,7 +120,8 @@ asyncio.run(main())
 
 1. Fetches the authenticated device list via REST (`/iot-open/sign/device/list`)
 2. Routes each device to a typed class by `productName` (or SN prefix as fallback)
-3. Connects to the EcoFlow MQTT broker with a generated `ANDROID_{UUID}_{account}` client ID
+3. Connects to the EcoFlow MQTT broker with a stable client ID, `ecoflow-sdk-<hash of the account>`
+   (the same ID on every run, so it never burns the ~10-IDs/day quota; AGENTS.md Quirk 1)
 4. Subscribes each typed device to its MQTT topic and registers message callbacks
 
 All typed device collections (`client.batteries`, `client.plugs`, `client.meters`,

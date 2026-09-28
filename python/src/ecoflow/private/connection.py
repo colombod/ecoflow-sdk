@@ -46,9 +46,10 @@ def private_client_id(user_id: str) -> str:
 
     QUIRK (format): the private broker only authorises client IDs shaped
     ``ANDROID_<32 upper-case hex>_<userId>``, as the EcoFlow app sends them; any
-    other shape is refused with 135 (Not authorized). The PR #6 commit
-    "feat: STREAM relay commands" replaced this with ``ecoflow-private-<hash>``
-    and every Wave 3 connection failed from then on (seen live 2026-09-27).
+    other shape is refused with 135 (Not authorized). PR #6 ("fix: use stable
+    deterministic MQTT client ID to avoid EcoFlow 10-ID/day quota") replaced this
+    with ``ecoflow-private-<hash>`` and every Wave 3 connection failed from then
+    on (seen live 2026-09-27).
 
     QUIRK (quota, AGENTS.md Quirk 1): the broker allows ~10 unique client IDs
     per account per day, so the hex part is derived from ``user_id`` instead of

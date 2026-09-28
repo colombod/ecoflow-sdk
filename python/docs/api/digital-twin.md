@@ -83,8 +83,11 @@ EcoFlow's real host names (`api-e.ecoflow.com`, `mqtt-e.ecoflow.com`, …) so ap
 can be pointed at it. Trust `ca.pem` only per process (`ECOFLOW_CA_FILE`,
 `curl --cacert`); never add it to a system or browser trust store, or anyone
 who can read `server.key` could impersonate EcoFlow on that machine. The twin
-writes `server.key` owner-only (`0600`), and the CA's own private key is never
-saved, so no further certificates can be issued from it.
+writes `server.key` owner-only (`0600`) and refuses a symlinked or foreign-owned
+key. The CA's own private key is never saved, so no further certificates can be
+issued from it. On **Windows** there are no POSIX modes: the key gets the ACLs
+of its folder. The default `--state-dir` is `.ecoflow-twin` in the current
+directory, so run the twin from a folder inside your user profile.
 
 ## Connection flow
 

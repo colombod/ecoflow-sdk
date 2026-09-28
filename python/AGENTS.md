@@ -182,7 +182,7 @@ return error 135 until the daily quota resets at midnight UTC.
 connection attempt. Each failed probe, each test run, each reconnect retry counted as a new unique
 ID. Within one debugging session (~20 connection attempts), the entire day's quota was gone.
 
-**The fix (the PR #6 commit "feat: STREAM relay commands"):** Client IDs are now deterministic and stable:
+**The fix (PR #6 commit "fix: use stable deterministic MQTT client ID to avoid EcoFlow 10-ID/day quota", squash-merged as "feat: STREAM relay commands — validated against real BK11/BK31 hardware"):** Client IDs are now deterministic and stable:
 ```python
 # Public API — derived from certificateAccount
 _stable_suffix = hashlib.sha256(account.encode()).hexdigest()[:12]
@@ -425,7 +425,7 @@ not change:
 | `id` | `str(next(_seq))` | monotonic per-command sequence number |
 | `version` | `"1.0"` | protocol version |
 
-**Fix (the PR #6 commit "feat: STREAM relay commands"):** `_stream_cmd()` in `devices/stream_ultra.py` now builds the
+**Fix (PR #6 commit "fix: STREAM command envelope — add dirDest/dirSrc/dest/needAck/from/id/version", squash-merged as "feat: STREAM relay commands — validated against real BK11/BK31 hardware"):** `_stream_cmd()` in `devices/stream_ultra.py` now builds the
 full envelope before passing to `_publish()`:
 
 ```python
