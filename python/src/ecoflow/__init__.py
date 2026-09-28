@@ -16,6 +16,7 @@ from ecoflow.devices import (
     StreamUltraDevice,
     Wave3Device,
 )
+from ecoflow.endpoints import Endpoints
 from ecoflow.exceptions import (
     EcoFlowAuthError,
     EcoFlowConnectionError,
@@ -48,6 +49,7 @@ except PackageNotFoundError:  # running from a source tree without installing
 __all__ = [
     "EcoFlowClient",
     "EcoFlowCredentials",
+    "Endpoints",
     "EcoFlowError",
     "EcoFlowAuthError",
     "EcoFlowConnectionError",

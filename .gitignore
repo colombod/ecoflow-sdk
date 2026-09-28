@@ -28,3 +28,6 @@ Thumbs.db
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# ecoflow-twin state (generated CA and keys)
+python/.ecoflow-twin/

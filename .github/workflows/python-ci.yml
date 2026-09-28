@@ -41,11 +41,33 @@ jobs:
       - name: Unit tests
         run: uv run pytest -m "not integration and not write_integration" -v
 
-      # The live REST/MQTT test modules, replayed offline against every
-      # redacted recording in tests/recordings/ (tests/support/replay.py).
-      # No secrets, no network: the SDK talks to a fake REST server and broker.
+      # The live REST/MQTT test modules, replayed against the service twin
+      # (ecoflow_twin): real HTTPS + MQTT/TLS on local ports, one twin per
+      # recording in tests/recordings/. No secrets, no network.
       - name: Replay recorded sessions
         run: uv run pytest tests/e2e --live=replay -v
+
+  # Non-Python clients against the twin: signed REST with curl + openssl,
+  # MQTT over TLS with mosquitto_sub (scripts/twin_smoke.sh).
+  twin-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install MQTT CLI clients
+        run: sudo apt-get update && sudo apt-get install -y mosquitto-clients
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: curl + mosquitto_sub against the service twin
+        run: bash scripts/twin_smoke.sh
 
   # Real live tests are deliberately NOT run in CI: they would share the
   # account's single MQTT session with the owner's live system (AGENTS.md

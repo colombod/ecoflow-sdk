@@ -20,6 +20,7 @@ from ecoflow.const import (
     ENDPOINT_QUOTA_SET,
     REST_TIMEOUT_S,
 )
+from ecoflow.endpoints import Endpoints
 from ecoflow.exceptions import (
     EcoFlowAuthError,
     EcoFlowConnectionError,
@@ -38,11 +39,17 @@ class RestTransport:
         credentials: EcoFlowCredentials,
         region: str = "EU",
         timeout: int = REST_TIMEOUT_S,
+        *,
+        endpoints: Endpoints | None = None,
     ) -> None:
-        host = ECOFLOW_REST_HOST_EU if region == "EU" else ECOFLOW_REST_HOST_US
+        endpoints = endpoints or Endpoints()
+        region_host = ECOFLOW_REST_HOST_EU if region == "EU" else ECOFLOW_REST_HOST_US
         self._creds = credentials
         self._timeout = timeout
-        self._client = httpx.AsyncClient(base_url=host)
+        self._client = httpx.AsyncClient(
+            base_url=endpoints.rest_base or region_host,
+            verify=endpoints.ssl_context(),
+        )
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:  # noqa: ANN401
         # No Content-Type on GET: with "application/json" the API verifies the
