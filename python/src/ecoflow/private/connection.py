@@ -69,6 +69,23 @@ class Wave3Connection:
 
     QUIRK: The private broker is the same for EU and US accounts.
     The public API uses mqtt-e.ecoflow.com for EU — do not use that here.
+
+    Reading reliably (verified live 2026-09-28, AGENTS.md Quirk 12b): keep ONE
+    connection open. The Wave 3 uploads its complete state every 120 s and
+    changed fields every ~2 s. ``Wave3Device`` publishes only complete states,
+    so the first ``await device.wait_for_update()`` (bound it with
+    ``asyncio.timeout(150)``) returns the real battery level — observed after
+    31 s — and later updates follow within seconds of a change (AC unplugged
+    -> battery power negative in ~2 s). Do not reconnect per reading, and do
+    not spam GET requests to hurry it: the device ignores them.
+
+    Example::
+
+        async with Wave3Connection(email, password, [sn]) as conn:
+            device = conn.devices[sn]
+            async with asyncio.timeout(150):
+                status = await device.wait_for_update()
+            print(status.battery_soc, status.ac_plugged_in)
     """
 
     def __init__(

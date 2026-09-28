@@ -135,3 +135,18 @@ async def test_wave3_refresh_with_rest_none_does_not_call_rest() -> None:
     # (None has no get_quota). This test passes if refresh() completes without raising.
     status = await device.refresh()
     assert status is not None
+
+
+def test_wave3_status_withheld_until_battery_level_arrives() -> None:
+    """Seen live: the first messages after connect lack the battery level, so the
+    status read 0 % / off for ~20 s. Publish only once the state dump arrived."""
+    device = make_wave3()
+    seen: list[Wave3Status] = []
+    device.on_update(seen.append)
+    device._on_message(device.sn, {"pow_get_ac": 41.5})  # pyright: ignore[reportPrivateUsage]
+    assert device.status is None and seen == []
+    device._on_message(device.sn, {"bms_batt_soc": 89.9, "dev_sleep_state": 0})  # pyright: ignore[reportPrivateUsage]
+    assert device.status is not None
+    assert device.status.battery_soc == pytest.approx(89.9)  # pyright: ignore[reportUnknownMemberType]
+    assert device.status.ac_power_watts == pytest.approx(41.5)  # pyright: ignore[reportUnknownMemberType]
+    assert len(seen) == 1
