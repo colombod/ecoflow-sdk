@@ -156,19 +156,23 @@ def _restrict(path: Path) -> None:
     mount where chmod fails) must not be served. Windows has no POSIX modes,
     so there the best effort is kept.
     """
-    try:
-        path.chmod(0o600)
-    except OSError:
-        if sys.platform == "win32":  # pragma: no cover - no POSIX modes
-            return
     if sys.platform == "win32":  # pragma: no cover - no POSIX modes
+        try:
+            path.chmod(0o600)
+        except OSError:
+            pass
         return
-    st = path.lstat()
-    if st.st_uid != os.getuid():
+    # Check the owner before touching the file: as root, chmod would succeed
+    # on someone else's key and change it before we refused it.
+    if path.lstat().st_uid != os.getuid():
         raise PermissionError(
             f"{path} belongs to another user; use a --state-dir only you can write"
         )
-    if st.st_mode & 0o077:
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass  # e.g. a read-only mount; the mode check below decides
+    if path.lstat().st_mode & 0o077:
         raise PermissionError(
             f"{path} is accessible by other users and could not be made "
             "owner-only; fix its permissions or use a fresh --state-dir"

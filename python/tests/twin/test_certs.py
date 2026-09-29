@@ -120,11 +120,14 @@ def test_refuses_symlinked_key_on_reuse(tmp_path: Path) -> None:
 def test_refuses_key_owned_by_another_user(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    ensure_certs(tmp_path)
+    certs = ensure_certs(tmp_path)
+    certs.key_file.chmod(0o644)
     real_uid = os.getuid()
     monkeypatch.setattr(os, "getuid", lambda: real_uid + 1)
     with pytest.raises(PermissionError, match="another user"):
         ensure_certs(tmp_path)
+    # Refused before any chmod: someone else's file is left as it was.
+    assert certs.key_file.stat().st_mode & 0o777 == 0o644
 
 
 def test_regenerates_leftovers_without_following_them(tmp_path: Path) -> None:
