@@ -8,7 +8,7 @@ and communicates over a Protobuf MQTT channel.
 
 > **Note:** All other EcoFlow devices (Delta, River, PowerStream, …) continue to use
 > `EcoFlowClient` with `accessKey`/`secretKey` from the Developer Portal.
-> See [Authentication](authentication.md) for that flow.
+> See [Getting started](getting-started.md) for that flow.
 
 ---
 
@@ -72,10 +72,11 @@ The library performs six steps when you open a `Wave3Connection`:
    exchange is needed.
 
 3. **aiomqtt connects to `mqtt.ecoflow.com:8883`** — TLS is enabled via
-   `ssl.create_default_context()`. The MQTT `client_id` is built as
-   `f"ANDROID_{uuid.uuid4().hex.upper()}_{creds.user_id}"` — this exact format
-   is required by the private broker; any other format results in MQTT error 135
-   (Not authorized).
+   `ssl.create_default_context()`. The MQTT `client_id` is
+   `ANDROID_<32 upper-case hex>_<userId>`. That shape is required by the private
+   broker, and any other shape results in MQTT error 135 (Not authorized). The hex
+   is derived from the user ID (`private_client_id()`), not random, so reconnects
+   reuse one ID and never burn the ~10-IDs/day quota (AGENTS.md Quirk 1).
 
 4. **Subscribes to `/app/device/property/{sn}` at QoS 1** — one subscription per
    device serial number in `device_sns`.

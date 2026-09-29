@@ -96,32 +96,45 @@ Subscribe to the quota topic at QoS 1:
 await client.subscribe(f"/open/{certificate_account}/{sn}/quota", qos=1)
 ```
 
-Publish commands as JSON at QoS 1:
+Publish commands as JSON at QoS 1, with the envelope (`from`/`id`/`version`/`sn`)
+the device expects. A bare `{"params": …}` is ignored silently by STREAM devices,
+which also need `cmdId`/`cmdFunc`/`dirDest`/`dirSrc`/`dest`/`needAck` (Quirk 13; see
+[Payload Format](#payload-format-json) and the STREAM section below). Smart Plug example:
 ```python
-payload = json.dumps({"params": {"switch": True}})
+payload = json.dumps({
+    "from": "my-app", "id": "1", "version": "1.0", "sn": sn,
+    "cmdCode": "WN511_SOCKET_SET_PLUG_SWITCH_MESSAGE", "params": {"plugSwitch": 1},
+})
 await client.publish(f"/open/{certificate_account}/{sn}/set", payload, qos=1)
 ```
+The SDK builds these for you (`BaseDevice._publish`); prefer it over raw MQTT.
 
 ### Payload Format (JSON)
 
-Incoming telemetry on the quota topic:
+Incoming telemetry on the quota topic is **not** uniformly wrapped. Shapes
+recorded live (2026-09-27/28, see `tests/recordings/`):
+
+STREAM Ultra / AC Pro and Smart Meter: flat, partial pushes (only some keys
+per message; battery packs arrive as their own push with `soc`, `vol`, …):
 ```json
-{
-  "params": {
-    "permanentWatts": 120.5,
-    "dynamicWatts": 115.0,
-    "gridStatus": 1
-  }
-}
+{"powGetSysGrid": 695.0, "powGetSysLoad": 738.7, "powGetBpCms": -40.2}
 ```
 
-Outgoing commands on the set topic:
+Smart Plug: a `params` envelope with command routing; REST exposes the same
+keys prefixed `2_1.` (`2_1.watts`):
 ```json
-{
-  "params": {
-    "switch": true
-  }
-}
+{"addr": "…", "cmdFunc": 2, "cmdId": 1, "params": {"watts": 1030}}
+```
+
+Other families (DELTA 2 / RIVER 2 `typeCode`, PowerStream `param`, DELTA Pro 3
+`params`) follow the tolwi reference and are not yet recorded here. The SDK
+unwraps all of them in `transport/payload.normalize_quota_payload()` (AGENTS.md
+Quirk 14).
+
+Outgoing commands on the set topic carry an envelope plus the device's command
+format (see the STREAM section below and Quirk 13):
+```json
+{"from": "ecoflow-python", "id": "1", "version": "1.0", "sn": "…", "params": {"…": "…"}}
 ```
 
 Field names match the REST `/iot-open/sign/device/quota/all` response for the same device.
@@ -347,9 +360,11 @@ Successful response:
 import hashlib, ssl
 import aiomqtt
 
-# Stable client ID from userId (not certificateAccount)
-_hash = hashlib.sha256(user_id.encode()).hexdigest()[:12]
-client_id = f"ecoflow-private-{_hash}"
+# Stable client ID from userId, in the only shape the app broker accepts:
+# ANDROID_<32 upper-case hex>_<userId>. Any other shape (e.g. "ecoflow-private-…")
+# is refused with 135; a random hex burns the daily quota. See ecoflow.private.private_client_id.
+_hex = hashlib.sha256(user_id.encode()).hexdigest()[:32].upper()
+client_id = f"ANDROID_{_hex}_{user_id}"
 
 tls_ctx = ssl.create_default_context()
 async with aiomqtt.Client(

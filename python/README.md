@@ -6,6 +6,8 @@
 
 ![Architecture Overview](docs/diagrams/overview.svg)
 
+<sub>0.3.0 overview. Current diagrams: [docs/architecture.md](docs/architecture.md).</sub>
+
 Python SDK for monitoring and controlling EcoFlow energy devices via the public Developer API and the private Wave 3 AC API.
 
 ---
@@ -14,15 +16,17 @@ Python SDK for monitoring and controlling EcoFlow energy devices via the public 
 
 | Device | SN Prefix | API Path | Write commands |
 |--------|-----------|----------|----------------|
-| STREAM Ultra | `BK11` | Public Developer API | `set_relay2/3(on/off)`, `set_charge_limit`, `set_discharge_limit`, `set_grid_export`, `set_backup_reserve` ✅ |
-| STREAM AC Pro | `BK31` | Public Developer API | same as STREAM Ultra ✅ |
+| STREAM Ultra | `BK11` | Public Developer API | `set_relay2(on/off)` ✅; `set_relay3`, `set_grid_export`, `set_backup_reserve`, `set_charge_limit`, `set_discharge_limit` ⚠️ |
+| STREAM AC Pro | `BK31` | Public Developer API | same as STREAM Ultra |
 | Smart Plug | `HW52` | Public Developer API | `turn_on()`, `turn_off()`, `toggle()`, `set_brightness()` |
 | Smart Home Meter | `BK21` | Public Developer API | — (read-only) |
 | Delta Pro / Pro 3 / 2 / 2 Max | – | Public Developer API | `set_charge_limit`, `set_discharge_limit`, `set_ac_output`, `set_dc_output` |
 | River Pro / 2 / 2 Max / 2 Pro | – | Public Developer API | `set_charge_limit`, `set_discharge_limit`, `set_ac_output`, `set_dc_output` |
 | PowerStream (600W / 800W) | – | Public Developer API | `set_feed_in_power()` |
-| Wave 3 AC | `AC71` | Private API (Wave 3 extra) | `turn_on/off()`, `set_temperature()`, `set_mode()`, `set_fan_speed()` |
+| Wave 3 AC | `AC71` | Private API (Wave 3 extra) | `turn_on/off()`, `set_temperature()`, `set_mode()`, `set_fan_speed()` ✅ |
 | Smart Home Panel 2 | – | Public Developer API (partial) | — |
+
+✅ validated on real hardware · ⚠️ unverified (a live run is needed; some are suspected wrong) · unmarked: from the reference integration, never run here. Details: [docs/validation-status.md](docs/validation-status.md).
 
 ---
 
@@ -169,12 +173,15 @@ asyncio.run(main())
 |----------|-------------|
 | [Getting Started](docs/api/getting-started.md) | Full quickstart + device reference |
 | [Private API Authentication](docs/api/private-authentication.md) | Wave 3 email/password auth guide |
-| [Architecture Overview](docs/diagrams/overview.svg) | System architecture diagram |
-| [Device Model](docs/diagrams/device-model.svg) | Device class hierarchy + capabilities |
-| [Auth Flow](docs/diagrams/auth-flow.svg) | Authentication flow for both APIs |
+| [Validation status](docs/validation-status.md) | What is proven on real hardware, what is recorded, what is unverified |
+| [Architecture](docs/architecture.md) | System context, modules, data flows, test tiers, recording pipeline |
+| [Decisions (ADRs)](docs/decisions/README.md) | Why the SDK is shaped this way, with the evidence |
+| [History](docs/history.md) | How we got here: timeline and lessons learned |
 | [Digital twin](docs/api/digital-twin.md) | Develop and test without EcoFlow's cloud: protocols, flows, emulated behaviour |
 | [Live testing](docs/api/live-testing.md) | Tiered live tests, recording real sessions, redaction |
 | [AGENTS.md](AGENTS.md) | Guide for AI agents and contributors (every quirk found live) |
+
+All docs, by audience: [docs/README.md](docs/README.md).
 
 ---
 

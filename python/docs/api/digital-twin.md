@@ -71,6 +71,25 @@ The SDK needs no twin-specific code. The **only** SDK addition is `Endpoints`:
 a trusted CA. The MQTT broker address always comes from the `certification`
 response, just as with EcoFlow, so pointing REST at the twin is enough.
 
+The SDK logs a **warning** for each one that is set:
+`ECOFLOW_REST_BASE` redirects every REST request, including the access-key
+header, to that host; `ECOFLOW_CA_FILE` only changes which CA is trusted for
+TLS (requests still go to the configured host). `rest_base` must be `https://`
+with a host and a valid port, and must not contain credentials, a query or a
+fragment. Pass `endpoints=` explicitly in code when you want no
+environment involvement at all.
+
+**Keep the twin CA local.** The twin's server certificate is valid for
+EcoFlow's real host names (`api-e.ecoflow.com`, `mqtt-e.ecoflow.com`, …) so apps
+can be pointed at it. Trust `ca.pem` only per process (`ECOFLOW_CA_FILE`,
+`curl --cacert`); never add it to a system or browser trust store, or anyone
+who can read `server.key` could impersonate EcoFlow on that machine. The twin
+writes `server.key` owner-only (`0600`) and refuses a symlinked or foreign-owned
+key. The CA's own private key is never saved, so no further certificates can be
+issued from it. On **Windows** there are no POSIX modes: the key gets the ACLs
+of its folder. The default `--state-dir` is `.ecoflow-twin` in the current
+directory, so run the twin from a folder inside your user profile.
+
 ## Connection flow
 
 This is the same sequence the SDK runs against EcoFlow, with every step
@@ -244,4 +263,5 @@ it would have shown up as occasional 0 V glitches in any app.
 - **Clients that hard-code EcoFlow's hostnames** (e.g. Home Assistant's
   integration) need DNS rewriting and the twin CA installed. That is Twin 3
   ([#24](https://github.com/colombod/ecoflow-sdk/issues/24)). The certificate
-  already includes those hostnames.
+  already includes those hostnames, so Twin 3 must confine that trust to the
+  sandbox (container or VM) running the client — see "Keep the twin CA local".

@@ -344,8 +344,9 @@ async def test_run_publishes_get_trigger_for_each_device() -> None:
 def test_private_client_id_has_the_format_the_broker_requires() -> None:
     """The private broker answers 135 (Not authorized) to any client ID not
     shaped ANDROID_<32 upper hex>_<userId> (docs/api/private-authentication.md).
-    Commit 67c3c87 switched to "ecoflow-private-<hash>" and every Wave 3
-    connection has been refused since — seen live 2026-09-27."""
+    PR #6 ("fix: use stable deterministic MQTT client ID to avoid EcoFlow
+    10-ID/day quota") switched to "ecoflow-private-<hash>" and every Wave 3
+    connection was refused until PR #11 — seen live 2026-09-27."""
     import re
 
     from ecoflow.private.connection import private_client_id
