@@ -117,3 +117,110 @@ async def test_plug_rest_refresh_metadata_matches_new_snapshot() -> None:
     assert data.daily_energy_wh is None
     assert data.power_watts == 0
     assert set(plug.field_received_at) == {"2_1.watts", "2_1.volt"}
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+async def test_plug_mqtt_updates_after_rest_refresh(legacy: bool) -> None:
+    """REST must not select the wrong parser for the next MQTT callback."""
+    from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
+
+    rest = MagicMock()
+    rest.get_quota = AsyncMock(return_value={"2_1.watts": 100, "2_1.switchSta": False})
+    plug = SmartPlugDevice(sn="HW52TEST", product_name="plug", rest=rest)
+    transport = MqttTransport(
+        MqttCredentials("offline.invalid", 8883, "mqtts", "u", "p", "c", "test")
+    )
+    transport.on_message(plug.sn, plug._handle_message)  # pyright: ignore[reportPrivateUsage]
+    await plug.refresh()
+    payload = (
+        {"plug_heartbeat": {"watts": 500, "plugState": 1}}
+        if legacy
+        else {"cmdFunc": 2, "cmdId": 1, "params": {"watts": 500, "switchSta": True}}
+    )
+    await transport.dispatch_message(f"/open/test/{plug.sn}/quota", payload)
+    assert plug.data is not None
+    assert plug.data.power_watts == 50
+    assert plug.data.is_on is True
+    key = "plug_heartbeat.watts" if legacy else "2_1.watts"
+    assert key in plug.field_received_at
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+async def test_plug_rest_does_not_erase_partial_mqtt_state(legacy: bool) -> None:
+    """Retained MQTT values and times survive a REST view and transport reset."""
+    from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
+
+    rest = MagicMock()
+    rest.get_quota = AsyncMock(return_value={"2_1.watts": 100, "2_1.switchSta": False})
+    plug = SmartPlugDevice(sn="HW52TEST", product_name="plug", rest=rest)
+    transport = MqttTransport(
+        MqttCredentials("offline.invalid", 8883, "mqtts", "u", "p", "c", "test")
+    )
+    transport.on_message(plug.sn, plug._handle_message)  # pyright: ignore[reportPrivateUsage]
+    topic = f"/open/test/{plug.sn}/quota"
+    payload = (
+        {"plug_heartbeat": {"watts": 500, "plugState": 1}}
+        if legacy
+        else {"cmdFunc": 2, "cmdId": 1, "params": {"watts": 500, "switchSta": True}}
+    )
+    await transport.dispatch_message(topic, payload)
+    key = "plug_heartbeat.watts" if legacy else "2_1.watts"
+    received = plug.field_received_at[key]
+    await plug.refresh()
+    assert "plug_heartbeat.watts" not in plug.field_received_at
+    await transport.disconnect()  # no socket was opened; exercise reset only
+    partial = (
+        {"plug_heartbeat": {"curr": 0}}
+        if legacy
+        else {"cmdFunc": 2, "cmdId": 1, "params": {"current": 0}}
+    )
+    await transport.dispatch_message(topic, partial)
+    assert plug.data is not None
+    assert plug.data.power_watts == 50
+    assert plug.data.is_on is True
+    assert plug.data.current == 0
+    assert plug.field_received_at[key] == received
+
+
+@pytest.mark.parametrize("rest_first", [False, True])
+async def test_stream_strategy_value_matches_its_receipt_time(rest_first: bool) -> None:
+    """Recorded REST flat keys and MQTT nested keys describe the same modes."""
+    rest = MagicMock()
+    rest.get_quota = AsyncMock(
+        return_value={"energyStrategyOperateMode.operateSelfPoweredOpen": False}
+    )
+    stream = StreamUltraDevice(sn="BK11TEST", product_name="stream", rest=rest)
+    nested = {"energyStrategyOperateMode": {"operateSelfPoweredOpen": True}}
+    if rest_first:
+        await stream.refresh()
+        stream._handle_message(stream.sn, nested)  # pyright: ignore[reportPrivateUsage]
+    else:
+        stream._handle_message(stream.sn, nested)  # pyright: ignore[reportPrivateUsage]
+        await stream.refresh()
+    assert stream.status is not None
+    assert stream.status.self_powered_mode is rest_first
+    assert (
+        "energyStrategyOperateMode.operateSelfPoweredOpen" in stream.field_received_at
+    )
+
+
+@pytest.mark.parametrize("flat", [False, True, None])
+def test_stream_strategy_same_payload_precedence_and_no_input_alias(
+    flat: bool | None,
+) -> None:
+    from ecoflow.models.stream_ultra import StreamUltraStatus
+
+    stream = StreamUltraDevice(sn="BK11TEST", product_name="stream", rest=MagicMock())
+    modes = {"operateSelfPoweredOpen": True}
+    payload = {
+        "energyStrategyOperateMode": modes,
+        "energyStrategyOperateMode.operateSelfPoweredOpen": flat,
+    }
+    expected = StreamUltraStatus.from_quota_payload(
+        stream.sn, payload
+    ).self_powered_mode
+    stream._handle_message(stream.sn, payload)  # pyright: ignore[reportPrivateUsage]
+    modes["operateSelfPoweredOpen"] = False
+    stream._handle_message(stream.sn, {"temp": 20})  # pyright: ignore[reportPrivateUsage]
+    assert stream.status is not None
+    assert stream.status.self_powered_mode is expected

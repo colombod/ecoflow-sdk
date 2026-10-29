@@ -143,7 +143,9 @@ monitoring use case before acting on a cached value.
 These times record local receipt, **not** when EcoFlow measured the value.
 A STREAM/meter REST merge updates only the fields it returns; a partial MQTT
 push does not make other cached fields fresh. Plug REST refresh replaces its
-snapshot and receipt map. `status.updated_at` / `data.updated_at`
+visible snapshot and receipt map, preserving a separate MQTT accumulator for
+subsequent partial pushes. STREAM strategy modes use one canonical flat key
+across REST and MQTT. `status.updated_at` / `data.updated_at`
 remain snapshot construction times, and `online` is not a connection health
 or freshness guarantee. Other device families do not yet populate the map.
 

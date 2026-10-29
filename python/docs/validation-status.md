@@ -44,9 +44,11 @@ The owner's hardware: STREAM Ultra, 4× STREAM AC Pro, Smart Meter, Smart Plug a
 
 ### Offline telemetry guarantees
 
-Mock regressions and committed recordings exercise empty Smart Meter REST
-handling, unknown Smart Plug daily energy, and per-field receipt times on
-STREAM/meter/plug partial updates. These are SDK guarantees, not new hardware
+Mock regressions exercise unknown daily energy, per-field receipt times,
+partial merges, and plug MQTT callbacks after REST snapshots. Committed
+recordings replay parsing and the empty Smart Meter REST contract. Both flat
+REST and nested MQTT STREAM strategy layouts occur in the recordings.
+These are offline SDK checks, not new hardware
 validation. See the [migration notes](../README.md#telemetry-availability-and-freshness).
 `updated_at` is snapshot parse time, not proof that every cached field is fresh.
 

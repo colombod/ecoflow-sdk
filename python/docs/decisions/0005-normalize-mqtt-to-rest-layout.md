@@ -17,7 +17,14 @@ REST `quota/all` returns one flat dict. MQTT pushes differ by device family:
 Before 2026-09 the parsers were fed raw pushes, and live MQTT produced all-zero statuses.
 
 ## Decision
-`MqttTransport.dispatch_message()` runs `normalize_quota_payload()` on every push. Device parsers only ever see the REST layout. Every typed device keeps **one accumulated raw dict**, and REST `refresh()` merges into the same dict instead of replacing it.
+`MqttTransport.dispatch_message()` runs `normalize_quota_payload()` on every push.
+STREAM and Smart Meter accumulate partial readings, merging nonempty REST
+refreshes into the same state. STREAM strategy modes are canonicalised to flat
+keys so the recorded nested MQTT and flat REST layouts update the same value.
+Smart Plug keeps its MQTT accumulator separate from a standalone REST snapshot:
+refresh replaces the visible data and receipt map, while later MQTT updates
+resume the retained MQTT values and receipt times. This also preserves the
+supported legacy heartbeat parser, whose units differ from the REST layout.
 
 ## Consequences
 - There is one parser per model, and a REST snapshot and an MQTT stream can be compared key by key. The replay tier does that for every recording.

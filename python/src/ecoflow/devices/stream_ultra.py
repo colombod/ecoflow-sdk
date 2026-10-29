@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools as _itertools
-from typing import Any
+from typing import Any, cast
 
 from ecoflow.devices.base import BaseDevice
 from ecoflow.models.stream_ultra import StreamUltraStatus
@@ -25,6 +25,27 @@ class StreamUltraDevice(BaseDevice):
         self.status: StreamUltraStatus | None = None
         self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
 
+    def _merge_stream_telemetry(self, data: dict[str, Any]) -> None:
+        """Canonicalise the recorded nested/flat strategy layouts before merge.
+
+        Otherwise an old flat REST mode masks a newer nested MQTT mode while
+        both appear under the same field receipt timestamp.
+        """
+        modes = data.get("energyStrategyOperateMode")
+        if isinstance(modes, dict):
+            canonical = {
+                f"energyStrategyOperateMode.{key}": value
+                for key, value in cast(dict[str, Any], modes).items()
+            }
+            # Match the parser: non-None flat values win within one payload.
+            for key, value in data.items():
+                if key != "energyStrategyOperateMode" and (
+                    value is not None or key not in canonical
+                ):
+                    canonical[key] = value
+            data = canonical
+        self._merge_telemetry(self._raw_data, data)
+
     async def refresh(self) -> StreamUltraStatus:
         """Fetch current device state via REST and return a StreamUltraStatus.
 
@@ -34,7 +55,7 @@ class StreamUltraDevice(BaseDevice):
         MQTT — a cascade slave's real SOC would otherwise drop back to 0.
         """
         raw = await self._rest.get_quota(self.sn)
-        self._merge_telemetry(self._raw_data, raw)
+        self._merge_stream_telemetry(raw)
         self.status = StreamUltraStatus.from_quota_payload(self.sn, self._raw_data)
         self.status.product_name = self.product_name
         return self.status
@@ -43,7 +64,7 @@ class StreamUltraDevice(BaseDevice):
         """Update status from an incoming MQTT payload, accumulating chunks."""
         if not data:
             return
-        self._merge_telemetry(self._raw_data, data)
+        self._merge_stream_telemetry(data)
         self.status = StreamUltraStatus.from_quota_payload(sn, self._raw_data)
         self.status.product_name = self.product_name
         self._notify_callbacks(self.status)

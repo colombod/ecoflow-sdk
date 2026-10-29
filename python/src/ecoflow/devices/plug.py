@@ -15,16 +15,17 @@ class SmartPlugDevice(BaseDevice):
         super().__init__(**kwargs)
         self.data: SmartPlugData | None = None
         self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
+        # REST is a separate snapshot view; retain MQTT chunks and their times.
+        self._mqtt_field_received_at = self._field_received_at
 
     async def refresh(self) -> SmartPlugData:
         """Fetch current device state via REST and return a SmartPlugData."""
         raw = await self._rest.get_quota(self.sn)
         # REST returns a standalone snapshot; its metadata must match that view.
-        self._field_received_at.clear()
-        self._raw_data.clear()
-        self._merge_telemetry(self._raw_data, raw)
         self.data = SmartPlugData.from_quota_payload(self.sn, raw)
         self.data.product_name = self.product_name
+        self._field_received_at = {}
+        self._merge_telemetry({}, raw)
         return self.data
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
@@ -36,6 +37,7 @@ class SmartPlugDevice(BaseDevice):
             data = {k: v for k, v in data.items() if k != "2_1.volt"}
         if not data:
             return
+        self._field_received_at = self._mqtt_field_received_at
         self._merge_telemetry(self._raw_data, data)
         # Public-API pushes are normalised to the REST "2_1.*" key layout.
         if any(k.startswith("2_1.") for k in self._raw_data):

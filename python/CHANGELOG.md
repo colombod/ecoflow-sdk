@@ -18,6 +18,10 @@ This project uses [semantic versioning](https://semver.org/).
 - STREAM, Smart Meter and Smart Plug expose `field_received_at` for raw-field
   availability and local receipt times. Partial updates preserve untouched
   receive times; nested records merge without losing unrelated readings.
+- Keep Smart Plug MQTT chunks and their receipt times separate from REST
+  snapshots; normalised and legacy heartbeat callbacks continue after refresh.
+- Canonicalise STREAM strategy modes so a newer nested MQTT value supersedes
+  an old flat REST value without misleading freshness metadata.
 - Correct the README's unsupported claim that STREAM charge limits were
   validated on hardware; see `docs/validation-status.md`.
 
