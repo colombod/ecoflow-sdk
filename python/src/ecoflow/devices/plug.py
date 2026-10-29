@@ -19,6 +19,10 @@ class SmartPlugDevice(BaseDevice):
     async def refresh(self) -> SmartPlugData:
         """Fetch current device state via REST and return a SmartPlugData."""
         raw = await self._rest.get_quota(self.sn)
+        # REST returns a standalone snapshot; its metadata must match that view.
+        self._field_received_at.clear()
+        self._raw_data.clear()
+        self._merge_telemetry(self._raw_data, raw)
         self.data = SmartPlugData.from_quota_payload(self.sn, raw)
         self.data.product_name = self.product_name
         return self.data
@@ -30,7 +34,9 @@ class SmartPlugDevice(BaseDevice):
         # reporting is powered, so 0 V is never real — keep the known value.
         if data.get("2_1.volt") == 0 and self._raw_data.get("2_1.volt"):
             data = {k: v for k, v in data.items() if k != "2_1.volt"}
-        self._raw_data.update(data)
+        if not data:
+            return
+        self._merge_telemetry(self._raw_data, data)
         # Public-API pushes are normalised to the REST "2_1.*" key layout.
         if any(k.startswith("2_1.") for k in self._raw_data):
             self.data = SmartPlugData.from_quota_payload(sn, self._raw_data)

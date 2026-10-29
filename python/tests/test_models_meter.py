@@ -147,7 +147,7 @@ def test_smart_meter_sn_stored() -> None:
 
 def test_smart_meter_online_true() -> None:
     """from_quota_payload marks device as online=True."""
-    meter = SmartMeterData.from_quota_payload("BK21", {})
+    meter = SmartMeterData.from_quota_payload("BK21", {"powGetSysGrid": 0})
     assert meter.online is True
 
 
@@ -162,8 +162,14 @@ def test_smart_meter_defaults_zero_when_empty() -> None:
 
 def test_smart_meter_updated_at_is_set() -> None:
     """from_quota_payload sets updated_at to a non-None datetime."""
-    meter = SmartMeterData.from_quota_payload("BK21", {})
+    meter = SmartMeterData.from_quota_payload("BK21", {"powGetSysGrid": 0})
     assert meter.updated_at is not None
+
+
+def test_empty_meter_payload_is_not_an_observation() -> None:
+    meter = SmartMeterData.from_quota_payload("BK21", {})
+    assert meter.online is False
+    assert meter.updated_at is None
 
 
 def test_smart_meter_from_mqtt_payload_alias() -> None:

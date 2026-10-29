@@ -18,6 +18,7 @@ from typing import Any
 import pytest
 
 from ecoflow.client import EcoFlowClient
+from ecoflow.exceptions import EcoFlowDataUnavailableError
 from tests.e2e.conftest import MqttTiming
 from tests.support.consistency import compare
 
@@ -79,9 +80,13 @@ async def test_mqtt_status_agrees_with_rest(
             continue
         # From the REST-only client: this device's own refresh() would merge
         # REST into its MQTT state (STREAM) and compare the pushes with themselves.
-        rest_status = await rest_devices[device.sn].refresh()
         if not compare(mqtt_status, mqtt_status).compared:
             failures.append(f"{label}: MQTT status has no populated stable fields")
+            continue
+        try:
+            rest_status = await rest_devices[device.sn].refresh()
+        except EcoFlowDataUnavailableError:
+            print(f"\n[{label}] MQTT parsed; REST readings unavailable")
             continue
         if not compare(rest_status, rest_status).compared:
             # Seen live: the Smart Meter's quota/all is empty and cascade-slave

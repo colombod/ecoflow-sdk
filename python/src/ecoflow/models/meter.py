@@ -77,7 +77,7 @@ class SmartMeterData:
         record: dict[str, Any] = data.get("gridConnectionDataRecord", {})
         return cls(
             sn=sn,
-            online=True,
+            online=bool(data),
             grid_power_watts=float(data.get("powGetSysGrid", 0)),
             grid_status=str(data.get("gridConnectionSta", "")),
             power_factor=float(data.get("gridConnectionPowerFactor", 0)),
@@ -99,7 +99,7 @@ class SmartMeterData:
             lifetime_energy_l1_wh=float(record.get("todayActiveL1", 0)),
             lifetime_energy_l2_wh=float(record.get("todayActiveL2", 0)),
             lifetime_energy_l3_wh=float(record.get("todayActiveL3", 0)),
-            updated_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC) if data else None,
         )
 
     # Alias for clarity when called from MQTT dispatch path.

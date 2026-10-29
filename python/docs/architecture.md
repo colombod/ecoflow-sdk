@@ -149,7 +149,15 @@ sequenceDiagram
 ```
 
 `EcoFlowClient(enable_mqtt=False)` stops after discovery: REST reads only, so it
-never takes the account's single MQTT session.
+never takes the account's single MQTT session. Smart Meter REST normally returns
+an empty quota; its `refresh()` raises `EcoFlowDataUnavailableError` rather than
+creating a zero-power reading.
+
+For STREAM, Smart Meter and Smart Plug, `field_received_at` tracks receipt of
+normalised raw leaves. Nested partial records preserve unmodified leaves and
+their timestamps. Snapshot `updated_at` remains parse time and cannot establish
+freshness of each field; receipt times cannot establish device measurement age.
+See the [availability and migration notes](../README.md#telemetry-availability-and-freshness).
 
 ## Sending commands
 

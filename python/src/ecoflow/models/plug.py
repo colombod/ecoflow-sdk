@@ -37,7 +37,8 @@ class SmartPlugData:
     """Actual wattage in W. QUIRK: raw 'watts' field is 10× (× WATTS_RAW_FACTOR)."""
     voltage: float
     current: float
-    daily_energy_wh: float
+    daily_energy_wh: float | None
+    """Daily energy in Wh, or None when the payload does not provide it."""
     on_time_seconds: int
     temp: float
     brightness: int = field(default=100)
@@ -64,7 +65,11 @@ class SmartPlugData:
             power_watts=float(hb.get("watts", 0)) * WATTS_RAW_FACTOR,
             voltage=float(hb.get("vol", 0)) * _VOL_RAW_FACTOR,
             current=float(hb.get("curr", 0)) * _CURR_RAW_FACTOR,
-            daily_energy_wh=float(hb.get("watth5", 0)) * _ENERGY_RAW_FACTOR,
+            daily_energy_wh=(
+                float(hb["watth5"]) * _ENERGY_RAW_FACTOR
+                if hb.get("watth5") is not None
+                else None
+            ),
             on_time_seconds=int(hb.get("onTime", 0)),
             temp=float(hb.get("temp", 0)) / 10.0,
             brightness=int(hb.get("brightness", 100)),
@@ -92,7 +97,7 @@ class SmartPlugData:
             power_watts=data.get("2_1.watts", 0) * WATTS_RAW_FACTOR,
             voltage=float(data.get("2_1.volt", 0)),  # already Volts — no factor
             current=data.get("2_1.current", 0) / 1000.0,  # mA → A
-            daily_energy_wh=0.0,  # not available in quota/all
+            daily_energy_wh=None,  # not available in quota/all
             on_time_seconds=data.get("2_1.runTime", 0),
             temp=float(data.get("2_1.temp", 0)),  # already °C — no /10
             brightness=round(raw_brightness / 1023 * 100) if raw_brightness > 0 else 0,

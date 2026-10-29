@@ -42,6 +42,14 @@ The owner's hardware: STREAM Ultra, 4× STREAM AC Pro, Smart Meter, Smart Plug a
 | PowerStream (`MicroInverterDevice`) | 📚 | 📚 (`cmdFunc/cmdId/param`) | ⚠️ reuses `SmartMeterData` as a placeholder model |
 | Smart Home Panel | 📚 | 📚 | ❌ no typed model; `refresh()` returns a raw dict |
 
+### Offline telemetry guarantees
+
+Mock regressions and committed recordings exercise empty Smart Meter REST
+handling, unknown Smart Plug daily energy, and per-field receipt times on
+STREAM/meter/plug partial updates. These are SDK guarantees, not new hardware
+validation. See the [migration notes](../README.md#telemetry-availability-and-freshness).
+`updated_at` is snapshot parse time, not proof that every cached field is fresh.
+
 ## Developer API: writes
 
 None of these ever run in CI. A live run needs the double opt-in ([ADR 0008](decisions/0008-live-tests-ad-hoc-never-ci.md)).

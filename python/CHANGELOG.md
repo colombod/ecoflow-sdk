@@ -9,6 +9,18 @@ This project uses [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Smart Plug daily energy is `None` when unavailable, preserving genuine zero.
+  Consumers must handle `float | None` before formatting or arithmetic.
+- Empty Smart Meter REST refreshes raise `EcoFlowDataUnavailableError` and
+  preserve cached MQTT readings instead of reporting online zero consumption.
+  Direct empty model parsing has no observation timestamp and is not online.
+- STREAM, Smart Meter and Smart Plug expose `field_received_at` for raw-field
+  availability and local receipt times. Partial updates preserve untouched
+  receive times; nested records merge without losing unrelated readings.
+- Correct the README's unsupported claim that STREAM charge limits were
+  validated on hardware; see `docs/validation-status.md`.
+
 ### Security
 - `Endpoints.from_env()` logs a warning for each override it applies:
   `ECOFLOW_REST_BASE` redirects every REST request, including the access-key

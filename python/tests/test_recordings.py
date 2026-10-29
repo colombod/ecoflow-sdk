@@ -24,7 +24,7 @@ import pytest
 from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
 from ecoflow.endpoints import Endpoints
-from ecoflow.exceptions import EcoFlowError
+from ecoflow.exceptions import EcoFlowDataUnavailableError, EcoFlowError
 from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
 from ecoflow.transport.rest import RestTransport
 from ecoflow_twin import TWIN_ACCESS_KEY, TWIN_ACCOUNT, TWIN_SECRET_KEY, TwinServer
@@ -114,6 +114,12 @@ async def test_mqtt_pushes_agree_with_rest(
             mqtt_status = _current(device)
             if str(recording.quota.get(sn, {}).get("code")) != "0":
                 pytest.skip(f"{sn[:4]}: REST quota not available (e.g. Wave 3 → 1006)")
+            if sn.startswith("BK21") and not recording.quota[sn].get("data"):
+                with pytest.raises(EcoFlowDataUnavailableError):
+                    await _rest_only_status(endpoints, sn)
+                assert mqtt_status is not None
+                assert compare(mqtt_status, mqtt_status).compared
+                return
             rest_status = await _rest_only_status(endpoints, sn)
         finally:
             await client.disconnect()

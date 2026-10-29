@@ -119,12 +119,52 @@ async def main():
 
         await stream.set_relay2(on=True)     # enable AC output socket 2
         await stream.set_relay3(on=False)    # disable AC output socket 3
-        await stream.set_charge_limit(80)    # limit charging to 80% SOC
 
 asyncio.run(main())
 ```
 
-> ✅ Relay and charge-limit commands validated against real BK11 / BK31 hardware (2026-06-01).
+> Only `set_relay2` was validated on STREAM Ultra (2026-06-01).
+> Relay 3 is unverified; charge/discharge-limit mappings are suspect.
+> A completed publish does not confirm device execution. See
+> [validation status](docs/validation-status.md) before relying on controls.
+
+---
+
+## Telemetry availability and freshness
+
+For STREAM (including AC Pro), Smart Meter and Smart Plug, use
+`device.field_received_at` to distinguish received raw fields from numeric
+parser defaults. This returns a copy of UTC receipt times keyed by normalised
+payload name: for example `powGetSysGrid`, `soc`, `2_1.watts`, or
+`gridConnectionDataRecord.todayActive`. An absent key is unknown; a received
+zero is a real observation. Apply a freshness threshold appropriate to your
+monitoring use case before acting on a cached value.
+
+These times record local receipt, **not** when EcoFlow measured the value.
+A STREAM/meter REST merge updates only the fields it returns; a partial MQTT
+push does not make other cached fields fresh. Plug REST refresh replaces its
+snapshot and receipt map. `status.updated_at` / `data.updated_at`
+remain snapshot construction times, and `online` is not a connection health
+or freshness guarantee. Other device families do not yet populate the map.
+
+Compatibility changes:
+
+- `SmartPlugData.daily_energy_wh` is now `float | None`: REST and heartbeats
+  without `watth5` return `None`. Handle `None` before formatting or arithmetic;
+  do not substitute zero when computing household energy totals.
+- `SmartMeterDevice.refresh()` raises `EcoFlowDataUnavailableError` (an
+  `EcoFlowError`) on an empty REST quota. Keep the previous cached MQTT data
+  if present and check its field receive times; in REST-only mode, a BK21
+  meter normally has no readings. Empty MQTT messages do not create a snapshot.
+- A directly parsed empty `SmartMeterData` has `online=False` and
+  `updated_at=None`. Numeric defaults remain for compatibility and are not
+  measurements.
+
+Remaining work: typed per-field availability across all models, source/device
+measurement timestamps, explicit client degradation status, and command
+acknowledgement handling. This patch does not change the existing STREAM SOC
+fallback or power-sign/cascade interpretation, and offline tests do not validate
+controls on hardware.
 
 ---
 

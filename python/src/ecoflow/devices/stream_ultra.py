@@ -34,14 +34,16 @@ class StreamUltraDevice(BaseDevice):
         MQTT — a cascade slave's real SOC would otherwise drop back to 0.
         """
         raw = await self._rest.get_quota(self.sn)
-        self._raw_data.update(raw)
+        self._merge_telemetry(self._raw_data, raw)
         self.status = StreamUltraStatus.from_quota_payload(self.sn, self._raw_data)
         self.status.product_name = self.product_name
         return self.status
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update status from an incoming MQTT payload, accumulating chunks."""
-        self._raw_data.update(data)
+        if not data:
+            return
+        self._merge_telemetry(self._raw_data, data)
         self.status = StreamUltraStatus.from_quota_payload(sn, self._raw_data)
         self.status.product_name = self.product_name
         self._notify_callbacks(self.status)

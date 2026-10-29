@@ -22,7 +22,12 @@ Before 2026-09 the parsers were fed raw pushes, and live MQTT produced all-zero 
 ## Consequences
 - There is one parser per model, and a REST snapshot and an MQTT stream can be compared key by key. The replay tier does that for every recording.
 - The merge matters. REST has only about 15 STREAM system keys, and the battery pack arrives only over MQTT. Replacing the state on `refresh()` dropped a cascade-slave AC Pro back to 0 % SOC.
-- Stale-message filtering drops only *strictly older* timestamps, because chunks of one state dump can share a timestamp.
+- The base handler compares local receipt times, not publisher timestamps; it
+  cannot detect old device measurements or out-of-order vendor delivery.
+- STREAM/meter/plug expose `field_received_at` for each normalised raw leaf.
+  Partial nested records merge without refreshing unchanged leaf timestamps.
+  These are receipt times, not device measurement times. Numeric defaults in
+  other model fields remain compatibility placeholders, not observations.
 
 ## Evidence
 - The flat STREAM/meter and plug `params` shapes were recorded live on 2026-09-27 (`tests/recordings/live-20260927`). Earlier docs claimed STREAM pushes were wrapped; the recording disproved that, and flat pushes pass through unchanged.

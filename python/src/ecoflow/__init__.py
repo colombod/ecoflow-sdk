@@ -20,6 +20,7 @@ from ecoflow.endpoints import Endpoints
 from ecoflow.exceptions import (
     EcoFlowAuthError,
     EcoFlowConnectionError,
+    EcoFlowDataUnavailableError,
     EcoFlowDeviceNotFoundError,
     EcoFlowDeviceOfflineError,
     EcoFlowError,
@@ -53,6 +54,7 @@ __all__ = [
     "EcoFlowError",
     "EcoFlowAuthError",
     "EcoFlowConnectionError",
+    "EcoFlowDataUnavailableError",
     "EcoFlowDeviceNotFoundError",
     "EcoFlowTimeoutError",
     "EcoFlowDeviceOfflineError",
