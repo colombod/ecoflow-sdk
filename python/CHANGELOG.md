@@ -9,6 +9,36 @@ This project uses [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Internal telemetry state now owns raw readings and receipt times together.
+  STREAM/meter/plug parse candidate updates before committing; malformed data
+  cannot poison future partial readings. Public model shapes are preserved.
+- STREAM mode normalisation is shared by direct parsing and device accumulation.
+  Device adapters consume narrow quota-reader/command-publisher interfaces;
+  client routing and device collections have explicit base-device types.
+- Failed client context entry and MQTT connection cancellation release owned
+  resources; REST cleanup is attempted even when MQTT cleanup fails. Primary
+  operation errors/cancellation survive secondary cleanup errors, which are
+  reported by exception notes. Broker IDs, retry rules and device commands
+  are unchanged. See `docs/architecture.md` for review scope
+  and deliberately deferred gaps.
+
+### Fixed
+- Smart Plug daily energy is `None` when unavailable, preserving genuine zero.
+  Consumers must handle `float | None` before formatting or arithmetic.
+- Empty Smart Meter REST refreshes raise `EcoFlowDataUnavailableError` and
+  preserve cached MQTT readings instead of reporting online zero consumption.
+  Direct empty model parsing has no observation timestamp and is not online.
+- STREAM, Smart Meter and Smart Plug expose `field_received_at` for raw-field
+  availability and local receipt times. Partial updates preserve untouched
+  receive times; nested records merge without losing unrelated readings.
+- Keep Smart Plug MQTT chunks and their receipt times separate from REST
+  snapshots; normalised and legacy heartbeat callbacks continue after refresh.
+- Canonicalise STREAM strategy modes so a newer nested MQTT value supersedes
+  an old flat REST value without misleading freshness metadata.
+- Correct the README's unsupported claim that STREAM charge limits were
+  validated on hardware; see `docs/validation-status.md`.
+
 ### Security
 - `Endpoints.from_env()` logs a warning for each override it applies:
   `ECOFLOW_REST_BASE` redirects every REST request, including the access-key

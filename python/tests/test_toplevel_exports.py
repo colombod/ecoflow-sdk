@@ -155,6 +155,7 @@ class TestTopLevelExports:
             "EcoFlowError",
             "EcoFlowAuthError",
             "EcoFlowConnectionError",
+            "EcoFlowDataUnavailableError",
             "EcoFlowDeviceNotFoundError",
             "EcoFlowTimeoutError",
             "EcoFlowDeviceOfflineError",

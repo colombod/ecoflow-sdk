@@ -10,9 +10,10 @@ from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
+from ecoflow.telemetry import TelemetryState
+
 if TYPE_CHECKING:
-    from ecoflow.transport.mqtt import MqttTransport
-    from ecoflow.transport.rest import RestTransport
+    from ecoflow.transport.protocols import CommandPublisher, QuotaReader
 
 _log = logging.getLogger(__name__)
 
@@ -33,15 +34,16 @@ def put_dropping_oldest(queue: asyncio.Queue[Any], item: Any) -> None:  # noqa: 
 class BaseDevice:
     """Base class for all EcoFlow device abstractions.
 
-    Publishes commands via MQTT when connected, falls back to REST otherwise.
+    Provides event delivery and public-API MQTT command envelopes. Device
+    adapters own read policies and compose their telemetry state separately.
     """
 
     def __init__(
         self,
         sn: str,
         product_name: str,
-        rest: RestTransport,
-        mqtt: MqttTransport | None = None,
+        rest: QuotaReader,
+        mqtt: CommandPublisher | None = None,
     ) -> None:
         self.sn = sn
         self.product_name = product_name
@@ -51,6 +53,18 @@ class BaseDevice:
         # Internal sinks feeding events() / wait_for_update() queues.
         self._sinks: list[Callable[[Any], None]] = []
         self._last_updated: datetime | None = None
+        self._telemetry = TelemetryState()
+
+    @property
+    def field_received_at(self) -> dict[str, datetime]:
+        """Raw-field receive times for STREAM, Smart Meter and Smart Plug.
+
+        Keys use the normalised payload layout, with dots for nested leaves.
+        An absent key is unknown in the cached view; zero/False are observations.
+        These are local receipt times, not device measurement timestamps.
+        Other device families do not currently populate this metadata.
+        """
+        return self._telemetry.field_received_at
 
     async def _publish(self, payload: dict[str, Any]) -> None:
         """Publish a command to this device via MQTT set topic.
@@ -119,10 +133,11 @@ class BaseDevice:
             await updates.aclose()
 
     def _handle_message(self, sn: str, data: dict[str, Any]) -> None:
-        """Route incoming MQTT payload — discard if older than cached state.
+        """Route incoming MQTT payload, guarding against local clock rollback.
 
         Only strictly older messages are dropped: chunks of one state dump can
         share a timestamp on platforms with a coarse clock.
+        This compares local receipt times, not vendor measurement timestamps.
         """
         now = datetime.now(tz=UTC)
         if self._last_updated is not None and self._last_updated > now:

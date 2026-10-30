@@ -6,7 +6,7 @@ import itertools as _itertools
 from typing import Any
 
 from ecoflow.devices.base import BaseDevice
-from ecoflow.models.stream_ultra import StreamUltraStatus
+from ecoflow.models.stream_ultra import StreamUltraStatus, normalize_stream_payload
 
 # Module-level sequential counter for STREAM command `id` field.
 # Must be module-level (not class-level) to avoid issues with itertools.count
@@ -23,7 +23,14 @@ class StreamUltraDevice(BaseDevice):
     def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.status: StreamUltraStatus | None = None
-        self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
+
+    def _update_status(self, sn: str, data: dict[str, Any]) -> StreamUltraStatus:
+        candidate = self._telemetry.updated(normalize_stream_payload(data))
+        status = StreamUltraStatus.from_quota_payload(sn, candidate.values)
+        status.product_name = self.product_name
+        self._telemetry = candidate
+        self.status = status
+        return status
 
     async def refresh(self) -> StreamUltraStatus:
         """Fetch current device state via REST and return a StreamUltraStatus.
@@ -34,17 +41,13 @@ class StreamUltraDevice(BaseDevice):
         MQTT — a cascade slave's real SOC would otherwise drop back to 0.
         """
         raw = await self._rest.get_quota(self.sn)
-        self._raw_data.update(raw)
-        self.status = StreamUltraStatus.from_quota_payload(self.sn, self._raw_data)
-        self.status.product_name = self.product_name
-        return self.status
+        return self._update_status(self.sn, raw)
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update status from an incoming MQTT payload, accumulating chunks."""
-        self._raw_data.update(data)
-        self.status = StreamUltraStatus.from_quota_payload(sn, self._raw_data)
-        self.status.product_name = self.product_name
-        self._notify_callbacks(self.status)
+        if not data:
+            return
+        self._notify_callbacks(self._update_status(sn, data))
 
     # ------------------------------------------------------------------
     # Command helpers

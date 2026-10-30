@@ -11,6 +11,7 @@ how it got here is in [history.md](history.md).
 - [Sending commands](#sending-commands)
 - [Testing architecture](#testing-architecture)
 - [Recording pipeline](#recording-pipeline)
+- [Telemetry and lifecycle review](#telemetry-and-lifecycle-review)
 
 ## System context
 
@@ -75,12 +76,14 @@ flowchart TB
             rest["rest.py<br/>RestTransport"]
             mqtt["mqtt.py<br/>MqttTransport"]
             payload["payload.py<br/>normalize_quota_payload()"]
+            ports["protocols.py<br/>QuotaReader · CommandPublisher"]
         end
         subgraph devices["devices/"]
             base["base.py<br/>BaseDevice: _publish envelope,<br/>events(), wait_for_update()"]
             typed["stream_ultra · stream_ac_pro · meter · plug<br/>battery · inverter · wave3 · panel · discovered"]
         end
-        models["models/<br/>typed status dataclasses"]
+        models["models/<br/>typed status dataclasses + family decoding"]
+        telemetry["telemetry.py<br/>TelemetryState: owned values + receipt times"]
         subgraph privatepkg["private/ (extra: wave3 → protobuf)"]
             pauth["auth.py — login()"]
             conn["connection.py — Wave3Connection"]
@@ -98,7 +101,9 @@ flowchart TB
     clientpy --> rest & mqtt & typed
     rest --> auth & endpoints
     mqtt --> payload
-    typed --> base & models
+    typed --> base & models & telemetry
+    base -. "device dependencies" .-> ports
+    rest & mqtt -. "implement structurally" .-> ports
     conn --> pauth & proto & typed
     server --> trest & broker & tstate
     twinpkg -. "never imported by ecoflow" .- ecoflow
@@ -106,10 +111,18 @@ flowchart TB
 
 ## Reading device state
 
-Every typed device keeps one accumulated raw dict and rebuilds its status model
-from it. REST (`refresh()`) and MQTT pushes feed the same parser, because MQTT
-payloads are first converted to the REST key layout
-([ADR 0005](decisions/0005-normalize-mqtt-to-rest-layout.md)).
+STREAM and Smart Meter merge partial readings into a `TelemetryState` containing
+raw values and their per-field receipt times. Smart Plug keeps a separate MQTT
+state while REST refreshes produce a standalone visible view. Other device
+families retain their existing read policies. MQTT envelopes are normalised by
+the transport; STREAM's model-level helper canonicalises its recorded nested
+and flat strategy keys ([ADR 0005](decisions/0005-normalize-mqtt-to-rest-layout.md)).
+
+For these three adapters, an update creates a candidate state and parses it
+before replacing the visible model and state together. Rejected readings cannot
+poison later updates or refresh field receipt times. The internal state owns
+its inputs and returns defensive copies. Public status dataclasses and event
+objects remain mutable as before.
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +150,7 @@ sequenceDiagram
         M->>N: unwrap params / param / typeCode
         N-->>M: flat REST-style keys
         M->>D: _handle_message(sn, data)
-        D->>D: merge into raw state → rebuild status model
+        D->>D: candidate state → parse → commit model and state
         D-->>App: on_update callbacks, events(), wait_for_update()
     end
 
@@ -145,11 +158,19 @@ sequenceDiagram
     D->>R: get_quota(sn)
     R->>E: GET /device/quota/all?sn=… (signed incl. sn, no Content-Type)
     E-->>R: flat quota dict
-    R-->>D: merged into the same raw state
+    R-->>D: apply device-specific REST read policy
 ```
 
 `EcoFlowClient(enable_mqtt=False)` stops after discovery: REST reads only, so it
-never takes the account's single MQTT session.
+never takes the account's single MQTT session. Smart Meter REST normally returns
+an empty quota; its `refresh()` raises `EcoFlowDataUnavailableError` rather than
+creating a zero-power reading.
+
+For STREAM, Smart Meter and Smart Plug, `field_received_at` tracks receipt of
+normalised raw leaves. Nested partial records preserve unmodified leaves and
+their timestamps. Snapshot `updated_at` remains parse time and cannot establish
+freshness of each field; receipt times cannot establish device measurement age.
+See the [availability and migration notes](../README.md#telemetry-availability-and-freshness).
 
 ## Sending commands
 
@@ -223,6 +244,70 @@ signatures independently of the SDK, enforces the one-session and client-ID
 rules, and plays the recorded MQTT timeline in a loop
 ([ADR 0010](decisions/0010-service-digital-twin.md),
 [digital-twin.md](api/digital-twin.md)).
+
+## Telemetry and lifecycle review
+
+Review date: 2026-10-30. The scope covers the Developer API client, REST/MQTT
+transports, envelope normalisation, device state, typed parsing and offline
+contracts. This is a bounded review and refactor, not a claim of blanket SOLID
+compliance or new hardware validation.
+
+| Priority | Finding and code evidence | Decision |
+|---|---|---|
+| High | The former `BaseDevice._merge_telemetry` updated raw values and receipt times before parsing. One invalid number could make subsequent valid partial packets fail. | `TelemetryState.updated()` returns a candidate. STREAM/meter/plug adapters parse before committing; rejected MQTT or REST data leaves the prior state intact. |
+| Medium | BaseDevice combined events/command envelopes with caller-owned cache mutation; plug selected sources by aliasing private timestamp dictionaries. | Move recursive merge, ownership and timestamps into `telemetry.py`. Plug composes separate states; source policies remain explicit in each adapter. |
+| Medium | STREAM device canonicalisation and `StreamUltraStatus.from_quota_payload` independently encoded flat/nested mode precedence. | Both use `models.stream_ultra.normalize_stream_payload`. Envelope unwrapping remains in `transport.payload`; units stay in the appropriate model parser. |
+| Medium | Devices named full REST/MQTT implementations, while client routing used bare `type` and `Any`. | Use small structural `QuotaReader` and `CommandPublisher` interfaces and type the registry/collections against BaseDevice. The client remains the concrete composition root and lifecycle owner. |
+| Medium | Client context entry failure leaked resources; failed MQTT cleanup skipped REST closure; cancelling MQTT connect left its task running. | Attempt cleanup on failed entry and both disconnect paths; reuse MQTT cleanup on timeout/cancellation. Keep the initiating error/cancellation, attaching a note for secondary cleanup errors. Preserve stable broker IDs. |
+
+The state helper contains no vendor field mapping, transport or model imports.
+Adapters retain the distinctions that must not be combined: empty meter REST
+raises `EcoFlowDataUnavailableError`, STREAM refresh preserves pack data, plug
+REST/MQTT views remain separate, and plug voltage filtering/units retain their
+recorded behaviour. The small repeated parse-and-commit steps in adapters keep
+model types and these policies visible; a generic device hierarchy or plugin
+registry would add indirection without demonstrated reuse.
+
+Adapters depend on narrow transport capabilities and pure state/model
+operations, with `EcoFlowClient` wiring the concrete implementations. The narrow
+interfaces can be satisfied by in-memory fakes with no discovery, certification
+or lifecycle methods. They do not unify the private Wave 3 Protobuf stack with
+the public JSON API. The client's explicit collection routing preserves its
+existing public typed lists instead of replacing them with an untyped registry.
+
+Validation includes shared adapter contracts for rejected-payload recovery,
+quota errors, timestamps and callbacks; pure nested-state ownership/schema
+replacement tests; minimal read/publish fakes; context/task cleanup tests; the
+existing zero-versus-missing/source-separation tests; and the recorded-session
+suite. Regressions were checked against the previous local patch: five of six
+rejected-payload cases and all four lifecycle cleanup cases failed there.
+The plug REST rejection case already behaved correctly and remains a contract.
+Independent review also caught a secondary cleanup error masking the original
+entry failure/cancellation. Shared error-preserving cleanup now handles failed
+entry, disconnect and context exit; tests cover simultaneous failures.
+Run the repository's ordinary offline unit, replay, lint, format and strict type
+commands; no live tier or write test is needed for these internal guarantees.
+
+Deliberate deferrals and limits:
+
+- Existing `daily_energy_wh: float | None` and empty-meter exceptions remain the
+  intentional compatibility changes described in the [README](../README.md#telemetry-availability-and-freshness).
+  Other numeric defaults and broad per-model availability need a separate API
+  migration; `online` still does not establish data freshness.
+- Receipt times cannot prove vendor measurement age. Reconnects do not renew
+  untouched fields, but no hardware reconnect or broker behaviour was validated.
+  Device event queues carry existing mutable models, not historical telemetry
+  metadata snapshots; consumers must capture the current map when needed.
+- Wave 3's optional REST dependency/public-device facade and incomplete
+  PowerStream/panel models remain substitutability/model gaps. Their protocol
+  behaviour is not changed by this refactor.
+- Client connection-state reporting and command acknowledgements remain gaps.
+  No suspect command mappings, power signs or cascade aggregation were changed.
+  Manual `connect()` callers still own cleanup; failed `async with` entry now
+  cleans up the resources that the context manager owns.
+- Transport signing, normalisation and broker retry/ID logic already have
+  separate modules. No broader factory framework, persistent queue or service
+  layer is introduced without a concrete use case.
 
 ## Older diagrams
 

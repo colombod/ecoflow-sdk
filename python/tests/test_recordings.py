@@ -24,7 +24,7 @@ import pytest
 from ecoflow.auth import EcoFlowCredentials
 from ecoflow.client import EcoFlowClient
 from ecoflow.endpoints import Endpoints
-from ecoflow.exceptions import EcoFlowError
+from ecoflow.exceptions import EcoFlowDataUnavailableError, EcoFlowError
 from ecoflow.transport.mqtt import MqttCredentials, MqttTransport
 from ecoflow.transport.rest import RestTransport
 from ecoflow_twin import TWIN_ACCESS_KEY, TWIN_ACCOUNT, TWIN_SECRET_KEY, TwinServer
@@ -114,6 +114,12 @@ async def test_mqtt_pushes_agree_with_rest(
             mqtt_status = _current(device)
             if str(recording.quota.get(sn, {}).get("code")) != "0":
                 pytest.skip(f"{sn[:4]}: REST quota not available (e.g. Wave 3 → 1006)")
+            if sn.startswith("BK21") and not recording.quota[sn].get("data"):
+                with pytest.raises(EcoFlowDataUnavailableError):
+                    await _rest_only_status(endpoints, sn)
+                assert mqtt_status is not None
+                assert compare(mqtt_status, mqtt_status).compared
+                return
             rest_status = await _rest_only_status(endpoints, sn)
         finally:
             await client.disconnect()
@@ -339,3 +345,42 @@ def test_pii_guard_rule_matches_redactor_rule() -> None:
     assert [script.is_identifying_key(k) for k in keys] == [
         _identifying(k) for k in keys
     ]
+
+
+async def test_recorded_stream_strategies_update_rest_snapshot() -> None:
+    """Real nested strategy pushes must supersede the initial flat REST modes."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from ecoflow.devices.stream_ultra import StreamUltraDevice
+
+    fields = {
+        "operateSelfPoweredOpen": "self_powered_mode",
+        "operateIntelligentScheduleModeOpen": "ai_schedule_mode",
+    }
+    checked = 0
+    for recording in RECORDINGS:
+        for sn in recording.serials:
+            if not sn.startswith(("BK11", "BK31")):
+                continue
+            rest = MagicMock()
+            rest.get_quota = AsyncMock(return_value=recording.quota[sn]["data"])
+            device = StreamUltraDevice(sn=sn, product_name="STREAM", rest=rest)
+            await device.refresh()
+            transport = _transport()
+            transport.on_message(sn, device._handle_message)  # pyright: ignore[reportPrivateUsage]
+            for push in recording.pushes(sn):
+                await transport.dispatch_message(quota_topic(sn), push)
+                modes = push.get("energyStrategyOperateMode")
+                if not isinstance(modes, dict):
+                    continue
+                mode_values = cast(dict[str, Any], modes)
+                for raw, attr in fields.items():
+                    if raw in mode_values:
+                        assert device.status is not None
+                        assert getattr(device.status, attr) is bool(mode_values[raw])
+                        assert (
+                            f"energyStrategyOperateMode.{raw}"
+                            in device.field_received_at
+                        )
+                        checked += 1
+    assert checked, "no recorded nested STREAM strategy was exercised"

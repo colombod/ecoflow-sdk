@@ -6,7 +6,7 @@ import asyncio
 import functools
 import hashlib as _hashlib
 import logging
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from types import TracebackType
 from typing import Any
 
@@ -32,6 +32,17 @@ _log = logging.getLogger(__name__)
 _EVENT_BUFFER = 1000
 
 
+async def _cleanup_after_error(
+    cleanup: Callable[[], Awaitable[None]], error: BaseException
+) -> None:
+    """Attempt owned cleanup without masking the initiating error/cancellation."""
+    try:
+        await cleanup()
+    except Exception as secondary:
+        # Report the secondary failure without including arbitrary error text.
+        error.add_note(f"Client cleanup also failed ({type(secondary).__name__}).")
+
+
 def _forward(
     queue: asyncio.Queue[dict[str, Any]],
     device: BaseDevice,
@@ -43,7 +54,7 @@ def _forward(
 
 
 # Map productName → device class
-_DEVICE_CLASS_MAP: dict[str, type] = {
+_DEVICE_CLASS_MAP: dict[str, type[BaseDevice]] = {
     DeviceModel.DELTA_PRO.value: BatteryDevice,
     DeviceModel.DELTA_PRO_3.value: BatteryDevice,
     DeviceModel.DELTA_2.value: BatteryDevice,
@@ -66,7 +77,7 @@ _DEVICE_CLASS_MAP: dict[str, type] = {
 # QUIRK: productName casing is not consistent across devices/firmware
 # (e.g. "Delta Pro 3", "WAVE 2" per tolwi/hassio-ecoflow-cloud registry),
 # so routing matches case-insensitively.
-_DEVICE_CLASS_BY_NAME: dict[str, type] = {
+_DEVICE_CLASS_BY_NAME: dict[str, type[BaseDevice]] = {
     name.casefold(): cls for name, cls in _DEVICE_CLASS_MAP.items()
 }
 
@@ -120,7 +131,7 @@ class EcoFlowClient:
         self.unknown_devices: list[DiscoveredDevice] = []
 
         # Internal: all typed devices (for MQTT subscription routing)
-        self._all_typed: list[Any] = []
+        self._all_typed: list[BaseDevice] = []
 
     # ------------------------------------------------------------------
     # Public read-only properties
@@ -181,21 +192,25 @@ class EcoFlowClient:
             # their _mqtt attribute is still None.  Without this, _publish()
             # always raises EcoFlowConnectionError even when MQTT is live.
             for device in self._all_typed:
-                device._mqtt = self._mqtt  # noqa: SLF001
+                device._mqtt = self._mqtt  # pyright: ignore[reportPrivateUsage]
             # Register callbacks BEFORE connect() so _run() subscribes to all
             # devices in one shot and captures the broker's initial state dump.
             for device in self._all_typed:
-                if hasattr(device, "_handle_message"):
-                    self._mqtt.on_message(device.sn, device._handle_message)  # noqa: SLF001
+                self._mqtt.on_message(device.sn, device._handle_message)  # pyright: ignore[reportPrivateUsage]
             await self._mqtt.connect()
         except Exception as exc:
             _log.warning("MQTT unavailable — REST-only mode: %s", exc)
 
     async def disconnect(self) -> None:
         """Close MQTT and REST connections."""
-        if self._mqtt is not None:
-            await self._mqtt.disconnect()
-        await self._rest.close()
+        try:
+            if self._mqtt is not None:
+                await self._mqtt.disconnect()
+        except BaseException as error:
+            await _cleanup_after_error(self._rest.close, error)
+            raise
+        else:
+            await self._rest.close()
 
     async def _discover(self) -> None:
         """Fetch device list and populate typed collections."""
@@ -258,7 +273,7 @@ class EcoFlowClient:
         removers: list[Callable[[], None]] = []
         for device in self._all_typed:
             removers.append(
-                device._add_sink(functools.partial(_forward, queue, device))
+                device._add_sink(functools.partial(_forward, queue, device))  # pyright: ignore[reportPrivateUsage]
             )  # noqa: SLF001
         try:
             while True:
@@ -268,7 +283,12 @@ class EcoFlowClient:
                 remove()
 
     async def __aenter__(self) -> EcoFlowClient:
-        await self.connect()
+        try:
+            await self.connect()
+        except BaseException as error:
+            # __aexit__ is not called when entry fails, including cancellation.
+            await _cleanup_after_error(self.disconnect, error)
+            raise
         return self
 
     async def __aexit__(
@@ -277,4 +297,7 @@ class EcoFlowClient:
         exc: BaseException | None,
         tb: TracebackType | None,
     ) -> None:
-        await self.disconnect()
+        if exc is None:
+            await self.disconnect()
+        else:
+            await _cleanup_after_error(self.disconnect, exc)

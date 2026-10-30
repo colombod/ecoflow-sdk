@@ -15,6 +15,10 @@ class EcoFlowConnectionError(EcoFlowError):
     """Network / transport failure."""
 
 
+class EcoFlowDataUnavailableError(EcoFlowError):
+    """A successful response contained no telemetry readings."""
+
+
 class EcoFlowDeviceNotFoundError(EcoFlowError):
     """Device SN not found in account."""
 

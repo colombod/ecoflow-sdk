@@ -7,6 +7,28 @@ from datetime import UTC, datetime
 from typing import Any, cast
 
 
+def normalize_stream_payload(data: dict[str, Any]) -> dict[str, Any]:
+    """Use one key layout for recorded flat REST and nested MQTT modes.
+
+    Non-None flat values take precedence within a single payload, matching the
+    original parser. Values from later payloads supersede earlier values.
+    No field units or other device-family layouts are changed.
+    """
+    modes = data.get("energyStrategyOperateMode")
+    if not isinstance(modes, dict):
+        return data.copy()
+    canonical = {
+        f"energyStrategyOperateMode.{key}": value
+        for key, value in cast(dict[str, Any], modes).items()
+    }
+    for key, value in data.items():
+        if key != "energyStrategyOperateMode" and (
+            value is not None or key not in canonical
+        ):
+            canonical[key] = value
+    return canonical
+
+
 @dataclass
 class StreamUltraStatus:
     """Status snapshot for EcoFlow STREAM Ultra and STREAM AC Pro home energy systems.
@@ -186,14 +208,10 @@ class StreamUltraStatus:
         cms_soc = float(data.get("cmsBattSoc", 0))
         batt_soc = bms_soc or pack_soc or cms_soc
 
-        # REST flattens this object ("energyStrategyOperateMode.operateX");
-        # accept the nested form too in case a push carries it unflattened.
-        nested = data.get("energyStrategyOperateMode")
-        modes = cast(dict[str, Any], nested) if isinstance(nested, dict) else {}
+        data = normalize_stream_payload(data)
 
         def _mode(name: str) -> bool:
-            flat = data.get(f"energyStrategyOperateMode.{name}")
-            return bool(modes.get(name, False) if flat is None else flat)
+            return bool(data.get(f"energyStrategyOperateMode.{name}", False))
 
         remain_mah = int(data.get("remainCap", 0))
         full_mah = int(data.get("fullCap", 0))
