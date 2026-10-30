@@ -15,7 +15,14 @@ class SmartMeterDevice(BaseDevice):
     def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.data: SmartMeterData | None = None
-        self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
+
+    def _update_data(self, sn: str, raw: dict[str, Any]) -> SmartMeterData:
+        candidate = self._telemetry.updated(raw)
+        data = SmartMeterData.from_mqtt_payload(sn, candidate.values)
+        data.product_name = self.product_name
+        self._telemetry = candidate
+        self.data = data
+        return data
 
     async def refresh(self) -> SmartMeterData:
         """Fetch REST state; raise EcoFlowDataUnavailableError for an empty quota.
@@ -28,17 +35,10 @@ class SmartMeterDevice(BaseDevice):
             raise EcoFlowDataUnavailableError(
                 "Smart Meter REST has no readings; use MQTT updates"
             )
-        self._merge_telemetry(self._raw_data, raw)
-        data = SmartMeterData.from_mqtt_payload(self.sn, self._raw_data)
-        data.product_name = self.product_name
-        self.data = data
-        return self.data
+        return self._update_data(self.sn, raw)
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update data from an incoming MQTT payload, accumulating chunks."""
         if not data:
             return
-        self._merge_telemetry(self._raw_data, data)
-        self.data = SmartMeterData.from_mqtt_payload(sn, self._raw_data)
-        self.data.product_name = self.product_name
-        self._notify_callbacks(self.data)
+        self._notify_callbacks(self._update_data(sn, data))

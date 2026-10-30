@@ -47,7 +47,7 @@ def test_partial_updates_preserve_field_receive_times(
     key = "2_1.watts" if device_type is SmartPlugDevice else "powGetSysGrid"
     first = datetime(2026, 10, 29, tzinfo=UTC)
     later = first + timedelta(minutes=10)
-    with patch("ecoflow.devices.base.datetime") as clock:
+    with patch("ecoflow.telemetry.datetime") as clock:
         clock.now.return_value = first
         device._handle_message("TEST", {key: 0})  # pyright: ignore[reportPrivateUsage]
         clock.now.return_value = later

@@ -134,15 +134,13 @@ class MqttTransport:
         try:
             await asyncio.wait_for(self._ready.wait(), timeout=float(self._timeout))
         except TimeoutError:
-            if self._run_task:
-                self._run_task.cancel()
-                try:
-                    await self._run_task
-                except (asyncio.CancelledError, Exception):
-                    pass
+            await self.disconnect()
             raise EcoFlowConnectionError(
                 f"MQTT connection timed out after {self._timeout}s"
             ) from None
+        except asyncio.CancelledError:
+            await self.disconnect()
+            raise
         # _run() may have signalled a fatal (non-retriable) error via _fatal_error.
         # Re-raise it here so callers get a proper exception instead of a silent hang.
         if self._fatal_error is not None:

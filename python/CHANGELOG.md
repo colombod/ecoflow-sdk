@@ -9,6 +9,20 @@ This project uses [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Internal telemetry state now owns raw readings and receipt times together.
+  STREAM/meter/plug parse candidate updates before committing; malformed data
+  cannot poison future partial readings. Public model shapes are preserved.
+- STREAM mode normalisation is shared by direct parsing and device accumulation.
+  Device adapters consume narrow quota-reader/command-publisher interfaces;
+  client routing and device collections have explicit base-device types.
+- Failed client context entry and MQTT connection cancellation release owned
+  resources; REST cleanup is attempted even when MQTT cleanup fails. Primary
+  operation errors/cancellation survive secondary cleanup errors, which are
+  reported by exception notes. Broker IDs, retry rules and device commands
+  are unchanged. See `docs/architecture.md` for review scope
+  and deliberately deferred gaps.
+
 ### Fixed
 - Smart Plug daily energy is `None` when unavailable, preserving genuine zero.
   Consumers must handle `float | None` before formatting or arithmetic.

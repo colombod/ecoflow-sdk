@@ -19,15 +19,19 @@ Before 2026-09 the parsers were fed raw pushes, and live MQTT produced all-zero 
 ## Decision
 `MqttTransport.dispatch_message()` runs `normalize_quota_payload()` on every push.
 STREAM and Smart Meter accumulate partial readings, merging nonempty REST
-refreshes into the same state. STREAM strategy modes are canonicalised to flat
-keys so the recorded nested MQTT and flat REST layouts update the same value.
+refreshes into the same state. `TelemetryState` owns raw values and receipt times;
+adapters parse candidate updates before committing them. STREAM strategy modes are canonicalised to flat
+keys through a shared model-level helper, so the recorded nested MQTT and flat
+REST layouts update the same value.
 Smart Plug keeps its MQTT accumulator separate from a standalone REST snapshot:
 refresh replaces the visible data and receipt map, while later MQTT updates
 resume the retained MQTT values and receipt times. This also preserves the
 supported legacy heartbeat parser, whose units differ from the REST layout.
 
 ## Consequences
-- There is one parser per model, and a REST snapshot and an MQTT stream can be compared key by key. The replay tier does that for every recording.
+- REST and normalised MQTT share model decoding where their schemas agree;
+  the plug's legacy heartbeat retains its separate unit-aware decoder. The
+  replay tier compares stable fields for every comparable recorded device.
 - The merge matters. REST has only about 15 STREAM system keys, and the battery pack arrives only over MQTT. Replacing the state on `refresh()` dropped a cascade-slave AC Pro back to 0 % SOC.
 - The base handler compares local receipt times, not publisher timestamps; it
   cannot detect old device measurements or out-of-order vendor delivery.

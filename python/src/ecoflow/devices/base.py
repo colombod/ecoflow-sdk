@@ -8,11 +8,12 @@ import itertools
 import logging
 from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
+
+from ecoflow.telemetry import TelemetryState
 
 if TYPE_CHECKING:
-    from ecoflow.transport.mqtt import MqttTransport
-    from ecoflow.transport.rest import RestTransport
+    from ecoflow.transport.protocols import CommandPublisher, QuotaReader
 
 _log = logging.getLogger(__name__)
 
@@ -33,15 +34,16 @@ def put_dropping_oldest(queue: asyncio.Queue[Any], item: Any) -> None:  # noqa: 
 class BaseDevice:
     """Base class for all EcoFlow device abstractions.
 
-    Publishes commands via MQTT when connected, falls back to REST otherwise.
+    Provides event delivery and public-API MQTT command envelopes. Device
+    adapters own read policies and compose their telemetry state separately.
     """
 
     def __init__(
         self,
         sn: str,
         product_name: str,
-        rest: RestTransport,
-        mqtt: MqttTransport | None = None,
+        rest: QuotaReader,
+        mqtt: CommandPublisher | None = None,
     ) -> None:
         self.sn = sn
         self.product_name = product_name
@@ -51,7 +53,7 @@ class BaseDevice:
         # Internal sinks feeding events() / wait_for_update() queues.
         self._sinks: list[Callable[[Any], None]] = []
         self._last_updated: datetime | None = None
-        self._field_received_at: dict[str, datetime] = {}
+        self._telemetry = TelemetryState()
 
     @property
     def field_received_at(self) -> dict[str, datetime]:
@@ -62,31 +64,7 @@ class BaseDevice:
         These are local receipt times, not device measurement timestamps.
         Other device families do not currently populate this metadata.
         """
-        return self._field_received_at.copy()
-
-    def _merge_telemetry(self, cache: dict[str, Any], data: dict[str, Any]) -> None:
-        """Merge partial payloads without refreshing untouched fields."""
-        received_at = datetime.now(UTC)
-
-        def merge(
-            target: dict[str, Any], incoming: dict[str, Any], prefix: str = ""
-        ) -> None:
-            for key, value in incoming.items():
-                path = f"{prefix}{key}"
-                if isinstance(value, dict):
-                    previous = target.get(key)
-                    nested = (
-                        cast(dict[str, Any], previous)
-                        if isinstance(previous, dict)
-                        else {}
-                    )
-                    target[key] = nested
-                    merge(nested, cast(dict[str, Any], value), f"{path}.")
-                else:
-                    target[key] = value
-                    self._field_received_at[path] = received_at
-
-        merge(cache, data)
+        return self._telemetry.field_received_at
 
     async def _publish(self, payload: dict[str, Any]) -> None:
         """Publish a command to this device via MQTT set topic.

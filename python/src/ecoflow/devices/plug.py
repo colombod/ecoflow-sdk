@@ -6,6 +6,7 @@ from typing import Any
 
 from ecoflow.devices.base import BaseDevice
 from ecoflow.models.plug import SmartPlugData
+from ecoflow.telemetry import TelemetryState
 
 
 class SmartPlugDevice(BaseDevice):
@@ -14,38 +15,41 @@ class SmartPlugDevice(BaseDevice):
     def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self.data: SmartPlugData | None = None
-        self._raw_data: dict[str, Any] = {}  # accumulate MQTT chunks
-        # REST is a separate snapshot view; retain MQTT chunks and their times.
-        self._mqtt_field_received_at = self._field_received_at
+        # REST is a standalone view; MQTT retains its own partial readings.
+        self._mqtt_telemetry = TelemetryState()
 
     async def refresh(self) -> SmartPlugData:
         """Fetch current device state via REST and return a SmartPlugData."""
         raw = await self._rest.get_quota(self.sn)
         # REST returns a standalone snapshot; its metadata must match that view.
-        self.data = SmartPlugData.from_quota_payload(self.sn, raw)
-        self.data.product_name = self.product_name
-        self._field_received_at = {}
-        self._merge_telemetry({}, raw)
-        return self.data
+        candidate = TelemetryState().updated(raw)
+        data = SmartPlugData.from_quota_payload(self.sn, candidate.values)
+        data.product_name = self.product_name
+        self._telemetry = candidate
+        self.data = data
+        return data
 
     def _on_message(self, sn: str, data: dict[str, Any]) -> None:  # type: ignore[type-arg]
         """Update data from an incoming MQTT payload, accumulating chunks."""
         # QUIRK (recorded live 2026-09-27/28, 4 of 4 cases): the plug pushes
         # ``volt: 0`` about 2 s before the real mains voltage. A plug that is
         # reporting is powered, so 0 V is never real — keep the known value.
-        if data.get("2_1.volt") == 0 and self._raw_data.get("2_1.volt"):
+        if data.get("2_1.volt") == 0 and self._mqtt_telemetry.values.get("2_1.volt"):
             data = {k: v for k, v in data.items() if k != "2_1.volt"}
         if not data:
             return
-        self._field_received_at = self._mqtt_field_received_at
-        self._merge_telemetry(self._raw_data, data)
+        candidate = self._mqtt_telemetry.updated(data)
+        raw = candidate.values
         # Public-API pushes are normalised to the REST "2_1.*" key layout.
-        if any(k.startswith("2_1.") for k in self._raw_data):
-            self.data = SmartPlugData.from_quota_payload(sn, self._raw_data)
+        if any(k.startswith("2_1.") for k in raw):
+            snapshot = SmartPlugData.from_quota_payload(sn, raw)
         else:
-            self.data = SmartPlugData.from_mqtt_payload(sn, self._raw_data)
-        self.data.product_name = self.product_name
-        self._notify_callbacks(self.data)
+            snapshot = SmartPlugData.from_mqtt_payload(sn, raw)
+        snapshot.product_name = self.product_name
+        self._mqtt_telemetry = candidate
+        self._telemetry = candidate
+        self.data = snapshot
+        self._notify_callbacks(snapshot)
 
     async def turn_on(self) -> None:
         """Turn the smart plug relay ON."""
